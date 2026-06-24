@@ -1,0 +1,11 @@
+-- ============================================================================
+-- seed.sql — runs on `supabase db reset` (LOCAL dev only).
+--
+-- Reference data (the category tree) is intentionally NOT here — it lives in
+-- migration 20260624110010_seed_categories.sql so it ships to every
+-- environment via `supabase db push`, not just local resets.
+--
+-- Add local-only sample data below (e.g. demo listings). Note: creating demo
+-- listings/users requires auth.users rows, which the signup trigger expands
+-- into public.users/profiles/user_roles — so seed test auth users first.
+-- ============================================================================

@@ -1,0 +1,21 @@
+{
+  "name": "query-and-buy",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Query & Buy — Supabase connection harness (Sprint 2A)",
+  "scripts": {
+    "verify": "node --env-file=.env.local --import tsx scripts/verify-supabase.ts",
+    "db:link": "npx supabase link",
+    "db:push": "npx supabase db push",
+    "db:diff": "npx supabase db diff",
+    "db:lint": "npx supabase db lint",
+    "db:reset": "npx supabase db reset"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2"
+  },
+  "devDependencies": {
+    "tsx": "^4"
+  }
+}

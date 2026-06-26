@@ -11,8 +11,21 @@ export type ParsedSearch = {
   condition?: string
   minFils?: number
   maxFils?: number
+  negotiable?: boolean
+  featured?: boolean
+  sinceDays?: number
   sort: SortKey
 }
+
+const VALID_SORTS: SortKey[] = [
+  'newest',
+  'oldest',
+  'price_asc',
+  'price_desc',
+  'most_viewed',
+  'recently_updated',
+  'featured_first',
+]
 
 function str(v: string | string[] | undefined): string | undefined {
   const s = Array.isArray(v) ? v[0] : v
@@ -28,7 +41,8 @@ function fils(v: string | string[] | undefined): number | undefined {
 export function parseSearch(sp: RawSearchParams): ParsedSearch {
   const emirate = str(sp.emirate)
   const condition = str(sp.condition)
-  const sort = str(sp.sort)
+  const sort = str(sp.sort) as SortKey | undefined
+  const since = Number(str(sp.since))
   return {
     q: str(sp.q),
     categorySlug: str(sp.category),
@@ -36,6 +50,9 @@ export function parseSearch(sp: RawSearchParams): ParsedSearch {
     condition: condition && CONDITION_VALUES.includes(condition) ? condition : undefined,
     minFils: fils(sp.min),
     maxFils: fils(sp.max),
-    sort: sort === 'price_asc' || sort === 'price_desc' ? sort : 'newest',
+    negotiable: str(sp.negotiable) === '1' ? true : undefined,
+    featured: str(sp.featured) === '1' ? true : undefined,
+    sinceDays: [1, 7, 30].includes(since) ? since : undefined,
+    sort: sort && VALID_SORTS.includes(sort) ? sort : 'newest',
   }
 }

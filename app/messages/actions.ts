@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
+import { detectProhibitedContact, CONTACT_BLOCK_MESSAGE } from '@/lib/safety/contact'
+import { dispatch } from '@/lib/notifications/dispatch'
 
 /**
  * Open (or create) the conversation between the current user (buyer) and a
@@ -81,7 +83,7 @@ export async function markConversationRead(
 export async function sendMessage(
   conversationId: string,
   body: string,
-): Promise<{ ok?: boolean; error?: string }> {
+): Promise<{ ok?: boolean; error?: string; blocked?: boolean }> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -91,6 +93,10 @@ export async function sendMessage(
   const text = body.trim()
   if (!text) return { error: 'Message is empty.' }
   if (text.length > 2000) return { error: 'Message is too long (max 2000 characters).' }
+
+  // Contact protection: prohibited content is NEVER written to the database.
+  const prohibited = detectProhibitedContact(text)
+  if (prohibited) return { error: CONTACT_BLOCK_MESSAGE, blocked: true }
 
   const { error } = await supabase.from('messages').insert({
     conversation_id: conversationId,
@@ -104,6 +110,24 @@ export async function sendMessage(
     .from('conversations')
     .update({ last_message_at: new Date().toISOString() })
     .eq('id', conversationId)
+
+  // Notify the other participant (in-app only — no email per message).
+  const { data: conv } = await supabase
+    .from('conversations')
+    .select('buyer_id, seller_id')
+    .eq('id', conversationId)
+    .maybeSingle()
+  if (conv) {
+    const c = conv as { buyer_id: string; seller_id: string }
+    const recipientId = user.id === c.buyer_id ? c.seller_id : c.buyer_id
+    await dispatch({
+      recipientId,
+      type: 'new_message',
+      title: 'New message',
+      body: text.slice(0, 80),
+      link: `/messages/${conversationId}`,
+    })
+  }
 
   revalidatePath(`/messages/${conversationId}`)
   revalidatePath('/messages')

@@ -1,130 +1,91 @@
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { BookmarkIcon, ExternalLinkIcon, HeartIcon, PackageIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
-import { signOut } from '@/app/(auth)/actions'
-import { SiteHeader } from '@/components/layout/SiteHeader'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { ProfileHeader } from '@/components/profile/ProfileHeader'
+import { createServiceClient } from '@/utils/supabase/admin'
+import { getSellerReputation } from '@/lib/reputation/queries'
+import { getProfileReviews } from '@/lib/reviews/queries'
+import { getActivity } from '@/lib/account/activity'
+import { computeTrust } from '@/lib/trust/score'
+import { ReputationCard } from '@/components/account/ReputationCard'
+import { ActivityTimeline } from '@/components/account/ActivityTimeline'
 import { ProfileCompletion } from '@/components/profile/ProfileCompletion'
-import { ProfileEditForm } from '@/components/profile/ProfileEditForm'
-import { AvatarUploader } from '@/components/profile/AvatarUploader'
 import type { Profile } from '@/lib/profile/completion'
 
-export default async function AccountPage() {
+export const metadata = { title: 'My profile · Query & Buy' }
+
+type TrustProfile = Profile & {
+  email_verified: boolean
+  phone_verified: boolean
+  reports_count: number
+}
+
+export default async function AccountOverviewPage() {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) return null
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('profiles')
     .select(
-      'id, username, display_name, avatar_url, bio, emirate, badge_level, listings_count, member_since',
+      'id, username, display_name, avatar_url, bio, emirate, badge_level, listings_count, member_since, email_verified, phone_verified, reports_count',
     )
     .eq('id', user.id)
-    .single()
-  const profile = data as Profile | null
+    .maybeSingle()
+  const profile = data as TrustProfile | null
+  if (!profile) return null
 
-  // Profile/username column missing → migrations not deployed yet.
-  if (error || !profile) {
-    return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-6">
-        <h1 className="text-2xl font-semibold">My account</h1>
-        <Card>
-          <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
-            <p>
-              Your profile couldn&apos;t be loaded. Deploy the latest database
-              migrations so the profile (and <code>username</code> column) exist:
-            </p>
-            <pre className="rounded-md bg-muted px-3 py-2 font-mono text-xs">
-              npm run db:push
-            </pre>
-          </CardContent>
-        </Card>
-        <form action={signOut}>
-          <Button type="submit" variant="outline" className="w-full">
-            Sign out
-          </Button>
-        </form>
-      </main>
-    )
+  const [rep, recentReviews, activity] = await Promise.all([
+    getSellerReputation(profile.id, { withResponse: true }),
+    getProfileReviews(profile.id, 4),
+    getActivity(profile.id, profile.member_since, 12),
+  ])
+
+  let repeatBuyers = 0
+  try {
+    const admin = createServiceClient()
+    const { data: rows } = await admin
+      .from('orders')
+      .select('buyer_id')
+      .eq('seller_id', profile.id)
+      .eq('status', 'completed')
+    const counts = new Map<string, number>()
+    for (const r of (rows ?? []) as { buyer_id: string }[])
+      counts.set(r.buyer_id, (counts.get(r.buyer_id) ?? 0) + 1)
+    repeatBuyers = [...counts.values()].filter((n) => n >= 2).length
+  } catch {
+    /* no service role → 0 */
   }
 
+  const trust = computeTrust({
+    display_name: profile.display_name,
+    username: profile.username,
+    avatar_url: profile.avatar_url,
+    bio: profile.bio,
+    emirate: profile.emirate,
+    email_verified: profile.email_verified,
+    phone_verified: profile.phone_verified,
+    member_since: profile.member_since,
+    listings_count: profile.listings_count,
+    reports_count: profile.reports_count,
+  })
+
   return (
-    <>
-      <SiteHeader />
-      <main className="mx-auto w-full max-w-2xl space-y-6 px-5 py-8 sm:px-6 sm:py-12">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="eyebrow">Account</p>
-            <h1 className="font-display mt-2 text-3xl tracking-tight sm:text-4xl">My account</h1>
-          </div>
-          <form action={signOut}>
-            <Button type="submit" variant="ghost" size="sm">
-              Sign out
-            </Button>
-          </form>
-        </div>
-
-        <Card className="shadow-soft">
-        <CardContent className="pt-6">
-          <ProfileHeader
-            profile={profile}
-            avatarSlot={
-              <AvatarUploader
-                userId={profile.id}
-                displayName={profile.display_name}
-                initialUrl={profile.avatar_url}
-              />
-            }
-          />
-          <Separator className="my-5" />
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/account/listings">
-                <PackageIcon className="size-4" />
-                My listings
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/favorites">
-                <HeartIcon className="size-4" />
-                Favorites
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/saved-searches">
-                <BookmarkIcon className="size-4" />
-                Saved searches
-              </Link>
-            </Button>
-            {profile.username && (
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/u/${profile.username}`}>
-                  <ExternalLinkIcon className="size-4" />
-                  View public profile
-                </Link>
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
+    <div className="grid gap-6 lg:grid-cols-5">
+      <div className="space-y-6 lg:col-span-3">
+        <ReputationCard
+          rep={rep}
+          trustScore={trust.score}
+          repeatBuyers={repeatBuyers}
+          recentReviews={recentReviews}
+        />
         <ProfileCompletion profile={profile} />
-
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="font-display text-lg font-normal">Edit profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProfileEditForm profile={profile} />
-          </CardContent>
-        </Card>
-      </main>
-    </>
+      </div>
+      <div className="lg:col-span-2">
+        <div className="rounded-3xl border border-border bg-card p-5 shadow-soft sm:p-6">
+          <h2 className="font-display mb-5 text-xl tracking-tight">Activity</h2>
+          <ActivityTimeline events={activity} />
+        </div>
+      </div>
+    </div>
   )
 }

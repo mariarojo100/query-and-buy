@@ -8,6 +8,8 @@ import {
   type Confident,
 } from '@/lib/ai/provider'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
+import { logModeration } from '@/lib/safety/moderation-log'
+import { logger } from '@/lib/logger'
 
 export type AiPricing = {
   quickSaleAed: number | null
@@ -71,6 +73,9 @@ export async function generateListingDraft(images: AiImageInput[]): Promise<AiDr
       categories.map((c) => ({ slug: c.slug, name: c.name_en })),
     )
   } catch (e) {
+    logger.error('ai.generateListingDraft', 'provider call failed', {
+      reason: e instanceof Error ? e.message : 'unknown',
+    })
     return { ok: false, error: e instanceof Error ? e.message : 'AI generation failed.' }
   }
 
@@ -147,6 +152,13 @@ export async function generateListingDraft(images: AiImageInput[]): Promise<AiDr
   const isConfident = overallConfidence >= CONFIDENCE_THRESHOLD
 
   if (!isConfident) {
+    // AI flagged the upload — log it for the admin AI-moderation queue.
+    await logModeration({
+      source: 'upload',
+      decision: 'flagged',
+      confidence: overallConfidence,
+      reason: 'Low AI identification confidence — clearer product photos requested.',
+    })
     // Nothing auto-fills. Keep `detected` so the user sees what the AI guessed,
     // but title/description/category/condition stay blank and no pricing is shown.
     return {

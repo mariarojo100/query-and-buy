@@ -6,6 +6,7 @@ export type SavedSearch = {
   label: string | null
   query_text: string | null
   parsed_filters: SavedFilters
+  notify: boolean
   created_at: string
 }
 
@@ -19,7 +20,7 @@ export async function getUserSavedSearches(): Promise<SavedSearch[]> {
 
   const { data } = await supabase
     .from('saved_searches')
-    .select('id, label, query_text, parsed_filters, created_at')
+    .select('id, label, query_text, parsed_filters, notify, created_at')
     .order('created_at', { ascending: false })
 
   return (data ?? []) as SavedSearch[]

@@ -13,12 +13,18 @@ import { getFavoritedIds } from '@/lib/favorites/queries'
 import { Button } from '@/components/ui/button'
 import { statusMeta } from '@/lib/listings/status'
 import { SellerTrustCard } from '@/components/trust/SellerTrustCard'
+import { SellerReputation } from '@/components/trust/SellerReputation'
+import { TrackView } from '@/components/listing/TrackView'
+import { getSellerReputation } from '@/lib/reputation/queries'
 import { formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
 import { ListingCard } from '@/components/listing/ListingCard'
-import { getListingById, getSellerListings } from '@/lib/listings/queries'
+import { getListingById, getSellerListings, getSimilarListings } from '@/lib/listings/queries'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { breadcrumbJsonLd, productJsonLd } from '@/lib/seo'
+import { absoluteUrl } from '@/lib/site'
 
 export async function generateMetadata({
   params,
@@ -28,12 +34,27 @@ export async function generateMetadata({
   const { id } = await params
   const listing = await getListingById(id)
   if (!listing) return { title: 'Listing not found · Query & Buy' }
+  const desc = listing.description.slice(0, 155)
+  const img = listing.images[0]
+    ? publicUrl(LISTING_IMAGES_BUCKET, listing.images[0].storage_key)
+    : undefined
   return {
     title: `${listing.title_en} · Query & Buy`,
-    description: listing.description.slice(0, 150),
-    openGraph: listing.images[0]
-      ? { images: [publicUrl(LISTING_IMAGES_BUCKET, listing.images[0].storage_key)] }
-      : undefined,
+    description: desc,
+    alternates: { canonical: `/listing/${id}` },
+    openGraph: {
+      type: 'website',
+      title: listing.title_en,
+      description: desc,
+      url: absoluteUrl(`/listing/${id}`),
+      images: img ? [img] : undefined,
+    },
+    twitter: {
+      card: img ? 'summary_large_image' : 'summary',
+      title: listing.title_en,
+      description: desc,
+      images: img ? [img] : undefined,
+    },
   }
 }
 
@@ -65,6 +86,9 @@ export default async function ListingDetailPage({
 
   const related = await getSellerListings(listing.seller_id, { excludeId: listing.id, limit: 4 })
   const relatedFav = await getFavoritedIds(related.map((l) => l.id))
+  const similar = await getSimilarListings(listing.id, 8)
+  const similarFav = await getFavoritedIds(similar.map((l) => l.id))
+  const sellerRep = await getSellerReputation(listing.seller_id, { withResponse: true })
 
   const location = [listing.area, emirateLabel(listing.emirate)].filter(Boolean).join(', ')
   const posted = listing.published_at ?? listing.created_at
@@ -80,6 +104,25 @@ export default async function ListingDetailPage({
   return (
     <>
       <SiteHeader />
+      <TrackView listingId={listing.id} />
+      <JsonLd
+        data={[
+          productJsonLd({
+            id: listing.id,
+            title: listing.title_en,
+            description: listing.description,
+            priceAed: listing.price_fils / 100,
+            condition: listing.condition,
+            imageUrls: listing.images.map((im) => publicUrl(LISTING_IMAGES_BUCKET, im.storage_key)),
+            sellerName: seller?.display_name ?? null,
+            available: listing.status === 'active',
+          }),
+          breadcrumbJsonLd([
+            { name: 'Home', path: '/' },
+            { name: listing.title_en, path: `/listing/${listing.id}` },
+          ]),
+        ]}
+      />
       <main className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 sm:py-10">
         <Link
           href="/"
@@ -143,6 +186,9 @@ export default async function ListingDetailPage({
               {seller && (
                 <div className="mt-7">
                   <SellerTrustCard seller={seller} />
+                  <div className="mt-3 rounded-xl border border-border bg-card p-4">
+                    <SellerReputation rep={sellerRep} />
+                  </div>
                 </div>
               )}
 
@@ -195,6 +241,22 @@ export default async function ListingDetailPage({
                   key={l.id}
                   listing={l}
                   favorited={relatedFav.has(l.id)}
+                  authed={!!user}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {similar.length > 0 && (
+          <section className="mt-14 border-t border-border pt-10 sm:mt-20">
+            <p className="eyebrow mb-6">You may also like</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-4 sm:gap-x-6">
+              {similar.map((l) => (
+                <ListingCard
+                  key={l.id}
+                  listing={l}
+                  favorited={similarFav.has(l.id)}
                   authed={!!user}
                 />
               ))}

@@ -58,12 +58,32 @@ export type SearchParseContext = {
   conditions: string[]
 }
 
+/** Context for an in-chat negotiation suggestion (Sprint 9). */
+export type NegotiationContext = {
+  role: 'buyer' | 'seller'
+  listingTitle: string
+  askingPriceAed: number
+  condition: string | null
+  daysListed: number
+  /** The most recent offer on the table (AED), if any. */
+  lastOfferAed: number | null
+}
+
+/** A suggested price + market estimate + short bullet reasons. Advisory only. */
+export type RawNegotiation = {
+  suggested_offer_aed: number | null
+  market_average_aed: number | null
+  reasons: string[]
+}
+
 export interface AiProvider {
   readonly name: string
   /** Analyze 1–5 photos of one item and return a structured draft with confidences. */
   generateListingDraft(images: AiImageInput[], categories: AiCategory[]): Promise<RawListingDraft>
   /** Parse a plain-English marketplace query into structured filter candidates. */
   parseSearchQuery(text: string, ctx: SearchParseContext): Promise<RawSearchParse>
+  /** Suggest a fair offer/counter with reasoning. Never auto-sends. */
+  suggestNegotiation(ctx: NegotiationContext): Promise<RawNegotiation>
 }
 
 /** Fields below this confidence are dropped (left empty for the user). */

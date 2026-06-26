@@ -8,6 +8,7 @@ const PROTECTED_PREFIXES = [
   '/messages',
   '/favorites',
   '/saved-searches',
+  '/notifications',
   '/admin',
 ]
 

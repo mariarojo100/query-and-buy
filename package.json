@@ -8,6 +8,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "verify": "node --env-file=.env.local --import tsx scripts/verify-supabase.ts",
     "db:link": "npx supabase link",
     "db:push": "npx supabase db push",

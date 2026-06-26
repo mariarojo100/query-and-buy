@@ -37,6 +37,10 @@ export type ConversationView = {
   listing: ListingSummary | null
   other: Participant | null
   meId: string
+  buyerId: string
+  sellerId: string
+  /** The other participant's last_read_at — drives read receipts. */
+  otherLastReadAt: string | null
 }
 
 type RawImage = { storage_key: string; position: number }
@@ -217,7 +221,9 @@ export async function getConversationView(
 
   const { data } = await supabase
     .from('conversations')
-    .select(`id, buyer_id, seller_id, status, ${LISTING_EMBED}`)
+    .select(
+      `id, buyer_id, seller_id, status, buyer_last_read_at, seller_last_read_at, ${LISTING_EMBED}`,
+    )
     .eq('id', conversationId)
     .maybeSingle()
   if (!data) return null // RLS: not a participant, or not found
@@ -227,9 +233,12 @@ export async function getConversationView(
     buyer_id: string
     seller_id: string
     status: string
+    buyer_last_read_at: string | null
+    seller_last_read_at: string | null
     listing: unknown
   }
-  const otherId = conv.buyer_id === user.id ? conv.seller_id : conv.buyer_id
+  const isBuyer = conv.buyer_id === user.id
+  const otherId = isBuyer ? conv.seller_id : conv.buyer_id
   const people = await participantMap(supabase, [otherId])
 
   return {
@@ -238,6 +247,9 @@ export async function getConversationView(
     listing: asListing(conv.listing),
     other: people.get(otherId) ?? null,
     meId: user.id,
+    buyerId: conv.buyer_id,
+    sellerId: conv.seller_id,
+    otherLastReadAt: isBuyer ? conv.seller_last_read_at : conv.buyer_last_read_at,
   }
 }
 

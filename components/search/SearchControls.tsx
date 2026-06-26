@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { SearchIcon, XIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -19,11 +20,31 @@ import { CONDITIONS } from '@/lib/listings/conditions'
 import type { CategoryLite } from '@/lib/listings/queries'
 
 const ALL = '__all__'
-const FILTER_KEYS = ['q', 'category', 'emirate', 'condition', 'min', 'max', 'sort']
+const FILTER_KEYS = [
+  'q',
+  'category',
+  'emirate',
+  'condition',
+  'min',
+  'max',
+  'sort',
+  'since',
+  'negotiable',
+  'featured',
+]
 const SORTS = [
-  { value: 'newest', label: 'Newest first' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
   { value: 'price_asc', label: 'Price: low to high' },
   { value: 'price_desc', label: 'Price: high to low' },
+  { value: 'most_viewed', label: 'Most viewed' },
+  { value: 'recently_updated', label: 'Recently updated' },
+  { value: 'featured_first', label: 'Featured first' },
+]
+const DATES = [
+  { value: '1', label: 'Today' },
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
 ]
 
 export function SearchControls({
@@ -162,6 +183,23 @@ export function SearchControls({
           </SelectContent>
         </Select>
 
+        <Select
+          value={params.get('since') ?? ALL}
+          onValueChange={(v) => setParam('since', v === ALL ? '' : v)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Date posted" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Any time</SelectItem>
+            {DATES.map((d) => (
+              <SelectItem key={d.value} value={d.value}>
+                {d.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -198,20 +236,45 @@ export function SearchControls({
         </form>
       </div>
 
-      {hasFilters && (
-        <button
-          type="button"
-          onClick={() => {
-            setQ('')
-            setMin('')
-            setMax('')
-            router.push(pathname)
-          }}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <XIcon className="size-3.5" /> Clear all
-        </button>
-      )}
+      <div className="flex flex-wrap items-center gap-2">
+        {[
+          { key: 'negotiable', label: 'Negotiable' },
+          { key: 'featured', label: 'Featured' },
+        ].map((t) => {
+          const on = params.get(t.key) === '1'
+          return (
+            <button
+              key={t.key}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setParam(t.key, on ? '' : '1')}
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs transition',
+                on
+                  ? 'border-transparent bg-primary text-primary-foreground'
+                  : 'border-border text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {t.label}
+            </button>
+          )
+        })}
+
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={() => {
+              setQ('')
+              setMin('')
+              setMax('')
+              router.push(pathname)
+            }}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <XIcon className="size-3.5" /> Clear all
+          </button>
+        )}
+      </div>
     </div>
   )
 }

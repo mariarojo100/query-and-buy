@@ -1,87 +1,88 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { ChevronLeftIcon, PackageIcon, PlusIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
-import { SiteHeader } from '@/components/layout/SiteHeader'
+import { PackageIcon, PlusIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { DashboardListingRow } from '@/components/account/DashboardListingRow'
 import { EmptyState } from '@/components/common/EmptyState'
+import { PremiumListingCard } from '@/components/account/PremiumListingCard'
 import { getMyListings } from '@/lib/listings/queries'
+import { cn } from '@/lib/utils'
 
 export const metadata = { title: 'My listings · Query & Buy' }
 
-function Metric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-      <p className="font-display text-3xl tracking-tight tabular-nums sm:text-4xl">
-        {value.toLocaleString('en-AE')}
-      </p>
-      <p className="eyebrow mt-2">{label}</p>
-    </div>
-  )
-}
+const FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active' },
+  { key: 'sold', label: 'Sold' },
+  { key: 'draft', label: 'Paused' },
+]
 
-export default async function SellerDashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect('/login?redirectTo=/account/listings')
-
-  const listings = await getMyListings()
-  const activeCount = listings.filter((l) => l.status === 'active').length
-  const soldCount = listings.filter((l) => l.status === 'sold').length
-  const totalViews = listings.reduce((sum, l) => sum + (l.view_count ?? 0), 0)
+export default async function SellerDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>
+}) {
+  const sp = await searchParams
+  const filter = sp.status ?? 'all'
+  const all = await getMyListings()
+  const listings = filter === 'all' ? all : all.filter((l) => l.status === filter)
 
   return (
-    <>
-      <SiteHeader />
-      <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-        <Link
-          href="/account"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeftIcon className="size-4" /> Account
-        </Link>
+    <section className="space-y-5">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-2xl tracking-tight">
+          {filter === 'sold' ? 'Sold items' : filter === 'draft' ? 'Paused listings' : 'My listings'}
+        </h2>
+        <Button asChild size="sm" className="rounded-full">
+          <Link href="/sell">
+            <PlusIcon className="size-4" />
+            <span className="hidden sm:inline">New listing</span>
+          </Link>
+        </Button>
+      </div>
 
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <h1 className="font-display text-3xl tracking-tight sm:text-4xl">My listings</h1>
-          <Button asChild size="sm">
-            <Link href="/sell">
-              <PlusIcon className="size-4" />
-              <span className="hidden sm:inline">New listing</span>
-            </Link>
-          </Button>
+      <div className="flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <Link
+            key={f.key}
+            href={f.key === 'all' ? '/account/listings' : `/account/listings?status=${f.key}`}
+            className={cn(
+              'rounded-full border px-3.5 py-1.5 text-sm transition',
+              filter === f.key
+                ? 'border-transparent bg-primary text-primary-foreground'
+                : 'border-border text-muted-foreground hover:bg-accent hover:text-foreground',
+            )}
+          >
+            {f.label}
+            {f.key !== 'all' && (
+              <span className="ml-1.5 tnum opacity-70">
+                {all.filter((l) => l.status === f.key).length}
+              </span>
+            )}
+          </Link>
+        ))}
+      </div>
+
+      {listings.length === 0 ? (
+        <EmptyState
+          icon={PackageIcon}
+          title={filter === 'all' ? 'Sell your first item' : 'Nothing here yet'}
+          description={
+            filter === 'all'
+              ? 'Snap a few photos and let AI write the title, description, and price. It takes about a minute.'
+              : 'Listings in this state will appear here.'
+          }
+          action={
+            <Button asChild className="rounded-full">
+              <Link href="/sell">Start selling</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {listings.map((l) => (
+            <PremiumListingCard key={l.id} listing={l} />
+          ))}
         </div>
-
-        <div className="mb-6 grid grid-cols-3 gap-3">
-          <Metric label="Active" value={activeCount} />
-          <Metric label="Sold" value={soldCount} />
-          <Metric label="Total views" value={totalViews} />
-        </div>
-
-        {listings.length === 0 ? (
-          <EmptyState
-            icon={PackageIcon}
-            title="Sell your first item"
-            description="Snap a few photos and let AI write the title, description, and price. It takes about a minute."
-            action={
-              <Button asChild className="rounded-full">
-                <Link href="/sell">Start selling</Link>
-              </Button>
-            }
-          />
-        ) : (
-          <Card>
-            <CardContent className="divide-y p-0">
-              {listings.map((l) => (
-                <DashboardListingRow key={l.id} listing={l} />
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </main>
-    </>
+      )}
+    </section>
   )
 }

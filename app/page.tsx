@@ -1,14 +1,16 @@
 import Link from 'next/link'
+import { TrendingUpIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SearchControls } from '@/components/search/SearchControls'
 import { SaveSearchButton } from '@/components/search/SaveSearchButton'
-import { ConversationalSearchBox } from '@/components/search/ConversationalSearchBox'
+import { SmartSearchBox } from '@/components/search/SmartSearchBox'
 import { CategoryChips } from '@/components/listing/CategoryChips'
 import { ListingResults } from '@/components/listing/ListingResults'
 import { TrustStats } from '@/components/home/TrustStats'
 import { CategoryShowcase } from '@/components/home/CategoryShowcase'
+import { ContinueNegotiation } from '@/components/home/ContinueNegotiation'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { WhyAI } from '@/components/home/WhyAI'
 import { Button } from '@/components/ui/button'
@@ -16,10 +18,18 @@ import {
   getActiveCategories,
   getCategoryBySlug,
   getCategoryCounts,
+  getFeaturedListings,
   getFilteredListings,
 } from '@/lib/listings/queries'
 import { getFavoritedIds } from '@/lib/favorites/queries'
+import {
+  getContinueNegotiation,
+  getRecentlyViewed,
+  getRecommended,
+  getSavedSearchMatches,
+} from '@/lib/personalization/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
+import { getTrendingSearches } from '@/lib/search/intelligence'
 
 const NO_MATCH = ['00000000-0000-0000-0000-000000000000']
 const POPULAR = ['iPhone', 'Toyota', 'PlayStation 5', 'Apartment in Dubai', 'Rolex']
@@ -56,6 +66,9 @@ export default async function HomePage({
     condition: parsed.condition,
     minFils: parsed.minFils,
     maxFils: parsed.maxFils,
+    negotiable: parsed.negotiable,
+    featured: parsed.featured,
+    sinceDays: parsed.sinceDays,
     sort: parsed.sort,
   })
 
@@ -65,6 +78,34 @@ export default async function HomePage({
   } = await supabase.auth.getUser()
   const favoritedIds = await getFavoritedIds(listings.map((l) => l.id))
   const counts = hasFilters ? undefined : await getCategoryCounts(categories)
+  const trending = hasFilters ? [] : await getTrendingSearches(8)
+  // Curated discovery shelves (real data via price-filtered queries).
+  const [featured, luxury, under500] = hasFilters
+    ? [[], [], []]
+    : await Promise.all([
+        getFeaturedListings(8),
+        getFilteredListings({ minFils: 5_000_000, sort: 'price_desc', limit: 8 }).then((r) => r.listings),
+        getFilteredListings({ maxFils: 50_000, sort: 'newest', limit: 8 }).then((r) => r.listings),
+      ])
+  const shelfFav = hasFilters
+    ? new Set<string>()
+    : await getFavoritedIds([...featured, ...luxury, ...under500].map((l) => l.id))
+
+  // Personalized (signed-in, no active search). Empty arrays → sections hidden.
+  const personalize = !hasFilters && !!user
+  const [recentlyViewed, recommended, continueItems, savedMatches] = personalize
+    ? await Promise.all([
+        getRecentlyViewed(8),
+        getRecommended(8),
+        getContinueNegotiation(6),
+        getSavedSearchMatches(8),
+      ])
+    : [[], [], [], null]
+  const personalFav = personalize
+    ? await getFavoritedIds(
+        [...recentlyViewed, ...recommended, ...(savedMatches?.listings ?? [])].map((l) => l.id),
+      )
+    : new Set<string>()
 
   const feed = (
     <ListingResults listings={listings} count={count} favoritedIds={favoritedIds} authed={!!user} />
@@ -85,7 +126,7 @@ export default async function HomePage({
               <SaveSearchButton authed={!!user} />
             </div>
             <div className="mb-6">
-              <ConversationalSearchBox />
+              <SmartSearchBox />
             </div>
             <div className="space-y-6">
               <SearchControls categories={categories} />
@@ -106,7 +147,7 @@ export default async function HomePage({
                 Emirates.
               </p>
               <div className="mx-auto mt-7 max-w-2xl">
-                <ConversationalSearchBox />
+                <SmartSearchBox trending={trending.map((t) => t.query)} />
               </div>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                 <span className="eyebrow mr-1">Popular</span>
@@ -122,6 +163,88 @@ export default async function HomePage({
               </div>
             </section>
 
+            {/* ---------- TRENDING TODAY (real search frequency) ---------- */}
+            {trending.length > 0 && (
+              <section className="py-6 sm:py-8">
+                <div className="mb-4 flex items-center gap-2">
+                  <TrendingUpIcon className="size-4 text-gold" />
+                  <h2 className="font-display text-xl tracking-tight sm:text-2xl">Trending today</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {trending.map((t) => (
+                    <Link
+                      key={t.query}
+                      href={`/?q=${encodeURIComponent(t.query)}`}
+                      className="lift rounded-full border border-border bg-card px-3.5 py-1.5 text-sm shadow-soft transition hover:border-gold/40 hover:text-foreground"
+                    >
+                      {t.query}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ---------- PERSONALIZED (signed-in) ---------- */}
+            {continueItems.length > 0 && (
+              <section className="py-6 sm:py-8">
+                <div className="mb-5">
+                  <p className="eyebrow">Pick up where you left off</p>
+                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                    Continue negotiating
+                  </h2>
+                </div>
+                <ContinueNegotiation items={continueItems} />
+              </section>
+            )}
+            {savedMatches && savedMatches.listings.length > 0 && (
+              <section className="py-6 sm:py-8">
+                <div className="mb-5">
+                  <p className="eyebrow">From your saved search</p>
+                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                    {savedMatches.label}
+                  </h2>
+                </div>
+                <ListingResults
+                  listings={savedMatches.listings}
+                  count={savedMatches.listings.length}
+                  favoritedIds={personalFav}
+                  authed={!!user}
+                />
+              </section>
+            )}
+            {recommended.length > 0 && (
+              <section className="py-6 sm:py-8">
+                <div className="mb-5">
+                  <p className="eyebrow">For you</p>
+                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                    Recommended for you
+                  </h2>
+                </div>
+                <ListingResults
+                  listings={recommended}
+                  count={recommended.length}
+                  favoritedIds={personalFav}
+                  authed={!!user}
+                />
+              </section>
+            )}
+            {recentlyViewed.length > 0 && (
+              <section className="py-6 sm:py-8">
+                <div className="mb-5">
+                  <p className="eyebrow">Recently viewed</p>
+                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                    Jump back in
+                  </h2>
+                </div>
+                <ListingResults
+                  listings={recentlyViewed}
+                  count={recentlyViewed.length}
+                  favoritedIds={personalFav}
+                  authed={!!user}
+                />
+              </section>
+            )}
+
             {/* ---------- CATEGORIES ---------- */}
             <section className="py-8 sm:py-10">
               <div className="mb-5">
@@ -132,6 +255,60 @@ export default async function HomePage({
               </div>
               <CategoryShowcase categories={categories} counts={counts} />
             </section>
+
+            {/* ---------- FEATURED (admin-curated) ---------- */}
+            {featured.length > 0 && (
+              <section className="py-6 sm:py-8">
+                <div className="mb-5">
+                  <p className="eyebrow text-gold">★ Handpicked</p>
+                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                    Featured listings
+                  </h2>
+                </div>
+                <ListingResults
+                  listings={featured}
+                  count={featured.length}
+                  favoritedIds={shelfFav}
+                  authed={!!user}
+                />
+              </section>
+            )}
+
+            {/* ---------- LUXURY PICKS ---------- */}
+            {luxury.length > 0 && (
+              <section className="py-6 sm:py-8">
+                <div className="mb-5">
+                  <p className="eyebrow text-gold">Curated</p>
+                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                    Luxury picks
+                  </h2>
+                </div>
+                <ListingResults
+                  listings={luxury}
+                  count={luxury.length}
+                  favoritedIds={shelfFav}
+                  authed={!!user}
+                />
+              </section>
+            )}
+
+            {/* ---------- UNDER AED 500 ---------- */}
+            {under500.length > 0 && (
+              <section className="py-6 sm:py-8">
+                <div className="mb-5">
+                  <p className="eyebrow">Budget finds</p>
+                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                    Under AED 500
+                  </h2>
+                </div>
+                <ListingResults
+                  listings={under500}
+                  count={under500.length}
+                  favoritedIds={shelfFav}
+                  authed={!!user}
+                />
+              </section>
+            )}
 
             {/* ---------- LISTINGS (early) ---------- */}
             <section id="listings" className="scroll-mt-20 py-4 sm:py-6">

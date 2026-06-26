@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { BadgeCheckIcon, ImageIcon, MapPinIcon } from 'lucide-react'
+import { BadgeCheckIcon, EyeIcon, ImageIcon, MapPinIcon } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
 import { FavoriteButton } from '@/components/listing/FavoriteButton'
 import { formatPrice, formatRelativeTime } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
+import { BLUR_DATA_URL } from '@/lib/blur'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
 import type { FeedListing } from '@/lib/listings/queries'
@@ -34,6 +35,8 @@ export function ListingCard({
             alt={listing.title_en}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
           />
         ) : (
@@ -48,6 +51,11 @@ export function ListingCard({
         {/* top row: badges + favorite */}
         <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
           <div className="flex flex-wrap gap-1.5">
+            {listing.is_featured && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gold px-2 py-1 text-[11px] font-semibold text-white shadow-sm">
+                ★ Featured
+              </span>
+            )}
             {verified && (
               <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-emerald-900 shadow-sm backdrop-blur">
                 <BadgeCheckIcon className="size-3.5 text-gold" />
@@ -84,7 +92,15 @@ export function ListingCard({
           <p className="tnum text-lg font-bold tracking-tight">
             {formatPrice(listing.price_fils, listing.currency)}
           </p>
-          {posted && <span className="shrink-0 text-xs text-muted-foreground">{posted}</span>}
+          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+            {listing.view_count > 0 && (
+              <span className="inline-flex items-center gap-0.5">
+                <EyeIcon className="size-3" />
+                {listing.view_count}
+              </span>
+            )}
+            {posted && <span>{posted}</span>}
+          </div>
         </div>
 
         {seller && (

@@ -14,6 +14,9 @@ import {
 } from '@/lib/listings/queries'
 import { getFavoritedIds } from '@/lib/favorites/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { breadcrumbJsonLd } from '@/lib/seo'
+import { absoluteUrl } from '@/lib/site'
 
 export async function generateMetadata({
   params,
@@ -23,9 +26,17 @@ export async function generateMetadata({
   const { slug } = await params
   const cat = await getCategoryBySlug(slug)
   if (!cat) return { title: 'Category not found · Query & Buy' }
+  const description = `Buy and sell ${cat.category.name_en} across the UAE on Query & Buy.`
   return {
     title: `${cat.category.name_en} · Query & Buy`,
-    description: `Buy and sell ${cat.category.name_en} across the UAE.`,
+    description,
+    alternates: { canonical: `/category/${slug}` },
+    openGraph: {
+      type: 'website',
+      title: `${cat.category.name_en} · Query & Buy`,
+      description,
+      url: absoluteUrl(`/category/${slug}`),
+    },
   }
 }
 
@@ -50,6 +61,9 @@ export default async function CategoryPage({
     condition: parsed.condition,
     minFils: parsed.minFils,
     maxFils: parsed.maxFils,
+    negotiable: parsed.negotiable,
+    featured: parsed.featured,
+    sinceDays: parsed.sinceDays,
     sort: parsed.sort,
   })
 
@@ -62,6 +76,12 @@ export default async function CategoryPage({
   return (
     <>
       <SiteHeader />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: cat.category.name_en, path: `/category/${slug}` },
+        ])}
+      />
       <main className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6 sm:py-8">
         <Link
           href="/"

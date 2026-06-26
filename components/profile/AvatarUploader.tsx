@@ -5,6 +5,7 @@ import { CameraIcon, Loader2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
 import { updateAvatar } from '@/app/account/actions'
 import { initials } from '@/components/profile/ProfileHeader'
@@ -16,10 +17,12 @@ export function AvatarUploader({
   userId,
   displayName,
   initialUrl,
+  avatarClassName,
 }: {
   userId: string
   displayName: string
   initialUrl: string | null
+  avatarClassName?: string
 }) {
   const [url, setUrl] = useState(initialUrl)
   const [uploading, setUploading] = useState(false)
@@ -69,7 +72,7 @@ export function AvatarUploader({
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative">
-        <Avatar className="size-24 sm:size-28">
+        <Avatar className={cn('size-24 sm:size-28', avatarClassName)}>
           <AvatarImage src={url ?? undefined} alt={displayName} />
           <AvatarFallback className="text-2xl">{initials(displayName)}</AvatarFallback>
         </Avatar>

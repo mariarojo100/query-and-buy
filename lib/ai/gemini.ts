@@ -2,7 +2,9 @@ import type {
   AiCategory,
   AiImageInput,
   AiProvider,
+  NegotiationContext,
   RawListingDraft,
+  RawNegotiation,
   RawSearchParse,
   SearchParseContext,
 } from '@/lib/ai/provider'
@@ -88,6 +90,44 @@ const SEARCH_SCHEMA = {
     'max_price_aed',
     'sort',
   ],
+}
+
+// ---- negotiation schema ----
+const NEGOTIATION_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    suggested_offer_aed: { type: 'NUMBER', nullable: true },
+    market_average_aed: { type: 'NUMBER', nullable: true },
+    reasons: { type: 'ARRAY', items: { type: 'STRING' } },
+  },
+  required: ['suggested_offer_aed', 'market_average_aed', 'reasons'],
+}
+
+function buildNegotiationPrompt(ctx: NegotiationContext): string {
+  const offerLine =
+    ctx.lastOfferAed != null
+      ? `The most recent offer on the table is AED ${ctx.lastOfferAed}.`
+      : 'No offer has been made yet.'
+  const goal =
+    ctx.role === 'buyer'
+      ? 'Suggest a fair opening/next OFFER the buyer should propose — below asking but realistic enough to be taken seriously.'
+      : 'Suggest a fair COUNTER the seller should propose — above the buyer offer but realistic for a quick sale.'
+  return `You are a pragmatic UAE second-hand marketplace negotiation advisor. Return ONLY a JSON object. You ADVISE; you never send anything.
+
+Item: "${ctx.listingTitle}"
+Condition: ${ctx.condition ?? 'unknown'}
+Asking price: AED ${ctx.askingPriceAed}
+Days listed: ${ctx.daysListed}
+${offerLine}
+You are advising the ${ctx.role.toUpperCase()}.
+
+${goal}
+
+- market_average_aed: your estimate of the typical UAE resale price for this item/condition (whole AED), or null if unsure.
+- suggested_offer_aed: a single whole-AED number that is a sensible, respectful ${ctx.role === 'buyer' ? 'offer' : 'counter'} given the asking price, condition, market average, and how long it has been listed (a long-listed item justifies a lower offer).
+- reasons: 2–3 short bullet strings (max ~10 words each) justifying it, e.g. "Below 19-day-old listing", "Matches UAE market average", "Good condition".
+
+Return ONLY the JSON object.`
 }
 
 function buildListingPrompt(categories: AiCategory[]): string {
@@ -195,5 +235,10 @@ export class GeminiProvider implements AiProvider {
   async parseSearchQuery(text: string, ctx: SearchParseContext): Promise<RawSearchParse> {
     const parts = [{ text: buildSearchPrompt(text, ctx) }]
     return (await this.generate(parts, SEARCH_SCHEMA, 0.2)) as RawSearchParse
+  }
+
+  async suggestNegotiation(ctx: NegotiationContext): Promise<RawNegotiation> {
+    const parts = [{ text: buildNegotiationPrompt(ctx) }]
+    return (await this.generate(parts, NEGOTIATION_SCHEMA, 0.3)) as RawNegotiation
   }
 }

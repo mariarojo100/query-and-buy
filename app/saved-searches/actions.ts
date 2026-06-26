@@ -55,5 +55,55 @@ export async function deleteSavedSearch(id: string): Promise<{ ok?: boolean; err
   if (error) return { error: error.message }
 
   revalidatePath('/saved-searches')
+  revalidatePath('/account/saved')
+  return { ok: true }
+}
+
+/** Rename a saved search. RLS scopes to owner. */
+export async function renameSavedSearch(
+  id: string,
+  label: string,
+): Promise<{ ok?: boolean; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'You must be signed in.' }
+  const name = label.trim()
+  if (!name) return { error: 'Name cannot be empty.' }
+  if (name.length > 80) return { error: 'Name is too long.' }
+
+  const { error } = await supabase
+    .from('saved_searches')
+    .update({ label: name })
+    .eq('id', id)
+    .eq('user_id', user.id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/saved-searches')
+  revalidatePath('/account/saved')
+  return { ok: true }
+}
+
+/** Enable/disable alerts for a saved search (stores the flag; delivery is future work). */
+export async function setSavedSearchAlerts(
+  id: string,
+  notify: boolean,
+): Promise<{ ok?: boolean; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'You must be signed in.' }
+
+  const { error } = await supabase
+    .from('saved_searches')
+    .update({ notify })
+    .eq('id', id)
+    .eq('user_id', user.id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/saved-searches')
+  revalidatePath('/account/saved')
   return { ok: true }
 }

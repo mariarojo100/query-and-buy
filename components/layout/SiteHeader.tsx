@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { getUnreadConversationCount } from '@/lib/messaging/queries'
+import { getNotifications, getUnreadNotificationCount } from '@/lib/notifications/queries'
 
 /** Quiet, editorial top bar. Primary nav on mobile lives in the bottom tab bar. */
 export async function SiteHeader() {
@@ -17,6 +19,8 @@ export async function SiteHeader() {
   let avatarUrl: string | null = null
   let displayName = ''
   let unread = 0
+  let notifications: Awaited<ReturnType<typeof getNotifications>> = []
+  let notifUnread = 0
   if (user) {
     const { data } = await supabase
       .from('profiles')
@@ -25,7 +29,11 @@ export async function SiteHeader() {
       .single()
     avatarUrl = (data?.avatar_url as string | null) ?? null
     displayName = (data?.display_name as string | null) ?? user.email ?? 'Account'
-    unread = await getUnreadConversationCount()
+    ;[unread, notifications, notifUnread] = await Promise.all([
+      getUnreadConversationCount(),
+      getNotifications(12),
+      getUnreadNotificationCount(),
+    ])
   }
 
   return (
@@ -76,6 +84,10 @@ export async function SiteHeader() {
                 )}
               </Link>
             </Button>
+          )}
+
+          {user && (
+            <NotificationBell userId={user.id} items={notifications} unreadCount={notifUnread} />
           )}
 
           <Button asChild size="sm" className="hidden rounded-full px-5 sm:inline-flex">

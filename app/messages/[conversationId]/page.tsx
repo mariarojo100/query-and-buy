@@ -4,9 +4,9 @@ import { notFound, redirect } from 'next/navigation'
 import { ChevronLeftIcon, ImageIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
 import { SiteHeader } from '@/components/layout/SiteHeader'
-import { MessageThread } from '@/components/messaging/MessageThread'
-import { MessageComposer } from '@/components/messaging/MessageComposer'
+import { NegotiationChat, type TimelineItem } from '@/components/orders/NegotiationChat'
 import { MarkConversationRead } from '@/components/messaging/MarkConversationRead'
+import { ConversationRealtime } from '@/components/realtime/ConversationRealtime'
 import { ConversationSidebar } from '@/components/messaging/ConversationSidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
@@ -17,6 +17,10 @@ import {
   getConversationMessages,
   getUserConversations,
 } from '@/lib/messaging/queries'
+import { getConversationOrder } from '@/lib/orders/queries'
+import { getMyReview } from '@/lib/reviews/queries'
+import { getSellerReputation } from '@/lib/reputation/queries'
+import { SellerBadges } from '@/components/trust/SellerBadges'
 
 export const metadata = { title: 'Conversation · Query & Buy' }
 
@@ -36,18 +40,43 @@ export default async function ConversationPage({
   const view = await getConversationView(conversationId)
   if (!view) notFound()
 
-  const [messages, conversations] = await Promise.all([
+  const [messages, conversations, { order, offers }] = await Promise.all([
     getConversationMessages(conversationId),
     getUserConversations(),
+    getConversationOrder(conversationId),
   ])
   const otherName = view.other?.display_name ?? 'Unknown user'
   const otherAvatar = view.other?.avatar_url ?? null
   const listing = view.listing
+  const currency = listing?.currency ?? 'AED'
+
+  const timeline: TimelineItem[] = [
+    ...messages.map((m) => ({
+      kind: 'message' as const,
+      id: m.id,
+      sender_id: m.sender_id,
+      body: m.body,
+      created_at: m.created_at,
+    })),
+    ...offers.map((o) => ({
+      kind: 'offer' as const,
+      id: o.id,
+      sender_id: o.sender_id,
+      amount_fils: o.amount_fils,
+      status: o.status,
+      created_at: o.created_at,
+    })),
+  ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+  const alreadyReviewed =
+    order?.status === 'completed' ? !!(await getMyReview(order.id)) : false
+  const otherRep = view.other ? await getSellerReputation(view.other.id, { withResponse: true }) : null
 
   return (
     <>
       <SiteHeader />
       <MarkConversationRead conversationId={conversationId} />
+      <ConversationRealtime conversationId={conversationId} />
       <div className="mx-auto flex h-[calc(100dvh-4rem)] w-full max-w-6xl overflow-hidden lg:border-x lg:border-border">
         <ConversationSidebar conversations={conversations} activeId={conversationId} />
 
@@ -68,7 +97,10 @@ export default async function ConversationPage({
             </Avatar>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold leading-tight">{otherName}</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-semibold leading-tight">{otherName}</p>
+                {otherRep && <SellerBadges badges={otherRep.badges} limit={2} className="hidden sm:flex" />}
+              </div>
               {listing ? (
                 <Link
                   href={`/listing/${listing.id}`}
@@ -108,13 +140,30 @@ export default async function ConversationPage({
             )}
           </div>
 
-          <MessageThread
-            messages={messages}
+          <NegotiationChat
+            conversationId={conversationId}
+            items={timeline}
             meId={view.meId}
+            buyerId={view.buyerId}
             otherName={otherName}
             otherAvatarUrl={otherAvatar}
+            otherLastReadAt={view.otherLastReadAt}
+            currency={currency}
+            order={
+              order
+                ? {
+                    id: order.id,
+                    status: order.status,
+                    acceptedPriceFils: order.accepted_price_fils,
+                    buyerConfirmed: order.buyer_confirmed,
+                    sellerConfirmed: order.seller_confirmed,
+                    contactRevealed: order.contact_revealed,
+                  }
+                : null
+            }
+            alreadyReviewed={alreadyReviewed}
+            disabled={view.status === 'blocked'}
           />
-          <MessageComposer conversationId={conversationId} disabled={view.status === 'blocked'} />
         </section>
       </div>
     </>

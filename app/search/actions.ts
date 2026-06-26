@@ -2,6 +2,14 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { getProvider } from '@/lib/ai/provider'
+import { track } from '@/lib/analytics'
+import { logger } from '@/lib/logger'
+import { getSearchSuggestions, logSearch, type Suggestion } from '@/lib/search/intelligence'
+
+/** Typeahead suggestions for the smart search box (client-callable). */
+export async function getSuggestions(prefix: string): Promise<Suggestion[]> {
+  return getSearchSuggestions(prefix)
+}
 import { EMIRATES, EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import type { SavedFilters } from '@/lib/savedSearches/filters'
@@ -21,6 +29,8 @@ export type ConversationalResult = {
 export async function parseConversationalSearch(text: string): Promise<ConversationalResult> {
   const raw = text.trim()
   if (!raw) return { query: null, filters: {}, aiUsed: false }
+  track('search_performed', { length: raw.length })
+  await logSearch(raw)
 
   const fallback: ConversationalResult = { query: raw, filters: {}, aiUsed: false }
 
@@ -41,7 +51,10 @@ export async function parseConversationalSearch(text: string): Promise<Conversat
       emirates: EMIRATES.map((e) => ({ value: e.value, label: e.label })),
       conditions: [...CONDITION_VALUES],
     })
-  } catch {
+  } catch (e) {
+    logger.warn('search.parse', 'AI parse failed, falling back to keyword', {
+      reason: e instanceof Error ? e.message : 'unknown',
+    })
     return fallback
   }
 

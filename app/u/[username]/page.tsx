@@ -10,10 +10,18 @@ import { TrustScore } from '@/components/trust/TrustScore'
 import { VerificationBadges } from '@/components/trust/VerificationBadges'
 import { ListingResults } from '@/components/listing/ListingResults'
 import { EmptyState } from '@/components/common/EmptyState'
+import { Stars } from '@/components/reviews/Stars'
+import { ReviewList } from '@/components/reviews/ReviewList'
 import { computeTrust } from '@/lib/trust/score'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { getSellerListings } from '@/lib/listings/queries'
 import { getFavoritedIds } from '@/lib/favorites/queries'
+import { getReviewStats, getReputation, getProfileReviews } from '@/lib/reviews/queries'
+import { absoluteUrl } from '@/lib/site'
+import { track } from '@/lib/analytics'
+import { getSellerReputation } from '@/lib/reputation/queries'
+import { formatResponseTime } from '@/lib/reputation/badges'
+import { SellerBadges } from '@/components/trust/SellerBadges'
 import type { Profile } from '@/lib/profile/completion'
 
 type ProfileWithTrust = Profile & {
@@ -43,9 +51,18 @@ export async function generateMetadata({
   const { username } = await params
   const profile = await getProfile(username)
   if (!profile) return { title: 'Profile not found · Query & Buy' }
+  const description = profile.bio ?? `${profile.display_name} on Query & Buy — buy & sell across the UAE.`
   return {
     title: `${profile.display_name} (@${profile.username}) · Query & Buy`,
-    description: profile.bio ?? `${profile.display_name} on Query & Buy`,
+    description,
+    alternates: { canonical: `/u/${username}` },
+    openGraph: {
+      type: 'profile',
+      title: `${profile.display_name} (@${profile.username})`,
+      description,
+      url: absoluteUrl(`/u/${username}`),
+      images: profile.avatar_url ? [profile.avatar_url] : undefined,
+    },
   }
 }
 
@@ -57,6 +74,7 @@ export default async function PublicProfilePage({
   const { username } = await params
   const profile = await getProfile(username)
   if (!profile) notFound()
+  track('profile_viewed', { username })
 
   const supabase = await createClient()
   const {
@@ -77,7 +95,13 @@ export default async function PublicProfilePage({
     reports_count: profile.reports_count,
   })
 
-  const listings = await getSellerListings(profile.id, { limit: 12 })
+  const [listings, stats, reputation, reviews, rep] = await Promise.all([
+    getSellerListings(profile.id, { limit: 12 }),
+    getReviewStats(profile.id),
+    getReputation(profile.id),
+    getProfileReviews(profile.id, 6),
+    getSellerReputation(profile.id, { withResponse: true }),
+  ])
   const favoritedIds = await getFavoritedIds(listings.map((l) => l.id))
   const memberSince = new Date(profile.member_since).getFullYear()
 
@@ -115,6 +139,7 @@ export default async function PublicProfilePage({
                 Member since {memberSince}
               </span>
             </div>
+            <SellerBadges badges={rep.badges} className="mt-3" />
           </div>
 
           {!isSelf && (
@@ -124,12 +149,46 @@ export default async function PublicProfilePage({
           )}
         </div>
 
+        {/* Reputation stat band */}
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+            <p className="eyebrow">Rating</p>
+            {stats.average != null ? (
+              <div className="mt-1.5">
+                <p className="font-display text-2xl tracking-tight tnum">{stats.average.toFixed(1)}</p>
+                <Stars value={stats.average} size="size-3.5" className="mt-1" />
+              </div>
+            ) : (
+              <p className="mt-1.5 text-sm text-muted-foreground">No ratings yet</p>
+            )}
+          </div>
+          <Stat label="Reviews" value={stats.count} />
+          <Stat label="Completed sales" value={reputation.completedSales} />
+          <Stat label="Completed purchases" value={reputation.completedPurchases} />
+        </div>
+
         {/* Trust + about */}
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <div className="mt-6 grid gap-6 lg:grid-cols-3">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-soft lg:col-span-1">
             <p className="eyebrow mb-4">Trust</p>
             <TrustScore trust={trust} />
             <VerificationBadges trust={trust} className="mt-4" />
+            <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
+              <div>
+                <p className="eyebrow">Response rate</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {rep.response.rate != null
+                    ? `${Math.round(rep.response.rate * 100)}%`
+                    : 'Not enough data'}
+                </p>
+              </div>
+              <div>
+                <p className="eyebrow">Response time</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formatResponseTime(rep.response.avgMinutes) ?? 'Not enough data'}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="rounded-2xl border border-border bg-card p-5 shadow-soft lg:col-span-2">
             <p className="eyebrow mb-3">About</p>
@@ -138,6 +197,17 @@ export default async function PublicProfilePage({
             </p>
           </div>
         </div>
+
+        {/* Reviews */}
+        <section className="mt-12">
+          <div className="mb-5 flex items-end gap-3">
+            <p className="eyebrow">Reviews</p>
+            <span className="text-sm text-muted-foreground">{stats.count}</span>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+            <ReviewList reviews={reviews} />
+          </div>
+        </section>
 
         {/* Listings */}
         <section className="mt-12">
@@ -164,5 +234,14 @@ export default async function PublicProfilePage({
         </section>
       </main>
     </>
+  )
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+      <p className="font-display text-2xl tracking-tight tnum">{value.toLocaleString('en-AE')}</p>
+      <p className="eyebrow mt-1">{label}</p>
+    </div>
   )
 }

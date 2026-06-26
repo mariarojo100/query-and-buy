@@ -39,6 +39,21 @@ export function formatChatTime(iso: string): string {
   return d.toLocaleDateString('en-AE', { day: 'numeric', month: 'short' })
 }
 
+/** Day label for chat date separators: "Today" / "Yesterday" / "12 June". */
+export function formatDateSeparator(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const days = Math.round((startOf(now) - startOf(d)) / 86_400_000)
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  return d.toLocaleDateString('en-AE', {
+    day: 'numeric',
+    month: 'long',
+    year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric',
+  })
+}
+
 /** Parse an AED string/number into integer fils. Returns null if invalid. */
 export function aedToFils(input: string | number): number | null {
   const aed = typeof input === 'number' ? input : Number(input)

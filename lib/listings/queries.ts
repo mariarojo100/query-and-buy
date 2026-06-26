@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { createServiceClient } from '@/utils/supabase/admin'
 
 export type SellerMini = {
   id: string
@@ -19,6 +20,8 @@ export type FeedListing = {
   condition: string
   cover_key: string | null
   published_at: string | null
+  is_featured: boolean
+  view_count: number
   seller: SellerMini | null
 }
 
@@ -60,6 +63,10 @@ export type MyListing = {
   view_count: number
   created_at: string
   cover_key: string | null
+  emirate: string | null
+  area: string | null
+  is_featured: boolean
+  favorites_count: number
 }
 
 export type EditListing = {
@@ -99,9 +106,16 @@ async function sellerMap(
 }
 
 const FEED_SELECT =
-  'id, title_en, price_fils, currency, emirate, area, condition, seller_id, published_at, images:listing_images(storage_key, position)'
+  'id, title_en, price_fils, currency, emirate, area, condition, seller_id, published_at, is_featured, view_count, images:listing_images(storage_key, position)'
 
-export type SortKey = 'newest' | 'price_asc' | 'price_desc'
+export type SortKey =
+  | 'newest'
+  | 'oldest'
+  | 'price_asc'
+  | 'price_desc'
+  | 'most_viewed'
+  | 'recently_updated'
+  | 'featured_first'
 
 export type ListingFilters = {
   q?: string
@@ -110,6 +124,10 @@ export type ListingFilters = {
   condition?: string
   minFils?: number
   maxFils?: number
+  negotiable?: boolean
+  featured?: boolean
+  /** Only listings published within the last N days. */
+  sinceDays?: number
   sort?: SortKey
   limit?: number
 }
@@ -124,6 +142,8 @@ type RawFeedRow = {
   condition: string
   seller_id: string
   published_at: string | null
+  is_featured: boolean
+  view_count: number
   images: RawImage[] | null
 }
 
@@ -152,10 +172,37 @@ export async function getFilteredListings(
   if (filters.condition) query = query.eq('condition', filters.condition)
   if (typeof filters.minFils === 'number') query = query.gte('price_fils', filters.minFils)
   if (typeof filters.maxFils === 'number') query = query.lte('price_fils', filters.maxFils)
+  if (filters.negotiable) query = query.eq('is_negotiable', true)
+  if (filters.featured) query = query.eq('is_featured', true)
+  if (filters.sinceDays && filters.sinceDays > 0) {
+    const since = new Date(Date.now() - filters.sinceDays * 86_400_000).toISOString()
+    query = query.gte('published_at', since)
+  }
 
-  if (filters.sort === 'price_asc') query = query.order('price_fils', { ascending: true })
-  else if (filters.sort === 'price_desc') query = query.order('price_fils', { ascending: false })
-  else query = query.order('published_at', { ascending: false, nullsFirst: false })
+  switch (filters.sort) {
+    case 'price_asc':
+      query = query.order('price_fils', { ascending: true })
+      break
+    case 'price_desc':
+      query = query.order('price_fils', { ascending: false })
+      break
+    case 'oldest':
+      query = query.order('published_at', { ascending: true, nullsFirst: false })
+      break
+    case 'most_viewed':
+      query = query.order('view_count', { ascending: false })
+      break
+    case 'recently_updated':
+      query = query.order('updated_at', { ascending: false })
+      break
+    case 'featured_first':
+      query = query
+        .order('is_featured', { ascending: false })
+        .order('published_at', { ascending: false, nullsFirst: false })
+      break
+    default:
+      query = query.order('published_at', { ascending: false, nullsFirst: false })
+  }
 
   const { data, count } = await query.limit(limit)
   const rows = (data ?? []) as RawFeedRow[]
@@ -176,8 +223,97 @@ function toFeedListing(r: RawFeedRow, sellers: Map<string, SellerMini>): FeedLis
     condition: r.condition,
     cover_key: coverKey(r.images),
     published_at: r.published_at,
+    is_featured: r.is_featured,
+    view_count: r.view_count ?? 0,
     seller: sellers.get(r.seller_id) ?? null,
   }
+}
+
+/** Currently-featured active listings for the homepage (admin-curated). */
+export async function getFeaturedListings(limit = 8): Promise<FeedListing[]> {
+  const supabase = await createClient()
+  const nowIso = new Date().toISOString()
+  const { data } = await supabase
+    .from('listings')
+    .select(FEED_SELECT)
+    .eq('status', 'active')
+    .is('deleted_at', null)
+    .eq('is_featured', true)
+    .or(`featured_until.is.null,featured_until.gt.${nowIso}`)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(limit)
+  const rows = (data ?? []) as RawFeedRow[]
+  const sellers = await sellerMap(supabase, [...new Set(rows.map((r) => r.seller_id))])
+  return rows.map((r) => toFeedListing(r, sellers))
+}
+
+/** Active listings by id, preserving the input order (recently viewed, recs). */
+export async function getListingsByIds(ids: string[]): Promise<FeedListing[]> {
+  if (ids.length === 0) return []
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('listings')
+    .select(FEED_SELECT)
+    .in('id', ids)
+    .eq('status', 'active')
+    .is('deleted_at', null)
+  const rows = (data ?? []) as RawFeedRow[]
+  const sellers = await sellerMap(supabase, [...new Set(rows.map((r) => r.seller_id))])
+  const byId = new Map(rows.map((r) => [r.id, toFeedListing(r, sellers)]))
+  return ids.map((id) => byId.get(id)).filter((l): l is FeedListing => !!l)
+}
+
+/**
+ * "You may also like" — active listings similar to one listing: same category,
+ * a nearby price band, ranked to prefer the same emirate. Never the current one.
+ */
+export async function getSimilarListings(listingId: string, limit = 8): Promise<FeedListing[]> {
+  const supabase = await createClient()
+  const { data: base } = await supabase
+    .from('listings')
+    .select('category_id, price_fils, emirate')
+    .eq('id', listingId)
+    .maybeSingle()
+  if (!base) return []
+  const b = base as { category_id: string | null; price_fils: number; emirate: string | null }
+
+  const lo = Math.round(b.price_fils * 0.4)
+  const hi = Math.round(b.price_fils * 1.6)
+
+  let q = supabase
+    .from('listings')
+    .select(FEED_SELECT)
+    .eq('status', 'active')
+    .is('deleted_at', null)
+    .neq('id', listingId)
+    .gte('price_fils', lo)
+    .lte('price_fils', hi)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(limit * 3)
+  if (b.category_id) q = q.eq('category_id', b.category_id)
+
+  const rows = new Map<string, RawFeedRow>()
+  for (const r of ((await q).data ?? []) as RawFeedRow[]) rows.set(r.id, r)
+
+  // Broaden to the whole category if the price band was too narrow.
+  if (rows.size < limit && b.category_id) {
+    const { data: more } = await supabase
+      .from('listings')
+      .select(FEED_SELECT)
+      .eq('status', 'active')
+      .is('deleted_at', null)
+      .neq('id', listingId)
+      .eq('category_id', b.category_id)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(limit * 2)
+    for (const r of (more ?? []) as RawFeedRow[]) if (!rows.has(r.id)) rows.set(r.id, r)
+  }
+
+  const ranked = [...rows.values()]
+    .sort((a, c) => (c.emirate === b.emirate ? 1 : 0) - (a.emirate === b.emirate ? 1 : 0))
+    .slice(0, limit)
+  const sellers = await sellerMap(supabase, [...new Set(ranked.map((r) => r.seller_id))])
+  return ranked.map((r) => toFeedListing(r, sellers))
 }
 
 /** A seller's active listings (for profile grids and "more from this seller"). */
@@ -285,7 +421,7 @@ export async function getMyListings(): Promise<MyListing[]> {
   const { data } = await supabase
     .from('listings')
     .select(
-      'id, title_en, price_fils, currency, status, view_count, created_at, images:listing_images(storage_key, position)',
+      'id, title_en, price_fils, currency, status, view_count, created_at, emirate, area, is_featured, images:listing_images(storage_key, position)',
     )
     .eq('seller_id', user.id)
     .is('deleted_at', null)
@@ -299,8 +435,31 @@ export async function getMyListings(): Promise<MyListing[]> {
     status: string
     view_count: number
     created_at: string
+    emirate: string | null
+    area: string | null
+    is_featured: boolean
     images: RawImage[] | null
   }>
+
+  // Favorite counts across all users need the service client (favorites RLS is
+  // owner-only). Best-effort — falls back to 0 if the service role isn't set.
+  const favCounts = new Map<string, number>()
+  if (rows.length) {
+    try {
+      const admin = createServiceClient()
+      const { data: favs } = await admin
+        .from('favorites')
+        .select('listing_id')
+        .in(
+          'listing_id',
+          rows.map((r) => r.id),
+        )
+      for (const f of (favs ?? []) as { listing_id: string }[])
+        favCounts.set(f.listing_id, (favCounts.get(f.listing_id) ?? 0) + 1)
+    } catch {
+      /* no service role → counts stay 0 */
+    }
+  }
 
   return rows.map((r) => ({
     id: r.id,
@@ -310,6 +469,10 @@ export async function getMyListings(): Promise<MyListing[]> {
     status: r.status,
     view_count: r.view_count,
     created_at: r.created_at,
+    emirate: r.emirate,
+    area: r.area,
+    is_featured: r.is_featured,
+    favorites_count: favCounts.get(r.id) ?? 0,
     cover_key: coverKey(r.images),
   }))
 }

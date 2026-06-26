@@ -61,6 +61,29 @@ export async function softDeleteListing(id: string): Promise<Result> {
   return { ok: true }
 }
 
+/** Pause (active → draft, hidden from feed) or resume (draft → active). Owner-only. */
+export async function setListingPaused(id: string, paused: boolean): Promise<Result> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'You must be signed in.' }
+
+  const { data, error } = await supabase
+    .from('listings')
+    .update({ status: paused ? 'draft' : 'active' })
+    .eq('id', id)
+    .eq('seller_id', user.id)
+    .in('status', paused ? ['active'] : ['draft'])
+    .select('id')
+    .maybeSingle()
+
+  if (error) return { error: error.message }
+  if (!data) return { error: 'Listing not found.' }
+  revalidateListing(id)
+  return { ok: true }
+}
+
 export type UpdateListingInput = {
   id: string
   title: string

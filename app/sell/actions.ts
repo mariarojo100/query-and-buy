@@ -6,6 +6,9 @@ import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
+import { logModeration } from '@/lib/safety/moderation-log'
+import { track } from '@/lib/analytics'
+import { logger } from '@/lib/logger'
 
 export type ListingImageInput = {
   storage_key: string
@@ -57,6 +60,12 @@ export async function createListing(
   // --- safety screen (BEFORE any DB write) ---
   const safety = analyzeListingSafety(title, description)
   if (!safety.safe) {
+    await logModeration({
+      source: 'listing',
+      decision: 'blocked',
+      confidence: 100,
+      reason: `Prohibited content: ${safety.categories.join(', ')}`,
+    })
     return { blocked: true, error: PROHIBITED_MESSAGE, categories: safety.categories }
   }
 
@@ -92,7 +101,7 @@ export async function createListing(
     .single()
 
   if (error || !listing) {
-    console.error('createListing insert failed:', error)
+    logger.error('sell.createListing', 'listing insert failed', { code: error?.code })
     return { error: 'Could not create your listing. Please try again.' }
   }
 
@@ -105,10 +114,11 @@ export async function createListing(
   }))
   const { error: imgErr } = await supabase.from('listing_images').insert(rows)
   if (imgErr) {
-    console.error('createListing image insert failed:', imgErr)
+    logger.error('sell.createListing', 'image insert failed', { code: imgErr.code })
     return { error: 'Could not save your photos. Please try again.' }
   }
 
+  track('listing_created', { listingId: listing.id, category_id: input.category_id })
   revalidatePath('/')
   return { id: listing.id as string }
 }

@@ -71,8 +71,11 @@ export default async function CategoryPage({
         </Link>
 
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{cat.category.name_en}</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="eyebrow">Category</p>
+          <h1 className="font-display mt-2 text-3xl tracking-tight sm:text-4xl">
+            {cat.category.name_en}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Listings in {cat.category.name_en} across the UAE.
           </p>
         </div>

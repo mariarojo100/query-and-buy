@@ -21,6 +21,7 @@ import { createClient } from '@/utils/supabase/client'
 import { EMIRATES } from '@/lib/profile/emirates'
 import { CONDITIONS } from '@/lib/listings/conditions'
 import { LISTING_IMAGES_BUCKET } from '@/lib/storage'
+import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
 import { generateListingDraft, type AiDraft, type AiPricing } from '@/app/sell/aiActions'
 import { fileToAiImage } from '@/lib/ai/image-client'
 import { PriceSuggestions } from '@/components/sell/PriceSuggestions'
@@ -54,6 +55,7 @@ export function CreateListingForm({
   const [detected, setDetected] = useState<AiDraft['detected'] | null>(null)
   const [pricing, setPricing] = useState<AiPricing | null>(null)
   const [aiWarning, setAiWarning] = useState<string | null>(null)
+  const [blocked, setBlocked] = useState<{ categories: string[] } | null>(null)
 
   async function onGenerate() {
     if (pics.length === 0) {
@@ -130,6 +132,15 @@ export function CreateListingForm({
     if (!emirate) return toast.error('Choose an emirate.')
     if (pics.length === 0) return toast.error('Add at least one photo.')
 
+    // Safety screen BEFORE uploading photos or calling the publish flow.
+    const safety = analyzeListingSafety(title, description)
+    if (!safety.safe) {
+      setBlocked({ categories: safety.categories })
+      toast.error('This item is not allowed on Query & Buy.')
+      return
+    }
+    setBlocked(null)
+
     setSubmitting(true)
     try {
       const supabase = createClient()
@@ -156,6 +167,13 @@ export function CreateListingForm({
         area,
         images,
       })
+      // Server-side enforcement (defense in depth).
+      if (res.blocked) {
+        setBlocked({ categories: res.categories ?? [] })
+        toast.error('This item is not allowed on Query & Buy.')
+        setSubmitting(false)
+        return
+      }
       if (res.error || !res.id) throw new Error(res.error ?? 'Could not create listing.')
 
       toast.success('Listing published!')
@@ -167,10 +185,10 @@ export function CreateListingForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-8">
       {/* Photos */}
-      <div className="space-y-2">
-        <Label>Photos</Label>
+      <div className="space-y-3">
+        <h2 className="font-display text-lg leading-none">Photos</h2>
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {pics.map((p, i) => (
             <div
@@ -221,7 +239,7 @@ export function CreateListingForm({
         </p>
 
         {/* Generate with AI */}
-        <div className="space-y-3 rounded-lg border border-dashed bg-muted/30 p-3">
+        <div className="space-y-3 rounded-xl border border-border bg-accent/40 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
               Add photos, then let AI draft your title, description, category, and condition.
@@ -267,6 +285,10 @@ export function CreateListingForm({
         </div>
       </div>
 
+      <div className="border-t border-border pt-8">
+        <h2 className="font-display text-lg leading-none">Details</h2>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
         <Input
@@ -282,6 +304,10 @@ export function CreateListingForm({
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
         <CategorySelect categories={categories} value={categoryId} onChange={setCategoryId} />
+      </div>
+
+      <div className="border-t border-border pt-8">
+        <h2 className="font-display text-lg leading-none">Pricing</h2>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -324,6 +350,10 @@ export function CreateListingForm({
         />
       )}
 
+      <div className="border-t border-border pt-8">
+        <h2 className="font-display text-lg leading-none">Location</h2>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="emirate">Emirate</Label>
@@ -352,6 +382,10 @@ export function CreateListingForm({
         </div>
       </div>
 
+      <div className="border-t border-border pt-8">
+        <h2 className="font-display text-lg leading-none">Description</h2>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
         <Textarea
@@ -364,6 +398,24 @@ export function CreateListingForm({
           required
         />
       </div>
+
+      {blocked && (
+        <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          <p className="whitespace-pre-line font-medium">{PROHIBITED_MESSAGE}</p>
+          {blocked.categories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {blocked.categories.map((c) => (
+                <span
+                  key={c}
+                  className="rounded-full bg-destructive px-2 py-0.5 text-xs font-medium text-white"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <Button type="submit" disabled={submitting} size="lg" className="w-full sm:w-auto">
         {submitting && <Loader2Icon className="size-4 animate-spin" />}

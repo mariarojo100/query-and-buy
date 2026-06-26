@@ -6,6 +6,7 @@ export type SellerMini = {
   display_name: string
   avatar_url: string | null
   badge_level: string
+  email_verified: boolean
 }
 
 export type FeedListing = {
@@ -15,7 +16,9 @@ export type FeedListing = {
   currency: string
   emirate: string | null
   area: string | null
+  condition: string
   cover_key: string | null
+  published_at: string | null
   seller: SellerMini | null
 }
 
@@ -36,7 +39,15 @@ export type ListingDetail = {
   seller_id: string
   images: { storage_key: string; position: number }[]
   seller:
-    | (SellerMini & { member_since: string; listings_count: number })
+    | (SellerMini & {
+        member_since: string
+        listings_count: number
+        bio: string | null
+        emirate: string | null
+        email_verified: boolean
+        phone_verified: boolean
+        reports_count: number
+      })
     | null
 }
 
@@ -81,14 +92,14 @@ async function sellerMap(
   if (ids.length === 0) return map
   const { data } = await supabase
     .from('profiles')
-    .select('id, username, display_name, avatar_url, badge_level')
+    .select('id, username, display_name, avatar_url, badge_level, email_verified')
     .in('id', ids)
   for (const row of (data ?? []) as SellerMini[]) map.set(row.id, row)
   return map
 }
 
 const FEED_SELECT =
-  'id, title_en, price_fils, currency, emirate, area, seller_id, published_at, images:listing_images(storage_key, position)'
+  'id, title_en, price_fils, currency, emirate, area, condition, seller_id, published_at, images:listing_images(storage_key, position)'
 
 export type SortKey = 'newest' | 'price_asc' | 'price_desc'
 
@@ -110,7 +121,9 @@ type RawFeedRow = {
   currency: string
   emirate: string | null
   area: string | null
+  condition: string
   seller_id: string
+  published_at: string | null
   images: RawImage[] | null
 }
 
@@ -148,17 +161,45 @@ export async function getFilteredListings(
   const rows = (data ?? []) as RawFeedRow[]
   const sellers = await sellerMap(supabase, [...new Set(rows.map((r) => r.seller_id))])
 
-  const listings = rows.map((r) => ({
+  const listings = rows.map((r) => toFeedListing(r, sellers))
+  return { listings, count: count ?? listings.length }
+}
+
+function toFeedListing(r: RawFeedRow, sellers: Map<string, SellerMini>): FeedListing {
+  return {
     id: r.id,
     title_en: r.title_en,
     price_fils: r.price_fils,
     currency: r.currency,
     emirate: r.emirate,
     area: r.area,
+    condition: r.condition,
     cover_key: coverKey(r.images),
+    published_at: r.published_at,
     seller: sellers.get(r.seller_id) ?? null,
-  }))
-  return { listings, count: count ?? listings.length }
+  }
+}
+
+/** A seller's active listings (for profile grids and "more from this seller"). */
+export async function getSellerListings(
+  sellerId: string,
+  opts?: { excludeId?: string; limit?: number },
+): Promise<FeedListing[]> {
+  const supabase = await createClient()
+  let query = supabase
+    .from('listings')
+    .select(FEED_SELECT)
+    .eq('status', 'active')
+    .is('deleted_at', null)
+    .eq('seller_id', sellerId)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(opts?.limit ?? 12)
+  if (opts?.excludeId) query = query.neq('id', opts.excludeId)
+
+  const { data } = await query
+  const rows = (data ?? []) as RawFeedRow[]
+  const sellers = await sellerMap(supabase, [...new Set(rows.map((r) => r.seller_id))])
+  return rows.map((r) => toFeedListing(r, sellers))
 }
 
 export type CategoryLite = {
@@ -178,6 +219,36 @@ export async function getActiveCategories(): Promise<CategoryLite[]> {
     .eq('is_active', true)
     .order('position', { ascending: true })
   return (data ?? []) as CategoryLite[]
+}
+
+/** Active-listing counts rolled up to each top-level category slug. */
+export async function getCategoryCounts(categories: CategoryLite[]): Promise<Map<string, number>> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('listings')
+    .select('category_id')
+    .eq('status', 'active')
+    .is('deleted_at', null)
+
+  const byId = new Map(categories.map((c) => [c.id, c]))
+  const topSlug = (catId: string): string | null => {
+    let c = byId.get(catId)
+    if (!c) return null
+    let guard = 0
+    while (c.parent_id && guard++ < 6) {
+      const parent = byId.get(c.parent_id)
+      if (!parent) break
+      c = parent
+    }
+    return c.slug
+  }
+
+  const counts = new Map<string, number>()
+  for (const row of (data ?? []) as { category_id: string }[]) {
+    const slug = topSlug(row.category_id)
+    if (slug) counts.set(slug, (counts.get(slug) ?? 0) + 1)
+  }
+  return counts
 }
 
 /** Resolve a category slug → the category + its (one-level) child ids for filtering. */
@@ -323,7 +394,9 @@ export async function getListingById(id: string): Promise<ListingDetail | null> 
 
   const { data: sellerRow } = await supabase
     .from('profiles')
-    .select('id, username, display_name, avatar_url, badge_level, member_since, listings_count')
+    .select(
+      'id, username, display_name, avatar_url, badge_level, bio, emirate, member_since, listings_count, email_verified, phone_verified, reports_count',
+    )
     .eq('id', row.seller_id)
     .maybeSingle()
 

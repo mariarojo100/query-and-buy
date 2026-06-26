@@ -7,7 +7,13 @@ import { formatChatTime } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import type { InboxItem } from '@/lib/messaging/queries'
 
-export function ConversationListItem({ item }: { item: InboxItem }) {
+export function ConversationListItem({
+  item,
+  active = false,
+}: {
+  item: InboxItem
+  active?: boolean
+}) {
   const otherName = item.other?.display_name ?? 'Unknown user'
   const title = item.listing?.title_en ?? 'Listing no longer available'
   const unread = item.unreadCount > 0
@@ -15,9 +21,11 @@ export function ConversationListItem({ item }: { item: InboxItem }) {
   return (
     <Link
       href={`/messages/${item.id}`}
-      className={`flex items-center gap-3 p-3 transition hover:bg-muted/50 ${unread ? 'bg-primary/5' : ''}`}
+      className={`flex items-center gap-3 p-3 transition ${
+        active ? 'bg-accent' : unread ? 'bg-primary/5 hover:bg-muted/60' : 'hover:bg-muted/50'
+      }`}
     >
-      <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border bg-muted">
+      <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border bg-muted">
         {item.listing?.cover_key ? (
           <Image
             src={publicUrl(LISTING_IMAGES_BUCKET, item.listing.cover_key)}

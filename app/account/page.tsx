@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { BookmarkIcon, ExternalLinkIcon, HeartIcon, PackageIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
 import { signOut } from '@/app/(auth)/actions'
+import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -54,17 +55,22 @@ export default async function AccountPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl space-y-6 px-4 py-8 sm:px-6 sm:py-12">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">My account</h1>
-        <form action={signOut}>
-          <Button type="submit" variant="ghost" size="sm">
-            Sign out
-          </Button>
-        </form>
-      </div>
+    <>
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-2xl space-y-6 px-5 py-8 sm:px-6 sm:py-12">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="eyebrow">Account</p>
+            <h1 className="font-display mt-2 text-3xl tracking-tight sm:text-4xl">My account</h1>
+          </div>
+          <form action={signOut}>
+            <Button type="submit" variant="ghost" size="sm">
+              Sign out
+            </Button>
+          </form>
+        </div>
 
-      <Card>
+        <Card className="shadow-soft">
         <CardContent className="pt-6">
           <ProfileHeader
             profile={profile}
@@ -108,16 +114,17 @@ export default async function AccountPage() {
         </CardContent>
       </Card>
 
-      <ProfileCompletion profile={profile} />
+        <ProfileCompletion profile={profile} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Edit profile</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProfileEditForm profile={profile} />
-        </CardContent>
-      </Card>
-    </main>
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle className="font-display text-lg font-normal">Edit profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProfileEditForm profile={profile} />
+          </CardContent>
+        </Card>
+      </main>
+    </>
   )
 }

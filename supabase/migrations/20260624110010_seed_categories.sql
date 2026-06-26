@@ -14,7 +14,6 @@ insert into public.categories (slug, name_en, name_ar, position) values
   ('mobiles',     'Mobiles & Tablets',   'الهواتف والأجهزة',      4),
   ('home-garden', 'Home & Garden',       'المنزل والحديقة',       5),
   ('fashion',     'Fashion & Beauty',    'الموضة والجمال',        6),
-  ('jobs',        'Jobs',                'الوظائف',               7),
   ('services',    'Services',            'الخدمات',               8),
   ('hobbies',     'Hobbies, Sports & Kids','الهوايات والرياضة',    9),
   ('business',    'Business & Industrial','الأعمال والصناعة',     10)

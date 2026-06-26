@@ -6,18 +6,19 @@ import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { DashboardListingRow } from '@/components/account/DashboardListingRow'
+import { EmptyState } from '@/components/common/EmptyState'
 import { getMyListings } from '@/lib/listings/queries'
 
 export const metadata = { title: 'My listings · Query & Buy' }
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <Card>
-      <CardContent className="py-4 text-center sm:py-5">
-        <p className="text-2xl font-semibold tabular-nums sm:text-3xl">{value}</p>
-        <p className="text-xs text-muted-foreground sm:text-sm">{label}</p>
-      </CardContent>
-    </Card>
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+      <p className="font-display text-3xl tracking-tight tabular-nums sm:text-4xl">
+        {value.toLocaleString('en-AE')}
+      </p>
+      <p className="eyebrow mt-2">{label}</p>
+    </div>
   )
 }
 
@@ -45,7 +46,7 @@ export default async function SellerDashboardPage() {
         </Link>
 
         <div className="mb-5 flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">My listings</h1>
+          <h1 className="font-display text-3xl tracking-tight sm:text-4xl">My listings</h1>
           <Button asChild size="sm">
             <Link href="/sell">
               <PlusIcon className="size-4" />
@@ -61,18 +62,16 @@ export default async function SellerDashboardPage() {
         </div>
 
         {listings.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
-            <PackageIcon className="size-10 text-muted-foreground/40" />
-            <div>
-              <p className="font-medium">No listings yet</p>
-              <p className="text-sm text-muted-foreground">
-                Create your first listing to start selling.
-              </p>
-            </div>
-            <Button asChild>
-              <Link href="/sell">Sell an item</Link>
-            </Button>
-          </div>
+          <EmptyState
+            icon={PackageIcon}
+            title="Sell your first item"
+            description="Snap a few photos and let AI write the title, description, and price. It takes about a minute."
+            action={
+              <Button asChild className="rounded-full">
+                <Link href="/sell">Start selling</Link>
+              </Button>
+            }
+          />
         ) : (
           <Card>
             <CardContent className="divide-y p-0">

@@ -1,8 +1,11 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { MessageSquareIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
 import { SiteHeader } from '@/components/layout/SiteHeader'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { EmptyState } from '@/components/common/EmptyState'
 import { ConversationListItem } from '@/components/messaging/ConversationListItem'
 import { getUserConversations } from '@/lib/messaging/queries'
 
@@ -20,17 +23,26 @@ export default async function MessagesPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 sm:py-8">
-        <h1 className="mb-5 text-2xl font-semibold tracking-tight">Messages</h1>
+      <main className="mx-auto w-full max-w-2xl px-5 py-8 sm:px-6 sm:py-12">
+        <p className="eyebrow">Inbox</p>
+        <h1 className="font-display mb-7 mt-2 text-3xl tracking-tight sm:text-4xl">Messages</h1>
 
         {conversations.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center">
-            <MessageSquareIcon className="size-10 text-muted-foreground/40" />
-            <p className="font-medium">No conversations yet</p>
-            <p className="text-sm text-muted-foreground">
-              Message a seller from any listing to start a conversation.
-            </p>
-          </div>
+          <EmptyState
+            icon={MessageSquareIcon}
+            title="No conversations yet"
+            description="Message a seller from any listing to start chatting. Your conversations show up here."
+            action={
+              <Button asChild className="rounded-full">
+                <Link href="/">Browse listings</Link>
+              </Button>
+            }
+            secondaryAction={
+              <Button asChild variant="ghost" className="rounded-full">
+                <Link href="/sell">Sell an item</Link>
+              </Button>
+            }
+          />
         ) : (
           <Card>
             <CardContent className="divide-y p-0">

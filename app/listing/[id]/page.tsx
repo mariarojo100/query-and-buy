@@ -1,26 +1,24 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CalendarDaysIcon, MapPinIcon, PencilIcon, TagIcon } from 'lucide-react'
+import { ChevronLeftIcon, PencilIcon, ShieldCheckIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { ImageGallery } from '@/components/listing/ImageGallery'
 import { ContactSellerButton } from '@/components/listing/ContactSellerButton'
 import { FavoriteButton } from '@/components/listing/FavoriteButton'
+import { StickyContactBar } from '@/components/listing/StickyContactBar'
+import { ReportButton } from '@/components/report/ReportButton'
 import { getFavoritedIds } from '@/lib/favorites/queries'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { statusMeta } from '@/lib/listings/status'
-import { initials } from '@/components/profile/ProfileHeader'
-import { VerifiedBadge } from '@/components/profile/VerifiedBadge'
+import { SellerTrustCard } from '@/components/trust/SellerTrustCard'
 import { formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
-import { getListingById } from '@/lib/listings/queries'
+import { ListingCard } from '@/components/listing/ListingCard'
+import { getListingById, getSellerListings } from '@/lib/listings/queries'
 
 export async function generateMetadata({
   params,
@@ -39,6 +37,16 @@ export async function generateMetadata({
   }
 }
 
+function Spec({ label, value }: { label: string; value: string | null }) {
+  if (!value) return null
+  return (
+    <div>
+      <dt className="eyebrow">{label}</dt>
+      <dd className="mt-1.5 text-sm">{value}</dd>
+    </div>
+  )
+}
+
 export default async function ListingDetailPage({
   params,
 }: {
@@ -55,26 +63,39 @@ export default async function ListingDetailPage({
   const isOwner = user?.id === listing.seller_id
   const favorited = (await getFavoritedIds([listing.id])).has(listing.id)
 
+  const related = await getSellerListings(listing.seller_id, { excludeId: listing.id, limit: 4 })
+  const relatedFav = await getFavoritedIds(related.map((l) => l.id))
+
   const location = [listing.area, emirateLabel(listing.emirate)].filter(Boolean).join(', ')
   const posted = listing.published_at ?? listing.created_at
   const seller = listing.seller
   const status = statusMeta(listing.status)
+  const priceLabel = formatPrice(listing.price_fils, listing.currency)
+  const postedLabel = new Date(posted).toLocaleDateString('en-AE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 sm:py-10">
+        <Link
+          href="/"
+          className="eyebrow mb-6 inline-flex items-center gap-1 transition-colors hover:text-foreground"
+        >
+          <ChevronLeftIcon className="size-3.5" />
+          Marketplace
+        </Link>
+
         {isOwner && (
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/40 px-4 py-3">
-            <p className="flex items-center gap-2 text-sm">
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${status.className}`}
-              >
-                {status.label}
-              </span>
-              This is your listing.
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-soft">
+            <p className="flex items-center gap-2.5 text-sm">
+              <span className="eyebrow">{status.label}</span>
+              <span className="text-muted-foreground">This is your listing.</span>
             </p>
-            <Button asChild size="sm" variant="outline">
+            <Button asChild size="sm" variant="outline" className="rounded-full">
               <Link href={`/listing/${id}/edit`}>
                 <PencilIcon className="size-4" />
                 Edit
@@ -83,107 +104,108 @@ export default async function ListingDetailPage({
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-5">
+        <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
           {/* Gallery */}
-          <div className="lg:col-span-3">
-            <ImageGallery
-              keys={listing.images.map((i) => i.storage_key)}
-              title={listing.title_en}
-            />
+          <div className="lg:col-span-7">
+            <ImageGallery keys={listing.images.map((i) => i.storage_key)} title={listing.title_en} />
           </div>
 
           {/* Details */}
-          <div className="space-y-5 lg:col-span-2">
-            <div className="space-y-2">
-              <p className="text-3xl font-semibold tracking-tight">
-                {formatPrice(listing.price_fils, listing.currency)}
-              </p>
-              <h1 className="text-xl font-medium leading-snug">{listing.title_en}</h1>
-              <div className="flex flex-wrap gap-2 pt-1">
-                {conditionLabel(listing.condition) && (
-                  <Badge variant="secondary">{conditionLabel(listing.condition)}</Badge>
-                )}
-                {listing.is_negotiable && <Badge variant="outline">Negotiable</Badge>}
-                {listing.category_name && (
-                  <Badge variant="outline" className="gap-1">
-                    <TagIcon className="size-3" />
-                    {listing.category_name}
-                  </Badge>
-                )}
-              </div>
-            </div>
+          <div className="lg:col-span-5">
+            <div className="lg:sticky lg:top-24">
+              <p className="eyebrow">{listing.category_name ?? 'Listing'}</p>
+              <h1 className="font-display mt-3 text-3xl leading-tight tracking-tight sm:text-[2.5rem]">
+                {listing.title_en}
+              </h1>
+              <p className="tnum mt-4 text-3xl font-semibold tracking-tight">{priceLabel}</p>
 
-            <div className="space-y-1 text-sm text-muted-foreground">
-              {location && (
-                <p className="flex items-center gap-1.5">
-                  <MapPinIcon className="size-4" />
-                  {location}
-                </p>
-              )}
-              <p className="flex items-center gap-1.5">
-                <CalendarDaysIcon className="size-4" />
-                Posted {new Date(posted).toLocaleDateString()}
-              </p>
-            </div>
+              <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-y border-border py-6">
+                <Spec label="Condition" value={conditionLabel(listing.condition)} />
+                <Spec label="Pricing" value={listing.is_negotiable ? 'Negotiable' : 'Fixed'} />
+                <Spec label="Location" value={location || null} />
+                <Spec label="Listed" value={postedLabel} />
+              </dl>
 
-            {!isOwner && (
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <ContactSellerButton listingId={listing.id} authed={!!user} />
+              {!isOwner && (
+                <div className="mt-7 flex gap-3">
+                  <div className="flex-1">
+                    <ContactSellerButton listingId={listing.id} authed={!!user} />
+                  </div>
+                  <FavoriteButton
+                    listingId={listing.id}
+                    initialFavorited={favorited}
+                    authed={!!user}
+                    className="size-11 shrink-0 rounded-full border border-border bg-card hover:bg-accent"
+                  />
                 </div>
-                <FavoriteButton
-                  listingId={listing.id}
-                  initialFavorited={favorited}
-                  authed={!!user}
-                  className="size-11 shrink-0 rounded-md border bg-card hover:bg-muted"
-                />
-              </div>
-            )}
+              )}
 
-            {/* Seller */}
-            {seller && (
-              <Card>
-                <CardContent className="pt-6">
-                  <Link
-                    href={seller.username ? `/u/${seller.username}` : '#'}
-                    className="flex items-center gap-3"
-                  >
-                    <Avatar className="size-12">
-                      <AvatarImage src={seller.avatar_url ?? undefined} alt={seller.display_name} />
-                      <AvatarFallback>{initials(seller.display_name)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate font-medium">{seller.display_name}</span>
-                        <VerifiedBadge level={seller.badge_level} />
-                      </div>
-                      {seller.username && (
-                        <p className="truncate text-sm text-muted-foreground">
-                          @{seller.username}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
-                  <Separator className="my-3" />
-                  <p className="text-xs text-muted-foreground">
-                    {seller.listings_count}{' '}
-                    {seller.listings_count === 1 ? 'active listing' : 'active listings'} · Member
-                    since {new Date(seller.member_since).getFullYear()}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+              {seller && (
+                <div className="mt-7">
+                  <SellerTrustCard seller={seller} />
+                </div>
+              )}
+
+              <div className="mt-4 rounded-xl border border-border bg-accent/40 p-4">
+                <p className="flex items-center gap-1.5 text-sm font-medium">
+                  <ShieldCheckIcon className="size-4 text-primary" />
+                  Buyer safety
+                </p>
+                <ul className="mt-2.5 space-y-1.5 text-xs leading-relaxed text-muted-foreground">
+                  <li>Meet in a public place during daylight.</li>
+                  <li>Inspect the item thoroughly before paying.</li>
+                  <li>Never transfer money in advance or off-platform.</li>
+                </ul>
+              </div>
+
+              {!isOwner && (
+                <div className="mt-5 flex items-center justify-center gap-1 text-muted-foreground">
+                  <ReportButton
+                    target="listing"
+                    listingId={listing.id}
+                    reportedUserId={listing.seller_id}
+                    authed={!!user}
+                  />
+                  <span className="text-border">·</span>
+                  <ReportButton
+                    target="user"
+                    reportedUserId={listing.seller_id}
+                    authed={!!user}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Description */}
-        <div className="mt-8 max-w-3xl">
-          <h2 className="mb-2 text-lg font-semibold">Description</h2>
-          <p className="whitespace-pre-line leading-relaxed text-foreground/90">
+        <section className="mt-14 max-w-2xl border-t border-border pt-10 sm:mt-20">
+          <p className="eyebrow">Description</p>
+          <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
             {listing.description}
           </p>
-        </div>
+        </section>
+
+        {related.length > 0 && (
+          <section className="mt-14 border-t border-border pt-10 sm:mt-20">
+            <p className="eyebrow mb-6">More from this seller</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-4 sm:gap-x-6">
+              {related.map((l) => (
+                <ListingCard
+                  key={l.id}
+                  listing={l}
+                  favorited={relatedFav.has(l.id)}
+                  authed={!!user}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
+
+      {!isOwner && (
+        <StickyContactBar listingId={listing.id} authed={!!user} priceLabel={priceLabel} />
+      )}
     </>
   )
 }

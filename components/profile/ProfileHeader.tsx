@@ -41,7 +41,7 @@ export function ProfileHeader({
 
       <div className="flex-1 space-y-2 text-center sm:text-left">
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:justify-start">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="font-display text-3xl leading-tight tracking-tight sm:text-4xl">
             {profile.display_name}
           </h1>
           <VerifiedBadge level={profile.badge_level} />

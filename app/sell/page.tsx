@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { SiteHeader } from '@/components/layout/SiteHeader'
-import { Card, CardContent } from '@/components/ui/card'
 import { CreateListingForm } from '@/components/sell/CreateListingForm'
 import type { Category } from '@/components/sell/CategorySelect'
 
@@ -24,25 +23,25 @@ export default async function SellPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-6 space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Sell an item</h1>
-          <p className="text-sm text-muted-foreground">
-            Add photos and details — your listing goes live right away.
-          </p>
+      <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-6 sm:py-16">
+        <p className="eyebrow">Create a listing</p>
+        <h1 className="font-display mt-2 text-3xl leading-tight tracking-tight sm:text-4xl">
+          Sell an item
+        </h1>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+          Add a few photos and let AI draft the rest — your listing goes live right away.
+        </p>
+
+        <div className="mt-10">
+          {categories.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Categories aren&apos;t loaded yet. Run{' '}
+              <code className="font-mono">npm run db:push</code> to seed them.
+            </p>
+          ) : (
+            <CreateListingForm userId={user.id} categories={categories} />
+          )}
         </div>
-        <Card>
-          <CardContent className="pt-6">
-            {categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Categories aren&apos;t loaded yet. Run{' '}
-                <code className="font-mono">npm run db:push</code> to seed them.
-              </p>
-            ) : (
-              <CreateListingForm userId={user.id} categories={categories} />
-            )}
-          </CardContent>
-        </Card>
       </main>
     </>
   )

@@ -4,6 +4,7 @@ import { HeartIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/common/EmptyState'
 import { ListingResults } from '@/components/listing/ListingResults'
 import { getUserFavorites } from '@/lib/favorites/queries'
 
@@ -23,21 +24,25 @@ export default async function FavoritesPage() {
     <>
       <SiteHeader />
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-        <h1 className="mb-5 text-2xl font-semibold tracking-tight">Favorites</h1>
+        <p className="eyebrow">Saved</p>
+        <h1 className="font-display mb-7 mt-2 text-3xl tracking-tight sm:text-4xl">Favorites</h1>
 
         {listings.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
-            <HeartIcon className="size-10 text-muted-foreground/40" />
-            <div>
-              <p className="font-medium">No favorites yet</p>
-              <p className="text-sm text-muted-foreground">
-                Tap the heart on any listing to save it here.
-              </p>
-            </div>
-            <Button asChild>
-              <Link href="/">Browse listings</Link>
-            </Button>
-          </div>
+          <EmptyState
+            icon={HeartIcon}
+            title="Save listings you love"
+            description="Tap the heart on any listing to keep it here for later — no pressure to decide now."
+            action={
+              <Button asChild className="rounded-full">
+                <Link href="/">Browse listings</Link>
+              </Button>
+            }
+            secondaryAction={
+              <Button asChild variant="ghost" className="rounded-full">
+                <Link href="/sell">Sell an item</Link>
+              </Button>
+            }
+          />
         ) : (
           <ListingResults
             listings={listings}

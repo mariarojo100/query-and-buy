@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Loader2Icon, SparklesIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { parseConversationalSearch } from '@/app/search/actions'
 import { buildSearchHref } from '@/lib/savedSearches/filters'
 
@@ -38,31 +37,32 @@ export function ConversationalSearchBox() {
   }
 
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div>
       <form
         onSubmit={(e) => {
           e.preventDefault()
           run(text)
         }}
-        className="flex flex-col gap-2 sm:flex-row"
+        className="flex items-center gap-2 rounded-full border border-border bg-card p-1.5 pl-5 shadow-soft transition focus-within:border-gold/40 focus-within:ring-1 focus-within:ring-gold/30"
       >
-        <div className="relative flex-1">
-          <SparklesIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary" />
-          <Input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Describe what you want — e.g. iPhone under AED 2000 in Dubai"
-            className="pl-9"
-            aria-label="Conversational search"
-          />
-        </div>
-        <Button type="submit" disabled={loading || !text.trim()} className="shrink-0">
-          {loading ? <Loader2Icon className="size-4 animate-spin" /> : <SparklesIcon className="size-4" />}
-          {loading ? 'Thinking…' : 'Ask AI'}
+        <SparklesIcon className="size-4 shrink-0 text-gold" />
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Search naturally — “iPhone under AED 2000 in Dubai”"
+          aria-label="Conversational search"
+          className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground"
+        />
+        <Button
+          type="submit"
+          disabled={loading || !text.trim()}
+          className="shrink-0 rounded-full px-5"
+        >
+          {loading ? <Loader2Icon className="size-4 animate-spin" /> : 'Search'}
         </Button>
       </form>
 
-      <div className="mt-2 flex flex-wrap gap-1.5">
+      <div className="mt-3 flex flex-wrap justify-center gap-2">
         {EXAMPLES.map((ex) => (
           <button
             key={ex}
@@ -72,7 +72,7 @@ export function ConversationalSearchBox() {
               setText(ex)
               run(ex)
             }}
-            className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground transition hover:bg-muted disabled:opacity-50"
+            className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition hover:border-gold/40 hover:text-foreground disabled:opacity-50"
           >
             {ex}
           </button>

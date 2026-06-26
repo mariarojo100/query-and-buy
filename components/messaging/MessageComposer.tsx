@@ -41,7 +41,10 @@ export function MessageComposer({
   }
 
   return (
-    <div className="border-t p-3">
+    <div
+      className="border-t border-border bg-background/85 p-3 backdrop-blur"
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
+    >
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -60,10 +63,16 @@ export function MessageComposer({
           }}
           rows={1}
           placeholder="Write a message…"
-          className="max-h-32 min-h-10 flex-1 resize-none"
+          className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl bg-card px-4 py-2.5"
           aria-label="Message"
         />
-        <Button type="submit" size="icon" disabled={pending || !text.trim()} aria-label="Send">
+        <Button
+          type="submit"
+          size="icon"
+          disabled={pending || !text.trim()}
+          aria-label="Send"
+          className="size-11 shrink-0 rounded-full bg-gradient-to-br from-primary to-emerald-800 shadow-sm transition hover:opacity-95"
+        >
           <SendIcon className="size-4" />
         </Button>
       </form>

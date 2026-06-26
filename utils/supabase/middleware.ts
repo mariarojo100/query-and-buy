@@ -2,7 +2,14 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /** Paths that require an authenticated user. */
-const PROTECTED_PREFIXES = ['/account', '/sell', '/messages', '/favorites', '/saved-searches']
+const PROTECTED_PREFIXES = [
+  '/account',
+  '/sell',
+  '/messages',
+  '/favorites',
+  '/saved-searches',
+  '/admin',
+]
 
 /**
  * Refreshes the Supabase session on every request (token rotation) and

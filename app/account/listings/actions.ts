@@ -6,9 +6,10 @@ import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { LISTING_IMAGES_BUCKET } from '@/lib/storage'
+import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
 import type { ListingImageInput } from '@/app/sell/actions'
 
-type Result = { ok?: boolean; error?: string }
+type Result = { ok?: boolean; error?: string; blocked?: boolean; categories?: string[] }
 
 function revalidateListing(id: string) {
   revalidatePath('/account/listings')
@@ -95,6 +96,13 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
   if (!input.images?.length) return { error: 'Keep at least one photo.' }
   if (input.images.length > 8) return { error: 'Up to 8 photos.' }
 
+  // Re-screen on edit so a safe listing can't be edited into prohibited content.
+  // Block BEFORE writing — nothing is updated if it fails.
+  const safety = analyzeListingSafety(title, description)
+  if (!safety.safe) {
+    return { blocked: true, error: PROHIBITED_MESSAGE, categories: safety.categories }
+  }
+
   const { data: cat } = await supabase
     .from('categories')
     .select('id')
@@ -121,7 +129,10 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
     .select('id')
     .maybeSingle()
 
-  if (updErr) return { error: updErr.message }
+  if (updErr) {
+    console.error('updateListing update failed:', updErr)
+    return { error: 'Could not save your changes. Please try again.' }
+  }
   if (!updated) return { error: 'Listing not found.' }
 
   // Replace image rows: remove all, reinsert the final ordered set.
@@ -137,7 +148,10 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
     .from('listing_images')
     .delete()
     .eq('listing_id', input.id)
-  if (delErr) return { error: delErr.message }
+  if (delErr) {
+    console.error('updateListing image delete failed:', delErr)
+    return { error: 'Could not save your changes. Please try again.' }
+  }
 
   const rows = input.images.map((im) => ({
     listing_id: input.id,
@@ -147,7 +161,10 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
     height: im.height ?? null,
   }))
   const { error: insErr } = await supabase.from('listing_images').insert(rows)
-  if (insErr) return { error: insErr.message }
+  if (insErr) {
+    console.error('updateListing image insert failed:', insErr)
+    return { error: 'Could not save your photos. Please try again.' }
+  }
 
   // Best-effort: delete orphaned storage objects for removed images.
   if (removed.length > 0) {

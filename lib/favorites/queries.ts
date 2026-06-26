@@ -38,7 +38,7 @@ export async function getUserFavorites(): Promise<FeedListing[]> {
   const { data } = await supabase
     .from('favorites')
     .select(
-      'created_at, listing:listings(id, title_en, price_fils, currency, emirate, area, status, deleted_at, seller_id, images:listing_images(storage_key, position))',
+      'created_at, listing:listings(id, title_en, price_fils, currency, emirate, area, condition, status, deleted_at, seller_id, published_at, images:listing_images(storage_key, position))',
     )
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -51,9 +51,11 @@ export async function getUserFavorites(): Promise<FeedListing[]> {
       currency: string
       emirate: string | null
       area: string | null
+      condition: string
       status: string
       deleted_at: string | null
       seller_id: string
+      published_at: string | null
       images: RawImage[] | null
     } | null
   }
@@ -70,7 +72,7 @@ export async function getUserFavorites(): Promise<FeedListing[]> {
   if (sellerIds.length > 0) {
     const { data: profs } = await supabase
       .from('profiles')
-      .select('id, username, display_name, avatar_url, badge_level')
+      .select('id, username, display_name, avatar_url, badge_level, email_verified')
       .in('id', sellerIds)
     for (const p of (profs ?? []) as SellerMini[]) sellers.set(p.id, p)
   }
@@ -82,7 +84,9 @@ export async function getUserFavorites(): Promise<FeedListing[]> {
     currency: l.currency,
     emirate: l.emirate,
     area: l.area,
+    condition: l.condition,
     cover_key: coverKey(l.images),
+    published_at: l.published_at,
     seller: sellers.get(l.seller_id) ?? null,
   }))
 }

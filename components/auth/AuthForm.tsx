@@ -52,29 +52,29 @@ export function AuthForm({
   const [state, formAction] = useActionState<AuthState, FormData>(action, null)
   const copy = COPY[mode]
 
+  const inputClass =
+    'rounded-lg border border-input bg-card px-3.5 py-2.5 text-sm font-normal outline-none transition focus:border-gold/50 focus:ring-1 focus:ring-gold/30'
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-6">
-      <h1 className="text-2xl font-semibold">{copy.title}</h1>
+    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-7 px-6 py-12">
+      <div className="text-center">
+        <Link href="/" className="font-display text-2xl tracking-tight">
+          Query <span className="text-muted-foreground">&amp;</span> Buy
+        </Link>
+        <h1 className="font-display mt-7 text-3xl tracking-tight">{copy.title}</h1>
+      </div>
 
       {message && (
-        <p className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-800">
-          {message}
-        </p>
+        <p className="rounded-lg border border-border bg-accent/40 px-3 py-2 text-sm">{message}</p>
       )}
 
       <form action={formAction} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-sm font-medium">
           Email
-          <input
-            type="email"
-            name="email"
-            required
-            autoComplete="email"
-            className="rounded-md border border-gray-300 px-3 py-2 font-normal"
-          />
+          <input type="email" name="email" required autoComplete="email" className={inputClass} />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-sm font-medium">
           Password
           <input
             type="password"
@@ -82,12 +82,12 @@ export function AuthForm({
             required
             minLength={6}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            className="rounded-md border border-gray-300 px-3 py-2 font-normal"
+            className={inputClass}
           />
         </label>
 
         {state?.error && (
-          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {state.error}
           </p>
         )}
@@ -95,9 +95,12 @@ export function AuthForm({
         <SubmitButton label={copy.submit} />
       </form>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-muted-foreground">
         {copy.altText}{' '}
-        <Link href={copy.altHref} className="font-medium text-gray-900 underline">
+        <Link
+          href={copy.altHref}
+          className="font-medium text-foreground underline decoration-gold underline-offset-4"
+        >
           {copy.altLabel}
         </Link>
       </p>

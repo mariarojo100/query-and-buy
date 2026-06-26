@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/server'
 import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
+import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
 
 export type ListingImageInput = {
   storage_key: string
@@ -27,7 +28,7 @@ export type CreateListingInput = {
 
 export async function createListing(
   input: CreateListingInput,
-): Promise<{ id?: string; error?: string }> {
+): Promise<{ id?: string; error?: string; blocked?: boolean; categories?: string[] }> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -53,6 +54,12 @@ export async function createListing(
   if (!input.images?.length) return { error: 'Add at least one photo.' }
   if (input.images.length > 8) return { error: 'Up to 8 photos.' }
 
+  // --- safety screen (BEFORE any DB write) ---
+  const safety = analyzeListingSafety(title, description)
+  if (!safety.safe) {
+    return { blocked: true, error: PROHIBITED_MESSAGE, categories: safety.categories }
+  }
+
   // category must exist and be active
   const { data: cat } = await supabase
     .from('categories')
@@ -77,14 +84,17 @@ export async function createListing(
       emirate: input.emirate,
       area,
       is_negotiable: input.isNegotiable ?? true,
-      status: 'active', // no moderation this sprint — publish directly
+      status: 'active',
       published_at: now.toISOString(),
       expires_at: expires.toISOString(),
     })
     .select('id')
     .single()
 
-  if (error || !listing) return { error: error?.message ?? 'Could not create listing.' }
+  if (error || !listing) {
+    console.error('createListing insert failed:', error)
+    return { error: 'Could not create your listing. Please try again.' }
+  }
 
   const rows = input.images.map((im) => ({
     listing_id: listing.id as string,
@@ -94,7 +104,10 @@ export async function createListing(
     height: im.height ?? null,
   }))
   const { error: imgErr } = await supabase.from('listing_images').insert(rows)
-  if (imgErr) return { error: imgErr.message }
+  if (imgErr) {
+    console.error('createListing image insert failed:', imgErr)
+    return { error: 'Could not save your photos. Please try again.' }
+  }
 
   revalidatePath('/')
   return { id: listing.id as string }

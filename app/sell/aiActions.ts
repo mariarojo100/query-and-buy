@@ -81,7 +81,9 @@ export async function generateListingDraft(images: AiImageInput[]): Promise<AiDr
   const conditionRaw = confident(raw.condition)
   const condition = conditionRaw && CONDITION_VALUES.includes(conditionRaw) ? conditionRaw : null
 
-  const slug = confident(raw.category_slug)
+  // The retired "Jobs" category maps to the closest valid one if the model returns it.
+  const rawSlug = confident(raw.category_slug)
+  const slug = rawSlug === 'jobs' ? 'services' : rawSlug
   const categoryId = slug && slugToId.has(slug) ? slugToId.get(slug)! : null
 
   // --- transparency panel: show everything the model saw, with confidence ---

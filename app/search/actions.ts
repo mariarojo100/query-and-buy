@@ -50,7 +50,9 @@ export async function parseConversationalSearch(text: string): Promise<Conversat
     typeof n === 'number' && Number.isFinite(n) && n > 0 ? String(Math.round(n)) : undefined
 
   const filters: SavedFilters = {}
-  if (parsed.category_slug && slugs.has(parsed.category_slug)) filters.category = parsed.category_slug
+  // The retired "Jobs" category maps to the closest valid one.
+  const catSlug = parsed.category_slug === 'jobs' ? 'services' : parsed.category_slug
+  if (catSlug && slugs.has(catSlug)) filters.category = catSlug
   if (parsed.emirate && EMIRATE_VALUES.includes(parsed.emirate)) filters.emirate = parsed.emirate
   if (parsed.condition && CONDITION_VALUES.includes(parsed.condition))
     filters.condition = parsed.condition

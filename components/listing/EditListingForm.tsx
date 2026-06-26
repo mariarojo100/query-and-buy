@@ -21,6 +21,7 @@ import { createClient } from '@/utils/supabase/client'
 import { EMIRATES } from '@/lib/profile/emirates'
 import { CONDITIONS } from '@/lib/listings/conditions'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
+import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
 import { formatPrice } from '@/lib/format'
 import type { EditListing } from '@/lib/listings/queries'
 
@@ -59,6 +60,7 @@ export function EditListingForm({
   const [emirate, setEmirate] = useState(listing.emirate ?? '')
   const [area, setArea] = useState(listing.area ?? '')
   const [submitting, setSubmitting] = useState(false)
+  const [blocked, setBlocked] = useState<{ categories: string[] } | null>(null)
 
   function addFiles(list: FileList | null) {
     if (!list) return
@@ -95,6 +97,15 @@ export function EditListingForm({
     if (!emirate) return toast.error('Choose an emirate.')
     if (pics.length === 0) return toast.error('Keep at least one photo.')
 
+    // Safety screen BEFORE uploading photos or saving.
+    const safety = analyzeListingSafety(title, description)
+    if (!safety.safe) {
+      setBlocked({ categories: safety.categories })
+      toast.error('This item is not allowed on Query & Buy.')
+      return
+    }
+    setBlocked(null)
+
     setSubmitting(true)
     try {
       const supabase = createClient()
@@ -128,6 +139,12 @@ export function EditListingForm({
         area,
         images,
       })
+      if (res.blocked) {
+        setBlocked({ categories: res.categories ?? [] })
+        toast.error('This item is not allowed on Query & Buy.')
+        setSubmitting(false)
+        return
+      }
       if (res.error) throw new Error(res.error)
 
       toast.success('Listing updated.')
@@ -282,6 +299,24 @@ export function EditListingForm({
           required
         />
       </div>
+
+      {blocked && (
+        <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          <p className="whitespace-pre-line font-medium">{PROHIBITED_MESSAGE}</p>
+          {blocked.categories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {blocked.categories.map((c) => (
+                <span
+                  key={c}
+                  className="rounded-full bg-destructive px-2 py-0.5 text-xs font-medium text-white"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-3">
         <Button type="submit" disabled={submitting} size="lg">

@@ -1,4 +1,5 @@
 import { SearchXIcon } from 'lucide-react'
+import { EmptyState } from '@/components/common/EmptyState'
 import { ListingCard } from '@/components/listing/ListingCard'
 import type { FeedListing } from '@/lib/listings/queries'
 
@@ -15,18 +16,18 @@ export function ListingResults({
 }) {
   return (
     <div>
-      <p className="mb-4 text-sm text-muted-foreground">
-        {count} {count === 1 ? 'result' : 'results'}
+      <p className="eyebrow mb-5">
+        {count} {count === 1 ? 'listing' : 'listings'}
       </p>
 
       {listings.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center">
-          <SearchXIcon className="size-10 text-muted-foreground/40" />
-          <p className="font-medium">No listings found</p>
-          <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
-        </div>
+        <EmptyState
+          icon={SearchXIcon}
+          title="Nothing here yet"
+          description="Try adjusting your search or filters — or clear them to see everything."
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-3">
           {listings.map((l) => (
             <ListingCard
               key={l.id}

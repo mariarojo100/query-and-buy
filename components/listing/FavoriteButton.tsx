@@ -61,7 +61,7 @@ export function FavoriteButton({
       className={cn('inline-flex items-center justify-center transition', className)}
     >
       <HeartIcon
-        className={cn('size-5', fav ? 'fill-red-500 text-red-500' : '', iconClassName)}
+        className={cn('size-5', fav ? 'fill-foreground text-foreground' : '', iconClassName)}
       />
     </button>
   )

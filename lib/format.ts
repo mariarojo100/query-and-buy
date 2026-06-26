@@ -8,6 +8,25 @@ export function formatPrice(fils: number, currency = 'AED'): string {
   return `${currency} ${formatted}`
 }
 
+/** Short "time ago" for listing cards (e.g. "3h ago", "2d ago"). */
+export function formatRelativeTime(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const diffMs = Date.now() - new Date(iso).getTime()
+  if (!Number.isFinite(diffMs)) return null
+  const min = Math.floor(diffMs / 60000)
+  if (min < 1) return 'Just now'
+  if (min < 60) return `${min}m ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr}h ago`
+  const day = Math.floor(hr / 24)
+  if (day < 7) return `${day}d ago`
+  const wk = Math.floor(day / 7)
+  if (wk < 5) return `${wk}w ago`
+  const mo = Math.floor(day / 30)
+  if (mo < 12) return `${mo}mo ago`
+  return `${Math.floor(day / 365)}y ago`
+}
+
 /** Compact timestamp for chat/inbox: time today, weekday this week, else date. */
 export function formatChatTime(iso: string): string {
   const d = new Date(iso)

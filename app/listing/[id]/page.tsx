@@ -148,9 +148,17 @@ export default async function ListingDetailPage({
         )}
 
         <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
-          {/* Gallery */}
+          {/* Gallery + description */}
           <div className="lg:col-span-7">
             <ImageGallery keys={listing.images.map((i) => i.storage_key)} title={listing.title_en} />
+
+            {/* Description sits directly under the image */}
+            <section className="mt-8 border-t border-border pt-8">
+              <p className="eyebrow">Description</p>
+              <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
+                {listing.description}
+              </p>
+            </section>
           </div>
 
           {/* Details */}
@@ -223,14 +231,6 @@ export default async function ListingDetailPage({
             </div>
           </div>
         </div>
-
-        {/* Description */}
-        <section className="mt-14 max-w-2xl border-t border-border pt-10 sm:mt-20">
-          <p className="eyebrow">Description</p>
-          <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
-            {listing.description}
-          </p>
-        </section>
 
         {related.length > 0 && (
           <section className="mt-14 border-t border-border pt-10 sm:mt-20">

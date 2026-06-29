@@ -164,7 +164,18 @@ export async function getFilteredListings(
     .is('deleted_at', null)
 
   const q = filters.q?.trim()
-  if (q) query = query.textSearch('search_vector', q, { type: 'websearch', config: 'simple' })
+  if (q) {
+    // Full-text search matches whole tokens only (config 'simple' = no stemming),
+    // so "phone" would miss "iPhone"/"Smartphone". Combine websearch FTS with a
+    // substring ILIKE on title + description so partial/generic terms still match.
+    const safe = q.replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim()
+    if (safe) {
+      const like = `*${safe}*`
+      query = query.or(
+        `search_vector.wfts(simple).${safe},title_en.ilike.${like},description.ilike.${like}`,
+      )
+    }
+  }
   if (filters.categoryIds && filters.categoryIds.length > 0) {
     query = query.in('category_id', filters.categoryIds)
   }

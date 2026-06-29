@@ -13,6 +13,7 @@ export async function getSuggestions(prefix: string): Promise<Suggestion[]> {
 import { EMIRATES, EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import type { SavedFilters } from '@/lib/savedSearches/filters'
+import { heuristicParse } from '@/lib/search/heuristicParse'
 
 export type ConversationalResult = {
   query: string | null
@@ -32,7 +33,15 @@ export async function parseConversationalSearch(text: string): Promise<Conversat
   track('search_performed', { length: raw.length })
   await logSearch(raw)
 
-  const fallback: ConversationalResult = { query: raw, filters: {}, aiUsed: false }
+  // Deterministic fallback: extract price/emirate/condition + clean keywords
+  // locally so search still works when the AI is rate-limited (429) or down,
+  // instead of dumping the whole sentence into full-text search.
+  const heuristic = heuristicParse(raw)
+  const fallback: ConversationalResult = {
+    query: heuristic.query ?? raw,
+    filters: heuristic.filters,
+    aiUsed: false,
+  }
 
   const supabase = await createClient()
   const { data: cats } = await supabase

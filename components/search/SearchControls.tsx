@@ -71,6 +71,20 @@ export function SearchControls({
   const setParam = (key: string, value: string) =>
     push((p) => (value ? p.set(key, value) : p.delete(key)))
 
+  const applyPrice = () =>
+    push((p) => {
+      if (min) p.set('min', min)
+      else p.delete('min')
+      if (max) p.set('max', max)
+      else p.delete('max')
+    })
+  const onPriceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      applyPrice()
+    }
+  }
+
   const parents = categories
     .filter((c) => !c.parent_id)
     .sort((a, b) => a.position - b.position)
@@ -200,40 +214,49 @@ export function SearchControls({
           </SelectContent>
         </Select>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            push((p) => {
-              if (min) p.set('min', min)
-              else p.delete('min')
-              if (max) p.set('max', max)
-              else p.delete('max')
-            })
-          }}
-          className="col-span-2 flex gap-2 sm:col-span-3 lg:col-span-1"
-        >
+      </div>
+
+      {/* Price range — reuses the same Input + grid as the dropdowns above. */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="relative">
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+            AED
+          </span>
           <Input
             type="number"
             min={0}
             inputMode="numeric"
             value={min}
             onChange={(e) => setMin(e.target.value)}
-            placeholder="Min AED"
-            aria-label="Minimum price"
+            onKeyDown={onPriceKeyDown}
+            placeholder="Min Price"
+            aria-label="Minimum price in AED"
+            className="pl-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
+        </div>
+        <div className="relative">
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+            AED
+          </span>
           <Input
             type="number"
             min={0}
             inputMode="numeric"
             value={max}
             onChange={(e) => setMax(e.target.value)}
-            placeholder="Max AED"
-            aria-label="Maximum price"
+            onKeyDown={onPriceKeyDown}
+            placeholder="Max Price"
+            aria-label="Maximum price in AED"
+            className="pl-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
-          <Button type="submit" variant="secondary">
-            Go
-          </Button>
-        </form>
+        </div>
+        <Button
+          type="button"
+          onClick={applyPrice}
+          className="col-span-2 h-8 w-full rounded-lg sm:col-span-1"
+        >
+          Apply
+        </Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

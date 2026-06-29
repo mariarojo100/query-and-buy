@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import type { AuthState } from '@/app/(auth)/actions'
 
 function SubmitButton({ label }: { label: string }) {
@@ -67,6 +68,18 @@ export function AuthForm({
       {message && (
         <p className="rounded-lg border border-border bg-accent/40 px-3 py-2 text-sm">{message}</p>
       )}
+
+      <div className="flex flex-col gap-4">
+        <GoogleSignInButton />
+
+        <div className="flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            or
+          </span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+      </div>
 
       <form action={formAction} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5 text-sm font-medium">

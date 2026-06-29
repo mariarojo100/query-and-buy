@@ -59,6 +59,19 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Logged-in users shouldn't sit on the auth pages — send them where they were
+  // headed (?redirectTo) or home. Prevents the post-OAuth "stuck on /login" loop.
+  if (user && (pathname === '/login' || pathname === '/signup')) {
+    const url = request.nextUrl.clone()
+    const redirectTo = request.nextUrl.searchParams.get('redirectTo')
+    url.pathname = redirectTo && redirectTo.startsWith('/') ? redirectTo : '/'
+    url.search = ''
+    const redirect = NextResponse.redirect(url)
+    // Carry over any refreshed auth cookies so the session isn't dropped.
+    supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c))
+    return redirect
+  }
+
   // Must return supabaseResponse as-is so refreshed auth cookies are preserved.
   return supabaseResponse
 }

@@ -69,25 +69,13 @@ export async function GET(request: NextRequest) {
     return loginRedirect('We couldn’t complete your Google sign-in. Please try again.')
   }
 
-  // The user is now authenticated and the session cookies are on `response`.
-  // Ensure a profile exists (idempotent self-heal) for first-time users — but a
-  // failure here must NEVER drop the session or bounce to /login (reqs 5 & 6).
-  // The DB trigger already provisions the profile on signup; this is a safety
-  // net. Wrapped so a throw can't prevent returning the authenticated redirect.
-  try {
-    const { error: profileError } = await supabase.rpc('ensure_self_profile')
-    if (profileError) {
-      logger.error('auth.callback', 'ensure_self_profile returned error (session kept)', {
-        reason: profileError.message,
-      })
-    }
-  } catch (e) {
-    logger.error('auth.callback', 'ensure_self_profile threw (session kept)', {
-      reason: e instanceof Error ? e.message : 'unknown',
-    })
-  }
-
-  // Always return the authenticated response: cookies persist, middleware sees
-  // the user, and the homepage renders the signed-in state immediately.
+  // Profile creation for first-time users is handled atomically by the
+  // `handle_new_user` DB trigger when Supabase creates the auth.users row — so
+  // nothing extra runs here. Keeping the callback to ONLY the code exchange is
+  // the known-good flow: no extra round-trip in the critical path that could
+  // fail/hang and drop the session for existing OR new users.
+  //
+  // Cookies are on `response` → session persists, middleware sees the user, and
+  // the homepage renders the signed-in state immediately. No second login.
   return response
 }

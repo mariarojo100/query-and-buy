@@ -22,11 +22,13 @@ export async function SiteHeader() {
   let notifications: Awaited<ReturnType<typeof getNotifications>> = []
   let notifUnread = 0
   if (user) {
+    // maybeSingle (not single): a brand-new user's profile may lag by a beat —
+    // never error/crash the navbar over it; fall back to the email.
     const { data } = await supabase
       .from('profiles')
       .select('display_name, avatar_url')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
     avatarUrl = (data?.avatar_url as string | null) ?? null
     displayName = (data?.display_name as string | null) ?? user.email ?? 'Account'
     ;[unread, notifications, notifUnread] = await Promise.all([

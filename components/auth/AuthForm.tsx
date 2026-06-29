@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { Logo } from '@/components/brand/Logo'
 import type { AuthState } from '@/app/(auth)/actions'
 
 function SubmitButton({ label }: { label: string }) {
@@ -59,8 +60,8 @@ export function AuthForm({
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-7 px-6 py-12">
       <div className="text-center">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          Query <span className="text-muted-foreground">&amp;</span> Buy
+        <Link href="/" aria-label="Query & Buy home" className="inline-flex justify-center">
+          <Logo size={44} />
         </Link>
         <h1 className="font-display mt-7 text-3xl tracking-tight">{copy.title}</h1>
       </div>

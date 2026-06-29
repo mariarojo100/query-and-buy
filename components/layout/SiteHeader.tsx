@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { HeartIcon, MessageSquareIcon } from 'lucide-react'
+import { Logo } from '@/components/brand/Logo'
 import { createClient } from '@/utils/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -41,8 +42,8 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
-        <Link href="/" className="font-display text-xl tracking-tight">
-          Query <span className="text-muted-foreground">&amp;</span> Buy
+        <Link href="/" aria-label="Query & Buy home" className="shrink-0">
+          <Logo size={34} />
         </Link>
 
         <div className="flex items-center gap-1 sm:gap-1.5">

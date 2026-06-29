@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { CookieConsent } from "@/components/consent/CookieConsent";
+import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
@@ -64,6 +66,8 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <MobileTabBar />
+          <FeedbackWidget />
+          <CookieConsent />
           <Toaster richColors position="top-center" />
         </ThemeProvider>
       </body>

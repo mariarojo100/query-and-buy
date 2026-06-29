@@ -7,6 +7,7 @@ import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
+import { logger } from '@/lib/logger'
 import type { ListingImageInput } from '@/app/sell/actions'
 
 type Result = { ok?: boolean; error?: string; blocked?: boolean; categories?: string[] }
@@ -153,7 +154,7 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
     .maybeSingle()
 
   if (updErr) {
-    console.error('updateListing update failed:', updErr)
+    logger.error('account.updateListing', 'update failed', { code: updErr.code })
     return { error: 'Could not save your changes. Please try again.' }
   }
   if (!updated) return { error: 'Listing not found.' }
@@ -172,7 +173,7 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
     .delete()
     .eq('listing_id', input.id)
   if (delErr) {
-    console.error('updateListing image delete failed:', delErr)
+    logger.error('account.updateListing', 'image delete failed', { code: delErr.code })
     return { error: 'Could not save your changes. Please try again.' }
   }
 
@@ -185,7 +186,7 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
   }))
   const { error: insErr } = await supabase.from('listing_images').insert(rows)
   if (insErr) {
-    console.error('updateListing image insert failed:', insErr)
+    logger.error('account.updateListing', 'image insert failed', { code: insErr.code })
     return { error: 'Could not save your photos. Please try again.' }
   }
 

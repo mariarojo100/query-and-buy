@@ -79,17 +79,10 @@ export default async function HomePage({
   const favoritedIds = await getFavoritedIds(listings.map((l) => l.id))
   const counts = hasFilters ? undefined : await getCategoryCounts(categories)
   const trending = hasFilters ? [] : await getTrendingSearches(8)
-  // Curated discovery shelves (real data via price-filtered queries).
-  const [featured, luxury, under500] = hasFilters
-    ? [[], [], []]
-    : await Promise.all([
-        getFeaturedListings(8),
-        getFilteredListings({ minFils: 5_000_000, sort: 'price_desc', limit: 8 }).then((r) => r.listings),
-        getFilteredListings({ maxFils: 50_000, sort: 'newest', limit: 8 }).then((r) => r.listings),
-      ])
-  const shelfFav = hasFilters
-    ? new Set<string>()
-    : await getFavoritedIds([...featured, ...luxury, ...under500].map((l) => l.id))
+  const featured = hasFilters ? [] : await getFeaturedListings(8)
+  const featuredFav = featured.length
+    ? await getFavoritedIds(featured.map((l) => l.id))
+    : new Set<string>()
 
   // Personalized (signed-in, no active search). Empty arrays → sections hidden.
   const personalize = !hasFilters && !!user
@@ -268,43 +261,7 @@ export default async function HomePage({
                 <ListingResults
                   listings={featured}
                   count={featured.length}
-                  favoritedIds={shelfFav}
-                  authed={!!user}
-                />
-              </section>
-            )}
-
-            {/* ---------- LUXURY PICKS ---------- */}
-            {luxury.length > 0 && (
-              <section className="py-6 sm:py-8">
-                <div className="mb-5">
-                  <p className="eyebrow text-gold">Curated</p>
-                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
-                    Luxury picks
-                  </h2>
-                </div>
-                <ListingResults
-                  listings={luxury}
-                  count={luxury.length}
-                  favoritedIds={shelfFav}
-                  authed={!!user}
-                />
-              </section>
-            )}
-
-            {/* ---------- UNDER AED 500 ---------- */}
-            {under500.length > 0 && (
-              <section className="py-6 sm:py-8">
-                <div className="mb-5">
-                  <p className="eyebrow">Budget finds</p>
-                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
-                    Under AED 500
-                  </h2>
-                </div>
-                <ListingResults
-                  listings={under500}
-                  count={under500.length}
-                  favoritedIds={shelfFav}
+                  favoritedIds={featuredFav}
                   authed={!!user}
                 />
               </section>

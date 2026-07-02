@@ -5,7 +5,7 @@
  *
  * Swap the sink (e.g. ship to Sentry/Datadog) by replacing `emit`.
  */
-type Level = 'debug' | 'info' | 'warn' | 'error'
+type Level = 'debug' | 'info' | 'warn' | 'error' | 'security' | 'audit'
 
 const SENSITIVE = /(pass|token|secret|key|authorization|cookie|email|phone|otp)/i
 
@@ -31,7 +31,7 @@ function emit(level: Level, scope: string, message: string, meta?: Record<string
     ...(meta ? { meta: redact(meta) } : {}),
   }
   const line = JSON.stringify(entry)
-  if (level === 'error') console.error(line)
+  if (level === 'error' || level === 'security') console.error(line)
   else if (level === 'warn') console.warn(line)
   else console.log(line)
 }
@@ -46,4 +46,10 @@ export const logger = {
     emit('warn', scope, message, meta),
   error: (scope: string, message: string, meta?: Record<string, unknown>) =>
     emit('error', scope, message, meta),
+  /** Security-relevant events: auth failures, rate-limit hits, blocked content. */
+  security: (scope: string, message: string, meta?: Record<string, unknown>) =>
+    emit('security', scope, message, meta),
+  /** Audit trail: who did what (admin actions, state changes). */
+  audit: (scope: string, message: string, meta?: Record<string, unknown>) =>
+    emit('audit', scope, message, meta),
 }

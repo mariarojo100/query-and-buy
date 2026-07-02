@@ -14,6 +14,7 @@ import { EMIRATES, EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import type { SavedFilters } from '@/lib/savedSearches/filters'
 import { heuristicParse } from '@/lib/search/heuristicParse'
+import { enforceRateLimit } from '@/lib/security/rateLimit'
 
 export type ConversationalResult = {
   query: string | null
@@ -52,6 +53,17 @@ export async function parseConversationalSearch(text: string): Promise<Conversat
     slug: c.slug,
     name: c.name_en,
   }))
+
+  // Cap AI search calls per signed-in user (best-effort, per-instance). A
+  // throttled user still gets the deterministic heuristic result, not an error.
+  // Anon traffic relies on the heuristic fallback + provider quota; IP-based
+  // limiting for anon needs edge middleware (see PRODUCTION_READINESS.md).
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (user && !enforceRateLimit('ai.search', user.id, 40, 60_000).allowed) {
+    return fallback
+  }
 
   let parsed
   try {

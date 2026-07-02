@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { ContentHeader } from '@/components/content/Prose'
+import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
   title: 'FAQ · Query & Buy',
@@ -43,9 +44,20 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
   },
 ]
 
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: typeof f.a === 'string' ? f.a : '' },
+  })),
+}
+
 export default function FaqPage() {
   return (
     <>
+      <JsonLd data={[faqJsonLd]} />
       <ContentHeader eyebrow="Answers" title="Frequently asked questions" />
       <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
         {FAQS.map((f, i) => (

@@ -10,6 +10,7 @@ import {
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { logModeration } from '@/lib/safety/moderation-log'
 import { logger } from '@/lib/logger'
+import { enforceRateLimit } from '@/lib/security/rateLimit'
 
 export type AiPricing = {
   quickSaleAed: number | null
@@ -56,6 +57,11 @@ export async function generateListingDraft(images: AiImageInput[]): Promise<AiDr
   } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'You must be signed in.' }
   if (!images?.length) return { ok: false, error: 'Add at least one photo first.' }
+
+  // Cost/abuse guard: cap AI generations per user (best-effort, per-instance).
+  if (!enforceRateLimit('ai.draft', user.id, 12, 60_000).allowed) {
+    return { ok: false, error: 'You are generating listings too quickly. Please wait a moment and try again.' }
+  }
 
   const photos = images.slice(0, 5) // req: 1–5 photos
 

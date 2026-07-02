@@ -1,6 +1,37 @@
 # Changelog
 
-All notable architectural and project-level decisions for Query & Buy.
+All notable changes to Query & Buy. Format loosely follows [Keep a Changelog](https://keepachangelog.com); versions follow [SemVer](https://semver.org).
+
+---
+
+## [0.9.0] — 2026-06-30 — Production Hardening (public-beta candidate)
+
+A hardening sprint (no new product features) to make the existing app ready for an invite-only / public beta on Vercel. UI and functionality were preserved.
+
+### Security
+- **Content-Security-Policy** added (default-src 'self'; scoped script/style/img/font/connect; `frame-ancestors 'none'`; `object-src 'none'`; `base-uri`/`form-action 'self'`; `upgrade-insecure-requests`). Strictest policy compatible with the App Router without nonces.
+- Tightened headers: `X-Frame-Options: DENY`, added `Cross-Origin-Opener-Policy: same-origin`, extended `Permissions-Policy`, disabled `X-Powered-By`.
+- **Account-enumeration defence** on login (generic "Invalid email or password"; real reason logged via security channel only).
+- **Best-effort rate limiting** (`lib/security/rateLimit.ts`) on the cost-sensitive AI endpoints (listing generation, conversational search). Fails open; per-instance (Upstash recommended for multi-instance).
+- Logger gained dedicated **`security`** and **`audit`** channels (secret/PII redaction retained).
+- Added `scripts/audit_rls.sql` to verify RLS/policies/buckets/RPCs against the live DB.
+
+### Features (auth completeness, not product scope)
+- **Password reset** flow: `/forgot-password` + `/reset-password` with `requestPasswordReset` / `updatePassword` server actions (recovery via the existing PKCE callback). "Forgot password?" link added to login.
+
+### SEO
+- **FAQPage JSON-LD** on `/faq` (rich snippets).
+- **Generated OpenGraph image** (`app/opengraph-image.tsx`) for social/link previews.
+- Added Google avatar host (`lh3.googleusercontent.com`) to `next/image` `remotePatterns`.
+
+### Tooling / Docs
+- Added **GitHub Actions CI** (`.github/workflows/ci.yml`) running `tsc --noEmit` on push/PR.
+- Added `VERSION_HISTORY.md` and `PRODUCTION_READINESS.md`.
+
+### Notes / known gaps (see PRODUCTION_READINESS.md)
+- External error monitoring (Sentry/Datadog), distributed rate limiting (Upstash), and anon/IP rate limiting are **recommended, not yet implemented**.
+- Live RLS verification must be run by the operator via `scripts/audit_rls.sql` (no DB credentials in this environment).
+- Documentation note: the AI provider in code is **Google Gemini (`gemini-2.5-flash`)** behind a provider abstraction; earlier changelog entries referencing Claude reflect an initial plan, not the current implementation.
 
 ---
 
@@ -14,7 +45,7 @@ All notable architectural and project-level decisions for Query & Buy.
 - Shadcn UI
 - Supabase
 - Vercel
-- Anthropic Claude API
+- (planned) Anthropic Claude API — superseded in implementation by Google Gemini behind the AI provider abstraction.
 
 **Rejected:**
 
@@ -27,8 +58,6 @@ All notable architectural and project-level decisions for Query & Buy.
 
 ## 2026-06-23 — AI provider finalized
 
-**Decision:** Phase 1 uses **Anthropic Claude** as the primary AI provider (resolves the earlier OpenAI-vs-Claude inconsistency in favor of Claude). Model tiers: `claude-haiku-4-5` (cheap classification / search parse), `claude-sonnet-4-6` (vision photo→listing, default), `claude-opus-4-8` (hard reasoning).
+**Decision (original plan):** Phase 1 would use Anthropic Claude. **Current implementation:** the AI layer is provider-agnostic (`lib/ai/provider.ts`) and ships with **Google Gemini `gemini-2.5-flash`**; OpenAI/Claude branches are templated for future use.
 
-**Rationale:** The entire AI design — vision photo→listing, structured-output attribute extraction, and conversational-search parsing — was built around Claude. Claude is the approved provider for all Phase 1 AI features.
-
-**Future flexibility:** The AI layer should be provider-agnostic, accessed through an abstraction (`packages/llm`). Future versions may support OpenAI or other providers without changing product code.
+**Future flexibility:** Switching providers is a config (`AI_PROVIDER`) + single-class change, with no impact on product code.

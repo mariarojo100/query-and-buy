@@ -25,7 +25,8 @@ export class SignupError extends Error {}
 export interface RegisterInput {
   email: string
   password: string
-  displayName: string
+  /** Optional — the signup form collects only email/password; defaults to the email local part. */
+  displayName?: string
 }
 
 /** Register a new email/password user. Returns the id + a raw email-verify token. */
@@ -33,10 +34,9 @@ export async function registerWithPassword(
   input: RegisterInput,
 ): Promise<{ userId: string; emailVerifyToken: string }> {
   const email = input.email.trim().toLowerCase()
-  const displayName = input.displayName.trim()
   if (!EMAIL_RE.test(email)) throw new SignupError('Enter a valid email address.')
   if (input.password.length < MIN_PASSWORD) throw new SignupError(`Password must be at least ${MIN_PASSWORD} characters.`)
-  if (!displayName) throw new SignupError('Display name is required.')
+  const displayName = (input.displayName ?? '').trim() || email.split('@')[0]
 
   if (await getUserIdByEmail(email)) throw new SignupError('An account with this email already exists.')
 

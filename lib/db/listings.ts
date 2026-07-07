@@ -14,6 +14,7 @@
  */
 import { db } from '@/lib/db'
 import { Prisma } from '@/lib/generated/prisma/client'
+import type { ListingCondition, Emirate } from '@/lib/generated/prisma/enums'
 import { listingVisibleWhere } from '@/lib/authz/policies'
 import type { Viewer } from '@/lib/authz/viewer'
 
@@ -609,4 +610,130 @@ export async function listingByIdVisible(viewer: Viewer | null, id: string): Pro
         }
       : null,
   }
+}
+
+// --- owner-scoped writes (Phase 4) ------------------------------------------
+
+export type ListingImageInput = {
+  storage_key: string
+  position: number
+  width?: number | null
+  height?: number | null
+}
+
+export type WriteListingInput = {
+  title: string
+  description: string
+  priceFils: number
+  categoryId: string
+  condition: string
+  emirate: string
+  area: string | null
+  isNegotiable: boolean
+  images: ListingImageInput[]
+}
+
+export async function categoryIsActive(id: string): Promise<boolean> {
+  const c = await db.category.findFirst({ where: { id, isActive: true }, select: { id: true } })
+  return !!c
+}
+
+function imageCreateRows(listingId: string, images: ListingImageInput[]) {
+  return images.map((im) => ({
+    listingId,
+    storageKey: im.storage_key,
+    position: im.position,
+    width: im.width ?? null,
+    height: im.height ?? null,
+  }))
+}
+
+/** Create a listing owned by the viewer (+ its images) in one write. */
+export async function createListingFor(viewer: Viewer, input: WriteListingInput): Promise<{ id?: string; error?: string }> {
+  if (!(await categoryIsActive(input.categoryId))) return { error: 'That category is unavailable.' }
+  const now = new Date()
+  const expires = new Date(now.getTime() + 30 * 86_400_000)
+  const listing = await db.listing.create({
+    data: {
+      sellerId: viewer.id,
+      categoryId: input.categoryId,
+      titleEn: input.title,
+      description: input.description,
+      priceFils: BigInt(input.priceFils),
+      condition: input.condition as ListingCondition,
+      emirate: input.emirate as Emirate,
+      area: input.area,
+      isNegotiable: input.isNegotiable,
+      status: 'active',
+      publishedAt: now,
+      expiresAt: expires,
+      images: { create: imageCreateRows('', input.images).map(({ listingId: _drop, ...rest }) => rest) },
+    },
+    select: { id: true },
+  })
+  return { id: listing.id }
+}
+
+/** Update a listing's fields + replace its image set. Owner-only. Returns removed storage keys. */
+export async function updateListingFor(
+  viewer: Viewer,
+  input: WriteListingInput & { id: string },
+): Promise<{ ok: true; removedKeys: string[] } | { error: string }> {
+  if (!(await categoryIsActive(input.categoryId))) return { error: 'That category is unavailable.' }
+  const outcome = await db.$transaction(async (tx) => {
+    const upd = await tx.listing.updateMany({
+      where: { id: input.id, sellerId: viewer.id },
+      data: {
+        titleEn: input.title,
+        description: input.description,
+        priceFils: BigInt(input.priceFils),
+        categoryId: input.categoryId,
+        condition: input.condition as ListingCondition,
+        emirate: input.emirate as Emirate,
+        area: input.area,
+        isNegotiable: input.isNegotiable,
+      },
+    })
+    if (upd.count === 0) return { notFound: true as const }
+    const existing = await tx.listingImage.findMany({ where: { listingId: input.id }, select: { storageKey: true } })
+    const finalKeys = new Set(input.images.map((i) => i.storage_key))
+    const removed = existing.map((e) => e.storageKey).filter((k) => !finalKeys.has(k))
+    await tx.listingImage.deleteMany({ where: { listingId: input.id } })
+    await tx.listingImage.createMany({ data: imageCreateRows(input.id, input.images) })
+    return { removed }
+  })
+  if ('notFound' in outcome) return { error: 'Listing not found.' }
+  return { ok: true, removedKeys: outcome.removed }
+}
+
+export async function markListingSoldFor(viewer: Viewer, id: string): Promise<boolean> {
+  const r = await db.listing.updateMany({ where: { id, sellerId: viewer.id }, data: { status: 'sold' } })
+  return r.count > 0
+}
+
+export async function softDeleteListingFor(viewer: Viewer, id: string): Promise<boolean> {
+  const r = await db.listing.updateMany({ where: { id, sellerId: viewer.id }, data: { status: 'deleted', deletedAt: new Date() } })
+  return r.count > 0
+}
+
+export async function setListingPausedFor(viewer: Viewer, id: string, paused: boolean): Promise<boolean> {
+  const r = await db.listing.updateMany({
+    where: { id, sellerId: viewer.id, status: paused ? 'active' : 'draft' },
+    data: { status: paused ? 'draft' : 'active' },
+  })
+  return r.count > 0
+}
+
+/** Increment a listing's view counter (any viewer; a public counter, no-op if missing). */
+export async function bumpViewCount(listingId: string): Promise<void> {
+  await db.listing.updateMany({ where: { id: listingId }, data: { viewCount: { increment: 1 } } })
+}
+
+/** Record the viewer's recently-viewed entry (owner-scoped upsert). */
+export async function recordListingView(viewer: Viewer, listingId: string): Promise<void> {
+  await db.listingView.upsert({
+    where: { userId_listingId: { userId: viewer.id, listingId } },
+    create: { userId: viewer.id, listingId },
+    update: { viewedAt: new Date() },
+  })
 }

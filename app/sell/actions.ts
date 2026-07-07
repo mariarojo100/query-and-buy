@@ -1,21 +1,17 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { createListingFor } from '@/lib/db/listings'
 import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
 import { logModeration } from '@/lib/safety/moderation-log'
 import { track } from '@/lib/analytics'
-import { logger } from '@/lib/logger'
 
-export type ListingImageInput = {
-  storage_key: string
-  position: number
-  width?: number | null
-  height?: number | null
-}
+export type { ListingImageInput } from '@/lib/db/listings'
+import type { ListingImageInput } from '@/lib/db/listings'
 
 export type CreateListingInput = {
   title: string
@@ -32,11 +28,8 @@ export type CreateListingInput = {
 export async function createListing(
   input: CreateListingInput,
 ): Promise<{ id?: string; error?: string; blocked?: boolean; categories?: string[] }> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'You must be signed in to sell.' }
+  const viewer = await getViewer()
+  if (!viewer) return { error: 'You must be signed in to sell.' }
 
   const title = input.title?.trim() ?? ''
   const description = input.description?.trim() ?? ''
@@ -69,56 +62,20 @@ export async function createListing(
     return { blocked: true, error: PROHIBITED_MESSAGE, categories: safety.categories }
   }
 
-  // category must exist and be active
-  const { data: cat } = await supabase
-    .from('categories')
-    .select('id')
-    .eq('id', input.category_id)
-    .eq('is_active', true)
-    .maybeSingle()
-  if (!cat) return { error: 'That category is unavailable.' }
+  const res = await createListingFor(viewer, {
+    title,
+    description,
+    priceFils: price_fils,
+    categoryId: input.category_id,
+    condition: input.condition,
+    emirate: input.emirate,
+    area,
+    isNegotiable: input.isNegotiable ?? true,
+    images: input.images,
+  })
+  if (res.error) return { error: res.error }
 
-  const now = new Date()
-  const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-
-  const { data: listing, error } = await supabase
-    .from('listings')
-    .insert({
-      seller_id: user.id,
-      category_id: input.category_id,
-      title_en: title,
-      description,
-      price_fils,
-      condition: input.condition,
-      emirate: input.emirate,
-      area,
-      is_negotiable: input.isNegotiable ?? true,
-      status: 'active',
-      published_at: now.toISOString(),
-      expires_at: expires.toISOString(),
-    })
-    .select('id')
-    .single()
-
-  if (error || !listing) {
-    logger.error('sell.createListing', 'listing insert failed', { code: error?.code })
-    return { error: 'Could not create your listing. Please try again.' }
-  }
-
-  const rows = input.images.map((im) => ({
-    listing_id: listing.id as string,
-    storage_key: im.storage_key,
-    position: im.position,
-    width: im.width ?? null,
-    height: im.height ?? null,
-  }))
-  const { error: imgErr } = await supabase.from('listing_images').insert(rows)
-  if (imgErr) {
-    logger.error('sell.createListing', 'image insert failed', { code: imgErr.code })
-    return { error: 'Could not save your photos. Please try again.' }
-  }
-
-  track('listing_created', { listingId: listing.id, category_id: input.category_id })
+  track('listing_created', { listingId: res.id, category_id: input.category_id })
   revalidatePath('/')
-  return { id: listing.id as string }
+  return { id: res.id }
 }

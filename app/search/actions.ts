@@ -1,6 +1,7 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { getActiveCategories } from '@/lib/listings/queries'
 import { getProvider } from '@/lib/ai/provider'
 import { track } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
@@ -44,24 +45,15 @@ export async function parseConversationalSearch(text: string): Promise<Conversat
     aiUsed: false,
   }
 
-  const supabase = await createClient()
-  const { data: cats } = await supabase
-    .from('categories')
-    .select('slug, name_en')
-    .eq('is_active', true)
-  const categories = ((cats ?? []) as { slug: string; name_en: string }[]).map((c) => ({
-    slug: c.slug,
-    name: c.name_en,
-  }))
+  const cats = await getActiveCategories()
+  const categories = cats.map((c) => ({ slug: c.slug, name: c.name_en }))
 
   // Cap AI search calls per signed-in user (best-effort, per-instance). A
   // throttled user still gets the deterministic heuristic result, not an error.
   // Anon traffic relies on the heuristic fallback + provider quota; IP-based
   // limiting for anon needs edge middleware (see PRODUCTION_READINESS.md).
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (user && !enforceRateLimit('ai.search', user.id, 40, 60_000).allowed) {
+  const viewer = await getViewer()
+  if (viewer && !enforceRateLimit('ai.search', viewer.id, 40, 60_000).allowed) {
     return fallback
   }
 

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { getActiveCategories } from '@/lib/listings/queries'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { CreateListingForm } from '@/components/sell/CreateListingForm'
 import type { Category } from '@/components/sell/CategorySelect'
@@ -7,18 +8,10 @@ import type { Category } from '@/components/sell/CategorySelect'
 export const metadata = { title: 'Sell an item · Query & Buy' }
 
 export default async function SellPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) redirect('/login?redirectTo=/sell')
 
-  const { data } = await supabase
-    .from('categories')
-    .select('id, name_en, parent_id, position')
-    .eq('is_active', true)
-    .order('position', { ascending: true })
-  const categories = (data ?? []) as Category[]
+  const categories = (await getActiveCategories()) as Category[]
 
   return (
     <>

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { BellIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Button } from '@/components/ui/button'
@@ -13,10 +13,7 @@ import { cn } from '@/lib/utils'
 export const metadata = { title: 'Notifications · Query & Buy' }
 
 export default async function NotificationsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) redirect('/login?redirectTo=/notifications')
 
   const items = await getNotifications(50)

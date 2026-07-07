@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { HeartIcon, MessageSquareIcon } from 'lucide-react'
 import { Logo } from '@/components/brand/Logo'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { profileHeader } from '@/lib/db/profiles'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
@@ -12,10 +13,7 @@ import { getNotifications, getUnreadNotificationCount } from '@/lib/notification
 
 /** Quiet, editorial top bar. Primary nav on mobile lives in the bottom tab bar. */
 export async function SiteHeader() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
 
   let avatarUrl: string | null = null
   let displayName = ''
@@ -23,15 +21,10 @@ export async function SiteHeader() {
   let notifications: Awaited<ReturnType<typeof getNotifications>> = []
   let notifUnread = 0
   if (user) {
-    // maybeSingle (not single): a brand-new user's profile may lag by a beat —
-    // never error/crash the navbar over it; fall back to the email.
-    const { data } = await supabase
-      .from('profiles')
-      .select('display_name, avatar_url')
-      .eq('id', user.id)
-      .maybeSingle()
-    avatarUrl = (data?.avatar_url as string | null) ?? null
-    displayName = (data?.display_name as string | null) ?? user.email ?? 'Account'
+    // A brand-new user's profile may lag by a beat — never crash the navbar; fall back to email.
+    const data = await profileHeader(user.id)
+    avatarUrl = data?.avatar_url ?? null
+    displayName = data?.display_name ?? user.email ?? 'Account'
     ;[unread, notifications, notifUnread] = await Promise.all([
       getUnreadConversationCount(),
       getNotifications(12),

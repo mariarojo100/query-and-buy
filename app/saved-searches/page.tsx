@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { BookmarkIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,10 +13,7 @@ import { getActiveCategories } from '@/lib/listings/queries'
 export const metadata = { title: 'Saved searches · Query & Buy' }
 
 export default async function SavedSearchesPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) redirect('/login?redirectTo=/saved-searches')
 
   const [searches, categories] = await Promise.all([

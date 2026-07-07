@@ -1,9 +1,11 @@
 import Link from 'next/link'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { profileById, accountPhoneE164 } from '@/lib/db/profiles'
 import { signOut } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm'
+import { PhoneVerification } from '@/components/profile/PhoneVerification'
 import { NotificationPreferences } from '@/components/notifications/NotificationPreferences'
 import { getMyPreferences } from '@/lib/notifications/preferences'
 import type { Profile } from '@/lib/profile/completion'
@@ -11,23 +13,13 @@ import type { Profile } from '@/lib/profile/completion'
 export const metadata = { title: 'Settings · Query & Buy' }
 
 export default async function AccountSettingsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) return null
 
-  const { data } = await supabase
-    .from('profiles')
-    .select(
-      'id, username, display_name, avatar_url, bio, emirate, badge_level, listings_count, member_since',
-    )
-    .eq('id', user.id)
-    .maybeSingle()
-  const profile = data as Profile | null
+  const profile = (await profileById(user.id)) as (Profile & { phone_verified: boolean }) | null
   if (!profile) return null
 
-  const prefs = await getMyPreferences()
+  const [prefs, currentPhone] = await Promise.all([getMyPreferences(), accountPhoneE164(user.id)])
 
   return (
     <div className="space-y-6">
@@ -53,6 +45,15 @@ export default async function AccountSettingsPage() {
         </CardHeader>
         <CardContent>
           <ProfileEditForm profile={profile} />
+        </CardContent>
+      </Card>
+
+      <Card id="phone" className="scroll-mt-24 shadow-soft">
+        <CardHeader>
+          <CardTitle className="font-display text-lg font-normal">Phone verification</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PhoneVerification verified={profile.phone_verified} currentPhone={currentPhone} />
         </CardContent>
       </Card>
 

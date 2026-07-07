@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound, redirect } from 'next/navigation'
 import { ChevronLeftIcon, ImageIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { NegotiationChat, type TimelineItem } from '@/components/orders/NegotiationChat'
 import { MarkConversationRead } from '@/components/messaging/MarkConversationRead'
@@ -31,10 +31,7 @@ export default async function ConversationPage({
 }) {
   const { conversationId } = await params
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) redirect(`/login?redirectTo=/messages/${conversationId}`)
 
   const view = await getConversationView(conversationId)

@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CalendarDaysIcon, MapPinIcon, MessagesSquareIcon, PackageIcon, PencilIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { profileByUsername } from '@/lib/db/profiles'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -32,9 +33,10 @@ import type { Profile } from '@/lib/profile/completion'
  * Public seller profile.
  *
  * Deferred / future work (intentionally NOT built yet):
- * - Phone verification: `phone_verified` is currently a placeholder in the trust
- *   model. Wire it to a real OTP provider (e.g. Twilio Verify / Firebase) and
- *   only surface a "Phone Verified" badge once the flow actually sets the flag.
+ * - Phone verification: now real — `phone_verified` is flipped only by a genuine
+ *   Supabase Auth OTP confirmation (see components/profile/PhoneVerification and
+ *   the 20260702120000_phone_verification migration). Still requires an SMS
+ *   provider to be configured in the Supabase dashboard to send codes.
  * - Cover image: the hero uses a brand gradient. A `cover_image_url` column can
  *   be added later so sellers personalise the hero (fall back to the gradient).
  * - Pagination: reviews (6) and listings (12) are capped fetches. Add a
@@ -49,17 +51,8 @@ type ProfileWithTrust = Profile & {
   reports_count: number
 }
 
-const PROFILE_COLUMNS =
-  'id, username, display_name, avatar_url, bio, emirate, badge_level, listings_count, member_since, email_verified, phone_verified, reports_count'
-
 async function getProfile(username: string): Promise<ProfileWithTrust | null> {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('profiles')
-    .select(PROFILE_COLUMNS)
-    .eq('username', username)
-    .maybeSingle()
-  return data as ProfileWithTrust | null
+  return (await profileByUsername(username)) as ProfileWithTrust | null
 }
 
 export async function generateMetadata({
@@ -97,10 +90,7 @@ export default async function PublicProfilePage({
   if (!profile) notFound()
   track('profile_viewed', { username })
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   const isSelf = user?.id === profile.id
 
   const trust = computeTrust({

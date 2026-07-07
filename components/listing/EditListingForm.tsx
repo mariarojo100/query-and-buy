@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select'
 import { CategorySelect, type Category } from '@/components/sell/CategorySelect'
 import { updateListing } from '@/app/account/listings/actions'
-import { createClient } from '@/utils/supabase/client'
+import { getListingUploadUrls } from '@/app/uploads/actions'
 import { EMIRATES } from '@/lib/profile/emirates'
 import { CONDITIONS } from '@/lib/listings/conditions'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
@@ -108,8 +108,13 @@ export function EditListingForm({
 
     setSubmitting(true)
     try {
-      const supabase = createClient()
-      const groupId = crypto.randomUUID()
+      // Presign only the newly-added photos; existing ones keep their keys.
+      const newPics = pics.filter((p) => p.kind === 'new')
+      const { slots, error: presignError } = newPics.length
+        ? await getListingUploadUrls(newPics.map((p) => ({ contentType: (p as { file: File }).file.type, sizeBytes: (p as { file: File }).file.size })))
+        : { slots: [], error: undefined }
+      if (presignError || !slots) throw new Error(presignError ?? 'Image upload failed.')
+
       const images = []
       let newIdx = 0
       for (let i = 0; i < pics.length; i++) {
@@ -117,14 +122,11 @@ export function EditListingForm({
         if (p.kind === 'existing') {
           images.push({ storage_key: p.storage_key, position: i })
         } else {
-          const ext = p.file.name.split('.').pop()?.toLowerCase() || 'jpg'
-          const key = `${userId}/${groupId}/${newIdx}.${ext}`
+          const slot = slots[newIdx]
           newIdx++
-          const { error } = await supabase.storage
-            .from(LISTING_IMAGES_BUCKET)
-            .upload(key, p.file, { cacheControl: '3600', upsert: true })
-          if (error) throw new Error(`Image upload failed: ${error.message}`)
-          images.push({ storage_key: key, position: i })
+          const put = await fetch(slot.url, { method: 'PUT', headers: slot.headers, body: p.file })
+          if (!put.ok) throw new Error('Image upload failed.')
+          images.push({ storage_key: slot.key, position: i })
         }
       }
 

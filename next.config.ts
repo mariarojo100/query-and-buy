@@ -9,16 +9,25 @@ import type { NextConfig } from 'next'
  *
  * - img-src allows https: (next/image proxies most, but Radix avatars load
  *   Google/Supabase URLs directly) plus data:/blob: for upload previews.
- * - connect-src allows Supabase REST + Realtime (wss). Gemini is server-side
+ * - connect-src allows Supabase (still live) + the S3-compatible storage host
+ *   for presigned PUT uploads during/after the migration. Gemini is server-side
  *   only, so it is intentionally NOT in connect-src.
  */
+const STORAGE_ORIGIN = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_STORAGE_BASE_URL ? new URL(process.env.NEXT_PUBLIC_STORAGE_BASE_URL).origin : ''
+  } catch {
+    return ''
+  }
+})()
+
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  `connect-src 'self' https://*.supabase.co wss://*.supabase.co${STORAGE_ORIGIN ? ` ${STORAGE_ORIGIN}` : ''}`,
   "frame-src 'none'",
   "frame-ancestors 'none'",
   "object-src 'none'",
@@ -53,8 +62,10 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      // Supabase Storage public objects (avatars, listing-images).
+      // Supabase Storage public objects (avatars, listing-images) — still live pre-cutover.
       { protocol: 'https', hostname: '**.supabase.co', pathname: '/storage/v1/object/public/**' },
+      // Target S3-compatible storage host (R2/S3/MinIO) — active once NEXT_PUBLIC_STORAGE_BASE_URL is set.
+      ...(STORAGE_ORIGIN ? [{ protocol: 'https' as const, hostname: new URL(STORAGE_ORIGIN).hostname }] : []),
       // Google account avatars from OAuth sign-in.
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],

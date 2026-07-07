@@ -1,7 +1,8 @@
-/** Build a public URL for an object in a public Supabase Storage bucket. */
-export function publicUrl(bucket: string, key: string): string {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/\/$/, '')
-  return `${base}/storage/v1/object/public/${bucket}/${key}`
-}
+/**
+ * Public storage URLs. Delegates to the target-stack object-storage layer,
+ * which prefers NEXT_PUBLIC_STORAGE_BASE_URL and falls back to the Supabase
+ * host until cutover (see lib/object-storage/index.ts#publicUrl).
+ */
+export { publicUrl } from '@/lib/object-storage'
 
 export const LISTING_IMAGES_BUCKET = 'listing-images'

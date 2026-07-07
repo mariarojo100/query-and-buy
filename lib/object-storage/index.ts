@@ -19,16 +19,18 @@ export * from '@/lib/object-storage/keys'
 export type { StorageDriver, PresignedUpload } from '@/lib/object-storage/driver'
 export { S3StorageDriver } from '@/lib/object-storage/s3'
 
-/** Public URL for a public-bucket object. Mirrors lib/storage.ts#publicUrl. */
+/**
+ * Public URL for a public-bucket object. Prefers the target host
+ * (NEXT_PUBLIC_STORAGE_BASE_URL); until cutover sets that, it falls back to the
+ * Supabase Storage public path so images still render. Flipping the env var at
+ * cutover is all that's needed to switch hosts.
+ */
 export function publicUrl(bucket: BucketName | string, key: string): string {
   const base = process.env.NEXT_PUBLIC_STORAGE_BASE_URL
-  if (!base) {
-    throw new Error(
-      'NEXT_PUBLIC_STORAGE_BASE_URL is not set. The object-storage layer is part of the ' +
-        'in-progress Supabase→self-managed migration and is not active yet; see lib/object-storage/README.md.',
-    )
-  }
-  return `${base.replace(/\/$/, '')}/${bucket}/${key}`
+  if (base) return `${base.replace(/\/$/, '')}/${bucket}/${key}`
+  const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (supabase) return `${supabase.replace(/\/$/, '')}/storage/v1/object/public/${bucket}/${key}`
+  return `/${bucket}/${key}`
 }
 
 let cached: StorageDriver | undefined

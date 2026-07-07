@@ -1,4 +1,9 @@
-import { createServiceClient } from '@/utils/supabase/admin'
+import {
+  insertSearchLog,
+  recentSearchQueries,
+  categorySuggestions,
+  listingTitleSuggestions,
+} from '@/lib/db/system/search'
 
 export type TrendingSearch = { query: string; count: number }
 
@@ -12,8 +17,7 @@ export async function logSearch(query: string, userId?: string | null): Promise<
   const q = query.trim().slice(0, 100)
   if (q.length < 2) return
   try {
-    const admin = createServiceClient()
-    await admin.from('search_log').insert({ query: q, user_id: userId ?? null })
+    await insertSearchLog(q, userId ?? null)
   } catch {
     /* logging is best-effort */
   }
@@ -21,21 +25,14 @@ export async function logSearch(query: string, userId?: string | null): Promise<
 
 /** Most frequent searches over the last 7 days — computed, never hardcoded. */
 export async function getTrendingSearches(limit = 8): Promise<TrendingSearch[]> {
-  let admin
+  let rows: { query: string }[]
   try {
-    admin = createServiceClient()
+    rows = await recentSearchQueries(7, 5000)
   } catch {
     return []
   }
-  const since = new Date(Date.now() - 7 * 86_400_000).toISOString()
-  const { data } = await admin
-    .from('search_log')
-    .select('query')
-    .gte('created_at', since)
-    .limit(5000)
-
   const counts = new Map<string, { display: string; n: number }>()
-  for (const r of (data ?? []) as { query: string }[]) {
+  for (const r of rows) {
     const key = r.query.toLowerCase().trim()
     if (key.length < 2) continue
     const e = counts.get(key) ?? { display: r.query.trim(), n: 0 }
@@ -52,24 +49,19 @@ export async function getTrendingSearches(limit = 8): Promise<TrendingSearch[]> 
 export async function getSearchSuggestions(prefix: string): Promise<Suggestion[]> {
   const p = prefix.trim()
   if (p.length < 2) return []
-  let admin
+
+  let cats: { slug: string; name_en: string }[]
+  let listings: { id: string; title_en: string }[]
+  let trending: TrendingSearch[]
   try {
-    admin = createServiceClient()
+    ;[cats, listings, trending] = await Promise.all([
+      categorySuggestions(p, 3),
+      listingTitleSuggestions(p, 5),
+      getTrendingSearches(20),
+    ])
   } catch {
     return []
   }
-  const like = `%${p}%`
-  const [{ data: cats }, { data: listings }, trending] = await Promise.all([
-    admin.from('categories').select('slug, name_en').eq('is_active', true).ilike('name_en', like).limit(3),
-    admin
-      .from('listings')
-      .select('id, title_en')
-      .eq('status', 'active')
-      .is('deleted_at', null)
-      .ilike('title_en', like)
-      .limit(5),
-    getTrendingSearches(20),
-  ])
 
   const out: Suggestion[] = []
   const lower = p.toLowerCase()
@@ -80,10 +72,8 @@ export async function getSearchSuggestions(prefix: string): Promise<Suggestion[]
       out.push({ type: 'query', label: t.query })
     }
   }
-  for (const c of (cats ?? []) as { slug: string; name_en: string }[])
-    out.push({ type: 'category', label: c.name_en, slug: c.slug })
-  for (const l of (listings ?? []) as { id: string; title_en: string }[])
-    out.push({ type: 'listing', label: l.title_en, id: l.id })
+  for (const c of cats) out.push({ type: 'category', label: c.name_en, slug: c.slug })
+  for (const l of listings) out.push({ type: 'listing', label: l.title_en, id: l.id })
 
   return out.slice(0, 10)
 }

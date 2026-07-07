@@ -1,4 +1,4 @@
-import { createServiceClient } from '@/utils/supabase/admin'
+import { insertNotification, emailPrefsFor, recipientEmailInfo } from '@/lib/db/system/notifications'
 import { sendEmail } from '@/lib/email/send'
 import { buildEmail, type EmailKind, type EmailData } from '@/lib/email/templates'
 
@@ -27,29 +27,20 @@ const ALWAYS_SEND: ReadonlySet<EmailKind> = new Set([
   'reservation_cancelled',
 ])
 
-const PREF_COLUMN: Record<PrefCategory, string> = {
-  offer: 'offer_emails',
-  chat: 'chat_emails',
-  order: 'order_emails',
-  review: 'review_emails',
-  marketing: 'marketing_emails',
-}
-
 /** Whether the recipient wants emails of this kind. Missing row → defaults. */
-async function emailAllowed(
-  admin: ReturnType<typeof createServiceClient>,
-  recipientId: string,
-  kind: EmailKind,
-): Promise<boolean> {
+async function emailAllowed(recipientId: string, kind: EmailKind): Promise<boolean> {
   if (ALWAYS_SEND.has(kind)) return true
   const category = EMAIL_CATEGORY[kind]
-  const { data } = await admin
-    .from('notification_preferences')
-    .select('offer_emails, chat_emails, order_emails, review_emails, marketing_emails')
-    .eq('user_id', recipientId)
-    .maybeSingle()
-  if (!data) return category !== 'marketing' // default: everything but marketing
-  return Boolean((data as Record<string, boolean>)[PREF_COLUMN[category]])
+  const prefs = await emailPrefsFor(recipientId)
+  if (!prefs) return category !== 'marketing' // default: everything but marketing
+  const byCategory: Record<PrefCategory, boolean> = {
+    offer: prefs.offerEmails,
+    chat: prefs.chatEmails,
+    order: prefs.orderEmails,
+    review: prefs.reviewEmails,
+    marketing: prefs.marketingEmails,
+  }
+  return byCategory[category]
 }
 
 export type NotificationType =
@@ -82,22 +73,15 @@ export type DispatchInput = {
  * blocked or failed by notification/email problems.
  */
 export async function dispatch(input: DispatchInput): Promise<void> {
-  let admin
-  try {
-    admin = createServiceClient()
-  } catch {
-    return // service role not configured → skip silently
-  }
-
   // 1) in-app notification
   try {
-    await admin.from('notifications').insert({
-      user_id: input.recipientId,
+    await insertNotification({
+      userId: input.recipientId,
       type: input.type,
       title: input.title,
-      body: input.body ?? null,
-      link: input.link ?? null,
-      data: (input.data ?? {}) as never,
+      body: input.body,
+      link: input.link,
+      data: input.data,
     })
   } catch {
     /* ignore */
@@ -106,26 +90,17 @@ export async function dispatch(input: DispatchInput): Promise<void> {
   // 2) email — verified address (req 6) + respects the recipient's preferences
   if (input.email) {
     try {
-      const allowed = await emailAllowed(admin, input.recipientId, input.email.kind)
+      const allowed = await emailAllowed(input.recipientId, input.email.kind)
       if (!allowed) return // preference off (and not a safety-critical email)
 
-      const [{ data: prof }, { data: usr }] = await Promise.all([
-        admin.from('profiles').select('display_name').eq('id', input.recipientId).maybeSingle(),
-        admin
-          .from('users')
-          .select('email, has_email_verified')
-          .eq('id', input.recipientId)
-          .maybeSingle(),
-      ])
-      const email = (usr as { email?: string } | null)?.email
-      const verified = !!(usr as { has_email_verified?: boolean } | null)?.has_email_verified
-      if (email && verified) {
+      const info = await recipientEmailInfo(input.recipientId)
+      if (info?.email && info.hasEmailVerified) {
         const { subject, html } = buildEmail(input.email.kind, {
           ...input.email.data,
-          recipientName: (prof as { display_name?: string } | null)?.display_name ?? 'there',
+          recipientName: info.displayName,
         })
         await sendEmail({
-          to: email,
+          to: info.email,
           subject,
           html,
           template: input.email.kind,

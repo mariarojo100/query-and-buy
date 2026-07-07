@@ -38,9 +38,13 @@ export function exitCode(): number {
   return failures > 0 ? 1 : 0
 }
 
-/** Wipe all user-owned data (keeps seeded categories + marketplace_settings). */
+/**
+ * Wipe all user-owned data (keeps seeded categories + marketplace_settings).
+ * `users CASCADE` clears everything with a FK chain to users; email_failures has
+ * no such FK, so it's truncated explicitly.
+ */
 export async function resetDb(): Promise<void> {
-  await db.$executeRawUnsafe('TRUNCATE public.users CASCADE')
+  await db.$executeRawUnsafe('TRUNCATE public.users, public.email_failures CASCADE')
 }
 
 /** Create a real user (+ profile + role) and return its id and a Viewer. */

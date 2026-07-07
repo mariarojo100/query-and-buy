@@ -16,8 +16,9 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - run: npm ci # postinstall runs `prisma generate` → produces lib/generated/prisma
       - run: npm run lint
+      - run: npm run check:boundaries # data-access import fence (lib/db/README.md)
     # NOTE: `next build` is intentionally not duplicated here — Vercel runs the
     # full production build (with project env vars) on every push to main, which
     # is the authoritative build gate. To also build in CI, add a job that sets

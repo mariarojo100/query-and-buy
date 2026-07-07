@@ -1,0 +1,831 @@
+// =============================================================================
+// Query & Buy — Prisma schema (MIGRATION FOUNDATION, not yet in runtime use)
+// =============================================================================
+// Mirrors the current Supabase schema (supabase/migrations/ 20260624110001 →
+// 20260702120000). Authored as part of MIGRATION_BLUEPRINT.md Phase 1.
+//
+// IMPORTANT — read prisma/README.md before using this schema:
+// * No runtime code uses @prisma/client yet. Supabase remains the live stack.
+// * `updated_at` columns are maintained by DB triggers (touch_updated_at), so
+//   fields are `@default(now())`, NOT `@updatedAt` — do not "fix" this.
+// * Postgres features Prisma cannot express live in SQL, not here:
+//   generated tsvector column expression, partial/GIN/GIST/ivfflat indexes,
+//   CHECK constraints, counter/guard triggers, and (until replaced) the
+//   auth.users FK + triggers. See README "Out-of-schema inventory".
+// * Reconcile against a live database with `prisma db pull` before this file
+//   is ever used to drive migrations.
+// =============================================================================
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../lib/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+// Connection URL lives in prisma.config.ts (Prisma 7) and reads env("DATABASE_URL").
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgcrypto, postgis, vector, pg_trgm, citext]
+}
+
+// ---------------------------------------------------------------------------
+// Enums (migration 110001; listing_status 'reserved' added in 110018)
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  active
+  suspended
+  banned
+  deleted
+
+  @@map("user_status")
+}
+
+enum AppRole {
+  user
+  moderator
+  admin
+  super_admin
+
+  @@map("app_role")
+}
+
+enum Emirate {
+  dubai
+  abu_dhabi
+  sharjah
+  ajman
+  umm_al_quwain
+  ras_al_khaimah
+  fujairah
+
+  @@map("emirate")
+}
+
+enum ListingStatus {
+  draft
+  pending_review
+  active
+  sold
+  expired
+  rejected
+  deleted
+  reserved
+
+  @@map("listing_status")
+}
+
+enum ListingCondition {
+  new
+  like_new
+  used
+  for_parts
+
+  @@map("listing_condition")
+}
+
+enum VerificationType {
+  mobile
+  email
+  emirates_id
+
+  @@map("verification_type")
+}
+
+enum VerificationStatus {
+  pending
+  verified
+  failed
+  expired
+  rejected
+
+  @@map("verification_status")
+}
+
+enum ConversationStatus {
+  open
+  archived
+  blocked
+
+  @@map("conversation_status")
+}
+
+enum ReportTarget {
+  listing
+  user
+  message
+
+  @@map("report_target")
+}
+
+// Orphaned since migration 110015 (reports table rewrite) but still present in
+// the database — kept so a schema diff against the live DB stays clean.
+enum ReportReason {
+  scam
+  prohibited
+  spam
+  offensive
+  wrong_category
+  counterfeit
+  other
+
+  @@map("report_reason")
+}
+
+// Orphaned since migration 110015 — see ReportReason note.
+enum ReportStatus {
+  open
+  reviewing
+  actioned
+  dismissed
+
+  @@map("report_status")
+}
+
+enum AdminActionType {
+  approve_listing
+  reject_listing
+  remove_listing
+  suspend_user
+  ban_user
+  reinstate_user
+  verify_user
+  dismiss_report
+  other
+
+  @@map("admin_action_type")
+}
+
+// ---------------------------------------------------------------------------
+// Identity (migration 110002; trust columns 110016; phone verification 120000)
+// ---------------------------------------------------------------------------
+
+/// Private account state. In the CURRENT database `id` is also an FK to
+/// auth.users(id) ON DELETE CASCADE — that FK is Supabase-only and is dropped
+/// in the target schema (MIGRATION_BLUEPRINT §2.1), so it is not modeled here.
+model User {
+  id                String     @id @map("id") @db.Uuid
+  phoneE164         String?    @unique @map("phone_e164")
+  email             String?    @unique @db.Citext
+  status            UserStatus @default(active)
+  locale            String     @default("en")
+  trustScore        Int        @default(0) @map("trust_score") @db.SmallInt
+  hasMobileVerified Boolean    @default(false) @map("has_mobile_verified")
+  hasEmailVerified  Boolean    @default(false) @map("has_email_verified")
+  hasEidVerified    Boolean    @default(false) @map("has_eid_verified")
+  flagged           Boolean    @default(false)
+  lastActiveAt      DateTime?  @map("last_active_at") @db.Timestamptz(6)
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  profile               Profile?
+  roles                 UserRole[]            @relation("RoleUser")
+  rolesGranted          UserRole[]            @relation("RoleGrantedBy")
+  listings              Listing[]
+  priceSuggestions      PriceSuggestion[]
+  conversationsAsBuyer  Conversation[]        @relation("ConversationBuyer")
+  conversationsAsSeller Conversation[]        @relation("ConversationSeller")
+  messagesSent          Message[]
+  savedSearches         SavedSearch[]
+  favorites             Favorite[]
+  verifications         VerificationRequest[] @relation("VerificationOwner")
+  verificationsReviewed VerificationRequest[] @relation("VerificationReviewer")
+  adminActions          AdminAction[]
+
+  // Target-stack auth (db/baseline/0002_auth_tables.sql) — not in Supabase.
+  authCredential     AuthCredential?
+  authAccounts       AuthAccount[]
+  verificationTokens AuthVerificationToken[]
+  phoneOtp           AuthPhoneOtp?
+
+  @@map("users")
+}
+
+/// Public seller card, 1:1 with users. rating_*, listings_count and
+/// reports_count are denormalized (maintained by DB triggers / app writes);
+/// phone_verified is guarded by trigger trg_guard_phone_verified (120000).
+model Profile {
+  id            String   @id @db.Uuid
+  displayName   String   @map("display_name")
+  avatarUrl     String?  @map("avatar_url")
+  bio           String?
+  emirate       Emirate?
+  badgeLevel    String   @default("none") @map("badge_level")
+  ratingAvg     Decimal  @default(0) @map("rating_avg") @db.Decimal(2, 1)
+  ratingCount   Int      @default(0) @map("rating_count")
+  listingsCount Int      @default(0) @map("listings_count")
+  memberSince   DateTime @default(now()) @map("member_since") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  username      String?  @unique @db.Citext
+  emailVerified Boolean  @default(false) @map("email_verified")
+  phoneVerified Boolean  @default(false) @map("phone_verified")
+  reportsCount  Int      @default(0) @map("reports_count")
+
+  user User @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  reportsFiled            Report[]                @relation("ReportReporter")
+  reportsReceived         Report[]                @relation("ReportedProfile")
+  ordersAsBuyer           Order[]                 @relation("OrderBuyer")
+  ordersAsSeller          Order[]                 @relation("OrderSeller")
+  offersSent              Offer[]
+  reviewsWritten          Review[]                @relation("ReviewReviewer")
+  reviewsReceived         Review[]                @relation("ReviewReviewee")
+  notifications           Notification[]
+  notificationPreferences NotificationPreference?
+  auditEntries            AdminAuditLog[]
+  listingViews            ListingView[]
+  searchLogs              SearchLog[]
+  feedback                Feedback[]
+
+  @@index([emirate], map: "idx_profiles_emirate")
+  @@map("profiles")
+}
+
+model UserRole {
+  userId    String   @map("user_id") @db.Uuid
+  role      AppRole  @default(user)
+  grantedBy String?  @map("granted_by") @db.Uuid
+  grantedAt DateTime @default(now()) @map("granted_at") @db.Timestamptz(6)
+
+  user    User  @relation("RoleUser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  granter User? @relation("RoleGrantedBy", fields: [grantedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([userId, role])
+  @@index([userId, role], map: "idx_user_roles_lookup")
+  @@map("user_roles")
+}
+
+// ---------------------------------------------------------------------------
+// Catalog (migration 110003; seeded in 110010; 'jobs' removed in 110017)
+// ---------------------------------------------------------------------------
+
+model Category {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentId  String?  @map("parent_id") @db.Uuid
+  slug      String   @unique
+  nameEn    String   @map("name_en")
+  nameAr    String   @map("name_ar")
+  icon      String?
+  position  Int      @default(0) @db.SmallInt
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  children Category[] @relation("CategoryTree")
+  listings Listing[]
+
+  @@index([parentId], map: "idx_categories_parent")
+  @@map("categories")
+}
+
+// ---------------------------------------------------------------------------
+// Listings (migration 110004; is_featured 110026; status 'reserved' 110018)
+// ---------------------------------------------------------------------------
+
+/// CHECK (price_fils >= 0) lives in SQL. `search_vector` is a GENERATED ALWAYS
+/// tsvector column (bilingual EN/AR, GIN-indexed) — expression lives in SQL.
+/// `location` is PostGIS geography(Point,4326) with a GIST index.
+model Listing {
+  id            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId      String                    @map("seller_id") @db.Uuid
+  categoryId    String                    @map("category_id") @db.Uuid
+  titleEn       String                    @map("title_en")
+  titleAr       String?                   @map("title_ar")
+  description   String
+  attributes    Json                      @default("{}")
+  priceFils     BigInt                    @map("price_fils")
+  currency      String                    @default("AED") @db.Char(3)
+  isNegotiable  Boolean                   @default(true) @map("is_negotiable")
+  condition     ListingCondition          @default(used)
+  status        ListingStatus             @default(draft)
+  emirate       Emirate?
+  area          String?
+  location      Unsupported("geography")?
+  isUrgent      Boolean                   @default(false) @map("is_urgent")
+  urgentUntil   DateTime?                 @map("urgent_until") @db.Timestamptz(6)
+  aiGenerated   Boolean                   @default(false) @map("ai_generated")
+  viewCount     Int                       @default(0) @map("view_count")
+  searchVector  Unsupported("tsvector")?  @map("search_vector")
+  isFeatured    Boolean                   @default(false) @map("is_featured")
+  featuredUntil DateTime?                 @map("featured_until") @db.Timestamptz(6)
+  publishedAt   DateTime?                 @map("published_at") @db.Timestamptz(6)
+  expiresAt     DateTime?                 @map("expires_at") @db.Timestamptz(6)
+  createdAt     DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?                 @map("deleted_at") @db.Timestamptz(6)
+
+  seller   User     @relation(fields: [sellerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  images           ListingImage[]
+  embedding        ListingEmbedding?
+  priceSuggestions PriceSuggestion[]
+  conversations    Conversation[]
+  favorites        Favorite[]
+  reports          Report[]
+  orders           Order[]
+  reviews          Review[]
+  moderationLogs   AiModerationLog[]
+  views            ListingView[]
+
+  @@index([categoryId, status], map: "idx_listings_category")
+  @@index([sellerId], map: "idx_listings_seller")
+  @@map("listings")
+}
+
+model ListingImage {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId  String   @map("listing_id") @db.Uuid
+  storageKey String   @map("storage_key")
+  cdnUrl     String?  @map("cdn_url")
+  position   Int      @default(0) @db.SmallInt
+  width      Int?
+  height     Int?
+  aiLabels   Json?    @map("ai_labels")
+  isSafe     Boolean  @default(true) @map("is_safe")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([listingId, position], map: "idx_images_listing")
+  @@map("listing_images")
+}
+
+/// Deny-all RLS today (service-role only); no app-code consumer yet.
+/// ivfflat index (vector_cosine_ops, lists=200) lives in SQL.
+model ListingEmbedding {
+  listingId String                       @id @map("listing_id") @db.Uuid
+  embedding Unsupported("vector(1024)")?
+  model     String?
+  updatedAt DateTime                     @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("listing_embeddings")
+}
+
+model PriceSuggestion {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId          String?  @map("listing_id") @db.Uuid
+  userId             String?  @map("user_id") @db.Uuid
+  suggestedMinFils   BigInt   @map("suggested_min_fils")
+  suggestedMaxFils   BigInt   @map("suggested_max_fils")
+  suggestedPointFils BigInt?  @map("suggested_point_fils")
+  basis              String   @default("comparables")
+  comparables        Json?
+  model              String?
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  listing Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@map("price_suggestions")
+}
+
+// ---------------------------------------------------------------------------
+// Messaging (migration 110005; read-state columns 110014)
+// ---------------------------------------------------------------------------
+
+model Conversation {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId        String             @map("listing_id") @db.Uuid
+  buyerId          String             @map("buyer_id") @db.Uuid
+  sellerId         String             @map("seller_id") @db.Uuid
+  status           ConversationStatus @default(open)
+  lastMessageAt    DateTime?          @map("last_message_at") @db.Timestamptz(6)
+  buyerUnread      Int                @default(0) @map("buyer_unread") @db.SmallInt
+  sellerUnread     Int                @default(0) @map("seller_unread") @db.SmallInt
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  buyerLastReadAt  DateTime?          @map("buyer_last_read_at") @db.Timestamptz(6)
+  sellerLastReadAt DateTime?          @map("seller_last_read_at") @db.Timestamptz(6)
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  buyer   User    @relation("ConversationBuyer", fields: [buyerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  seller  User    @relation("ConversationSeller", fields: [sellerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  messages Message[]
+  orders   Order[]
+  offers   Offer[]
+
+  @@unique([listingId, buyerId])
+  @@index([buyerId, lastMessageAt(sort: Desc)], map: "idx_conv_buyer")
+  @@index([sellerId, lastMessageAt(sort: Desc)], map: "idx_conv_seller")
+  @@map("conversations")
+}
+
+model Message {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  senderId       String    @map("sender_id") @db.Uuid
+  body           String?
+  attachments    Json?
+  flagged        Boolean   @default(false)
+  readAt         DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reports      Report[]
+
+  @@index([conversationId, createdAt(sort: Desc)], map: "idx_messages_conv")
+  @@map("messages")
+}
+
+// ---------------------------------------------------------------------------
+// Buyer tools (migration 110006)
+// ---------------------------------------------------------------------------
+
+model SavedSearch {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  label         String?
+  queryText     String?   @map("query_text")
+  parsedFilters Json      @default("{}") @map("parsed_filters")
+  notify        Boolean   @default(true)
+  notifyChannel String    @default("push") @map("notify_channel")
+  lastRunAt     DateTime? @map("last_run_at") @db.Timestamptz(6)
+  lastMatchAt   DateTime? @map("last_match_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_saved_user")
+  @@map("saved_searches")
+}
+
+model Favorite {
+  userId    String   @map("user_id") @db.Uuid
+  listingId String   @map("listing_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([userId, listingId])
+  @@index([userId, createdAt(sort: Desc)], map: "idx_fav_user")
+  @@map("favorites")
+}
+
+// ---------------------------------------------------------------------------
+// Trust & safety (110006; reports rewritten 110015, extended 110026)
+// ---------------------------------------------------------------------------
+
+/// Partial unique index uq_eid_hash (WHERE eid_number_hash IS NOT NULL) lives in SQL.
+model VerificationRequest {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String             @map("user_id") @db.Uuid
+  type          VerificationType
+  status        VerificationStatus @default(pending)
+  source        String?
+  eidNumberHash String?            @map("eid_number_hash")
+  docFrontKey   String?            @map("doc_front_key")
+  docBackKey    String?            @map("doc_back_key")
+  metadata      Json?
+  reviewedBy    String?            @map("reviewed_by") @db.Uuid
+  reviewedAt    DateTime?          @map("reviewed_at") @db.Timestamptz(6)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user     User  @relation("VerificationOwner", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reviewer User? @relation("VerificationReviewer", fields: [reviewedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([userId, type], map: "idx_verif_user_type")
+  @@map("verification_requests")
+}
+
+/// Current shape (110015 rewrite + 110026 columns). CHECK reports_has_target
+/// (listing_id IS NOT NULL OR reported_user_id IS NOT NULL) lives in SQL.
+/// reason/status are free text by design (enums ReportReason/ReportStatus are orphaned).
+model Report {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporterId     String   @map("reporter_id") @db.Uuid
+  listingId      String?  @map("listing_id") @db.Uuid
+  reportedUserId String?  @map("reported_user_id") @db.Uuid
+  reason         String
+  description    String?
+  status         String   @default("open")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  messageId      String?  @map("message_id") @db.Uuid
+  adminNotes     String?  @map("admin_notes")
+
+  reporter     Profile  @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  listing      Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  reportedUser Profile? @relation("ReportedProfile", fields: [reportedUserId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  message      Message? @relation(fields: [messageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([status, createdAt(sort: Desc)], map: "idx_reports_status")
+  @@index([reporterId], map: "idx_reports_reporter")
+  @@map("reports")
+}
+
+/// Append-only staff action log (no UPDATE/DELETE surface).
+model AdminAction {
+  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId    String?         @map("admin_id") @db.Uuid
+  action     AdminActionType
+  targetType ReportTarget?   @map("target_type")
+  targetId   String?         @map("target_id") @db.Uuid
+  reason     String?
+  metadata   Json?
+  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  admin User? @relation(fields: [adminId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([targetType, targetId, createdAt(sort: Desc)], map: "idx_admin_actions_target")
+  @@map("admin_actions")
+}
+
+// ---------------------------------------------------------------------------
+// Orders & offers (110019; completion columns 110021)
+// ---------------------------------------------------------------------------
+
+/// status values (free text, documented not enforced): negotiating |
+/// offer_sent | offer_accepted | awaiting_confirmation | confirmed |
+/// cancelled | completed. CHECK orders_distinct (buyer_id <> seller_id) in SQL.
+model Order {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId         String    @map("listing_id") @db.Uuid
+  conversationId    String?   @map("conversation_id") @db.Uuid
+  buyerId           String    @map("buyer_id") @db.Uuid
+  sellerId          String    @map("seller_id") @db.Uuid
+  acceptedPriceFils BigInt?   @map("accepted_price_fils")
+  status            String    @default("negotiating")
+  buyerConfirmed    Boolean   @default(false) @map("buyer_confirmed")
+  sellerConfirmed   Boolean   @default(false) @map("seller_confirmed")
+  contactRevealed   Boolean   @default(false) @map("contact_revealed")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  completedAt       DateTime? @map("completed_at") @db.Timestamptz(6)
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(6)
+
+  listing      Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  buyer        Profile       @relation("OrderBuyer", fields: [buyerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  seller       Profile       @relation("OrderSeller", fields: [sellerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  offers  Offer[]
+  reviews Review[]
+
+  @@unique([listingId, buyerId])
+  @@index([buyerId, updatedAt(sort: Desc)], map: "idx_orders_buyer")
+  @@index([sellerId, updatedAt(sort: Desc)], map: "idx_orders_seller")
+  @@index([conversationId], map: "idx_orders_conv")
+  @@map("orders")
+}
+
+/// status values (free text): pending | accepted | declined | countered |
+/// superseded. CHECK (amount_fils >= 0) in SQL.
+model Offer {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId        String   @map("order_id") @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  senderId       String   @map("sender_id") @db.Uuid
+  amountFils     BigInt   @map("amount_fils")
+  status         String   @default("pending")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sender       Profile      @relation(fields: [senderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([orderId, createdAt], map: "idx_offers_order")
+  @@index([conversationId, createdAt], map: "idx_offers_conv")
+  @@map("offers")
+}
+
+// ---------------------------------------------------------------------------
+// Reviews (110022)
+// ---------------------------------------------------------------------------
+
+/// CHECKs in SQL: reviewer_role IN ('buyer','seller'); rating BETWEEN 1 AND 5;
+/// review_text NULL OR char_length <= 1000.
+model Review {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId      String   @map("order_id") @db.Uuid
+  listingId    String   @map("listing_id") @db.Uuid
+  reviewerId   String   @map("reviewer_id") @db.Uuid
+  revieweeId   String   @map("reviewee_id") @db.Uuid
+  reviewerRole String   @map("reviewer_role")
+  rating       Int
+  reviewText   String?  @map("review_text")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reviewer Profile @relation("ReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reviewee Profile @relation("ReviewReviewee", fields: [revieweeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([orderId, reviewerId])
+  @@index([revieweeId, createdAt(sort: Desc)], map: "idx_reviews_reviewee")
+  @@index([listingId], map: "idx_reviews_listing")
+  @@map("reviews")
+}
+
+// ---------------------------------------------------------------------------
+// Notifications (110023; preferences 110025)
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String
+  title     String
+  body      String?
+  link      String?
+  data      Json      @default("{}")
+  readAt    DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId, createdAt(sort: Desc)], map: "idx_notifications_user")
+  @@map("notifications")
+}
+
+/// Deny-all RLS today (service-role only): Resend failure log.
+model EmailFailure {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  toEmail   String?  @map("to_email")
+  template  String?
+  error     String?
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("email_failures")
+}
+
+model NotificationPreference {
+  userId          String   @id @map("user_id") @db.Uuid
+  offerEmails     Boolean  @default(true) @map("offer_emails")
+  chatEmails      Boolean  @default(true) @map("chat_emails")
+  orderEmails     Boolean  @default(true) @map("order_emails")
+  reviewEmails    Boolean  @default(true) @map("review_emails")
+  marketingEmails Boolean  @default(false) @map("marketing_emails")
+  updatedAt       DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("notification_preferences")
+}
+
+// ---------------------------------------------------------------------------
+// Admin ops (110026), engagement logs (110027–110029)
+// ---------------------------------------------------------------------------
+
+model AdminAuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId    String?  @map("admin_id") @db.Uuid
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  detail     Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  admin Profile? @relation(fields: [adminId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([createdAt(sort: Desc)], map: "idx_audit_created")
+  @@map("admin_audit_log")
+}
+
+model AiModerationLog {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId     String?  @map("listing_id") @db.Uuid
+  source        String   @default("listing")
+  decision      String
+  confidence    Decimal? @db.Decimal
+  reason        String?
+  humanOverride String?  @map("human_override")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  listing Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([createdAt(sort: Desc)], map: "idx_ai_mod_created")
+  @@map("ai_moderation_log")
+}
+
+/// Singleton row (id = 'global', CHECK settings_singleton in SQL).
+model MarketplaceSetting {
+  id                   String   @id @default("global")
+  marketplaceName      String   @default("Query & Buy") @map("marketplace_name")
+  logoUrl              String?  @map("logo_url")
+  brandColors          Json     @default("{}") @map("brand_colors")
+  contactEmail         String?  @map("contact_email")
+  supportEmail         String?  @default("support@queryandbuy.ae") @map("support_email")
+  socialLinks          Json     @default("{}") @map("social_links")
+  termsUrl             String?  @map("terms_url")
+  privacyUrl           String?  @map("privacy_url")
+  aiSettings           Json     @default("{}") @map("ai_settings")
+  moderationThresholds Json     @default("{\"min_confidence\": 70}") @map("moderation_thresholds")
+  maintenanceMode      Boolean  @default(false) @map("maintenance_mode")
+  updatedAt            DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("marketplace_settings")
+}
+
+model ListingView {
+  userId    String   @map("user_id") @db.Uuid
+  listingId String   @map("listing_id") @db.Uuid
+  viewedAt  DateTime @default(now()) @map("viewed_at") @db.Timestamptz(6)
+
+  user    Profile @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([userId, listingId])
+  @@index([userId, viewedAt(sort: Desc)], map: "idx_listing_views_user")
+  @@map("listing_views")
+}
+
+/// Deny-all RLS today (service-role only). Expression index
+/// idx_search_log_query_lower on lower(query) lives in SQL.
+model SearchLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  query     String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user Profile? @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([createdAt(sort: Desc)], map: "idx_search_log_created")
+  @@map("search_log")
+}
+
+/// CHECKs in SQL: kind IN ('bug','feature','general'); message length 1–2000.
+model Feedback {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  kind      String
+  message   String
+  path      String?
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user Profile? @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([createdAt(sort: Desc)], map: "idx_feedback_created")
+  @@map("feedback")
+}
+
+// ---------------------------------------------------------------------------
+// Target-stack auth tables (db/baseline/0002_auth_tables.sql). These do NOT
+// exist in the live Supabase database — they replace Supabase Auth state
+// (design: TARGET_ARCHITECTURE.md §3.1). CHECK type IN (...) is SQL-only.
+// ---------------------------------------------------------------------------
+
+/// Email/password credential, 1:0..1 with users. bcrypt hash (Supabase hashes
+/// verify as-is). OAuth-only accounts have no row here.
+model AuthCredential {
+  userId       String   @id @map("user_id") @db.Uuid
+  passwordHash String   @map("password_hash")
+  updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("auth_credentials")
+}
+
+/// Linked OAuth accounts (Auth.js "account", trimmed). Google provider_account_id = `sub`.
+model AuthAccount {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  provider          String
+  providerAccountId String   @map("provider_account_id")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId], map: "idx_auth_accounts_user")
+  @@map("auth_accounts")
+}
+
+/// Single-use email-verify / password-reset tokens; only the SHA-256 hash is stored.
+model AuthVerificationToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId, type], map: "idx_auth_tokens_user")
+  @@map("auth_verification_tokens")
+}
+
+/// Phone OTP state for the Twilio-backed verification flow. One active row per user.
+model AuthPhoneOtp {
+  userId    String   @id @map("user_id") @db.Uuid
+  phoneE164 String   @map("phone_e164")
+  codeHash  String   @map("code_hash")
+  attempts  Int      @default(0) @db.SmallInt
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("auth_phone_otps")
+}

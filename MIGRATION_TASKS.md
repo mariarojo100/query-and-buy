@@ -101,7 +101,7 @@ Order within phase: query libs first (leaf dependencies), then actions, then pag
 |---|---|---|
 | [x] DONE | `lib/listings/queries.ts` | → `lib/db/listings.ts` (`listingVisibleWhere`, raw-SQL FTS, favorites-count via groupBy); listings.test.ts 19/19 incl. draft/reserved visibility + order-participant |
 | [x] DONE | `lib/favorites/queries.ts` | → `lib/db/favorites.ts` (Viewer-scoped); tests/authz/favorites.test.ts 12/12 |
-| [ ] REWRITE | `lib/messaging/queries.ts` | participant filters |
+| [x] DONE | `lib/messaging/queries.ts` + `app/messages/actions.ts` | → `lib/db/messaging.ts` (participant scoping; send asserts participant + not-blocked); messaging.test.ts 17/17 incl. no-leak thread read |
 | [ ] REWRITE | `lib/orders/queries.ts` | participant filters |
 | [ ] REWRITE | `lib/reviews/queries.ts` | public reads + owner bits; completed-order counts become plain queries |
 | [ ] REWRITE | `lib/reputation/queries.ts` | → `lib/db/system/reputation.ts` (cross-user aggregates, unchanged semantics) |

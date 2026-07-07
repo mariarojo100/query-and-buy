@@ -85,6 +85,20 @@ export async function makeListing(
   return l.id
 }
 
+/** Create a conversation (buyer↔seller on a listing). Defaults to status 'open'. */
+export async function makeConversation(
+  listingId: string,
+  buyerId: string,
+  sellerId: string,
+  opts: { status?: 'open' | 'archived' | 'blocked' } = {},
+): Promise<string> {
+  const c = await db.conversation.create({
+    data: { listingId, buyerId, sellerId, status: opts.status ?? 'open' },
+    select: { id: true },
+  })
+  return c.id
+}
+
 export async function disconnect(): Promise<void> {
   await db.$disconnect()
 }

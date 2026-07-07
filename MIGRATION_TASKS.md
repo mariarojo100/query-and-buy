@@ -87,18 +87,25 @@
 
 Order within phase: query libs first (leaf dependencies), then actions, then pages.
 
+> **In progress (test-as-I-go).** A persistent local target Postgres (Docker,
+> from `db/baseline`) + `tests/authz/` harness verify allow AND deny per domain.
+> `npm run test:authz` (needs `DATABASE_URL` → local target DB). Done so far:
+> **favorites** (12/12), **saved-searches** (12/12), **notifications +
+> preferences** (10/10) — all incl. cross-user deny.
+
 ### 4a. Query libraries → repositories
 
 | Task | File | Notes |
 |---|---|---|
 | [ ] REWRITE | `lib/listings/queries.ts` | use `listingVisibleWhere(viewer)`; favorites-count joins move from admin client to plain aggregate (no RLS to bypass anymore) |
-| [ ] REWRITE | `lib/favorites/queries.ts` | owner filter |
+| [x] DONE | `lib/favorites/queries.ts` | → `lib/db/favorites.ts` (Viewer-scoped); tests/authz/favorites.test.ts 12/12 |
 | [ ] REWRITE | `lib/messaging/queries.ts` | participant filters |
 | [ ] REWRITE | `lib/orders/queries.ts` | participant filters |
 | [ ] REWRITE | `lib/reviews/queries.ts` | public reads + owner bits; completed-order counts become plain queries |
 | [ ] REWRITE | `lib/reputation/queries.ts` | → `lib/db/system/reputation.ts` (cross-user aggregates, unchanged semantics) |
 | [ ] REWRITE | `lib/personalization/queries.ts` | owner filter on listing_views |
-| [ ] REWRITE | `lib/savedSearches/queries.ts`, `lib/notifications/queries.ts`, `lib/notifications/preferences.ts` | owner filters |
+| [x] DONE | `lib/savedSearches/queries.ts` | → `lib/db/savedSearches.ts`; savedSearches.test.ts 12/12 |
+| [x] DONE | `lib/notifications/queries.ts`, `lib/notifications/preferences.ts` | → `lib/db/notifications.ts`; notifications.test.ts 10/10 |
 | [ ] REWRITE | `lib/notifications/dispatch.ts` | → system repo insert |
 | [ ] REWRITE | `lib/email/send.ts` | only the `email_failures` insert changes (system repo) |
 | [ ] REWRITE | `lib/search/intelligence.ts` | search_log system repo; trending/typeahead plain queries |

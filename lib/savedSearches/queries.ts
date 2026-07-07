@@ -1,27 +1,11 @@
-import { createClient } from '@/utils/supabase/server'
-import type { SavedFilters } from '@/lib/savedSearches/filters'
+import { getViewer } from '@/lib/auth/session'
+import { savedSearchesFor, type SavedSearch } from '@/lib/db/savedSearches'
 
-export type SavedSearch = {
-  id: string
-  label: string | null
-  query_text: string | null
-  parsed_filters: SavedFilters
-  notify: boolean
-  created_at: string
-}
+export type { SavedSearch }
 
-/** The current user's saved searches, newest first. RLS scopes to owner. */
+/** The current user's saved searches, newest first (owner-scoped). */
 export async function getUserSavedSearches(): Promise<SavedSearch[]> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return []
-
-  const { data } = await supabase
-    .from('saved_searches')
-    .select('id, label, query_text, parsed_filters, notify, created_at')
-    .order('created_at', { ascending: false })
-
-  return (data ?? []) as SavedSearch[]
+  const viewer = await getViewer()
+  if (!viewer) return []
+  return savedSearchesFor(viewer)
 }

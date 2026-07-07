@@ -1,39 +1,17 @@
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { notificationsFor, unreadCountFor, type AppNotification } from '@/lib/db/notifications'
 
-export type AppNotification = {
-  id: string
-  type: string
-  title: string
-  body: string | null
-  link: string | null
-  read_at: string | null
-  created_at: string
-}
+export type { AppNotification }
 
-/** Recent notifications for the current user (RLS scopes to owner). */
+/** Recent notifications for the current user (owner-scoped). */
 export async function getNotifications(limit = 20): Promise<AppNotification[]> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return []
-  const { data } = await supabase
-    .from('notifications')
-    .select('id, type, title, body, link, read_at, created_at')
-    .order('created_at', { ascending: false })
-    .limit(limit)
-  return (data ?? []) as AppNotification[]
+  const viewer = await getViewer()
+  if (!viewer) return []
+  return notificationsFor(viewer, limit)
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return 0
-  const { count } = await supabase
-    .from('notifications')
-    .select('id', { count: 'exact', head: true })
-    .is('read_at', null)
-  return count ?? 0
+  const viewer = await getViewer()
+  if (!viewer) return 0
+  return unreadCountFor(viewer)
 }

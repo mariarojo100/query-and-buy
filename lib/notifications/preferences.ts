@@ -1,4 +1,5 @@
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { getPreferencesFor } from '@/lib/db/notifications'
 
 export type NotificationPrefs = {
   offer_emails: boolean
@@ -16,19 +17,9 @@ export const DEFAULT_PREFS: NotificationPrefs = {
   marketing_emails: false,
 }
 
-const COLUMNS = 'offer_emails, chat_emails, order_emails, review_emails, marketing_emails'
-
-/** The current user's email preferences (defaults when no row exists yet). */
+/** The current user's email preferences (defaults when no row / signed out). */
 export async function getMyPreferences(): Promise<NotificationPrefs> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return DEFAULT_PREFS
-  const { data } = await supabase
-    .from('notification_preferences')
-    .select(COLUMNS)
-    .eq('user_id', user.id)
-    .maybeSingle()
-  return (data as NotificationPrefs | null) ?? DEFAULT_PREFS
+  const viewer = await getViewer()
+  if (!viewer) return DEFAULT_PREFS
+  return (await getPreferencesFor(viewer)) ?? DEFAULT_PREFS
 }

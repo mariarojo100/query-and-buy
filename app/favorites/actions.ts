@@ -1,40 +1,20 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { toggleFavoriteFor } from '@/lib/db/favorites'
 
-/** Toggle a favorite for the current user. RLS (fav_owner_all) scopes to owner. */
+/** Toggle a favorite for the current user (scoped to the viewer in the repository). */
 export async function toggleFavorite(
   listingId: string,
 ): Promise<{ favorited?: boolean; needAuth?: boolean; error?: string }> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { needAuth: true }
-
-  const { data: existing } = await supabase
-    .from('favorites')
-    .select('listing_id')
-    .eq('user_id', user.id)
-    .eq('listing_id', listingId)
-    .maybeSingle()
-
-  if (existing) {
-    const { error } = await supabase
-      .from('favorites')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('listing_id', listingId)
-    if (error) return { error: error.message }
+  const viewer = await getViewer()
+  if (!viewer) return { needAuth: true }
+  try {
+    const { favorited } = await toggleFavoriteFor(viewer, listingId)
     revalidatePath('/favorites')
-    return { favorited: false }
+    return { favorited }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Could not update favorite.' }
   }
-
-  const { error } = await supabase
-    .from('favorites')
-    .insert({ user_id: user.id, listing_id: listingId })
-  if (error) return { error: error.message }
-  revalidatePath('/favorites')
-  return { favorited: true }
 }

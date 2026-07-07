@@ -15,7 +15,7 @@
 import { randomUUID } from 'node:crypto'
 import { db } from '@/lib/db'
 import { deriveViewer, type Viewer } from '@/lib/authz/viewer'
-import type { ListingStatus } from '@/lib/generated/prisma/enums'
+import type { ListingStatus, AppRole } from '@/lib/generated/prisma/enums'
 
 let failures = 0
 let passes = 0
@@ -55,8 +55,12 @@ export async function makeUser(
   const email = opts.email ?? `${id.slice(0, 8)}@test.ae`
   await db.user.create({ data: { id, email, hasEmailVerified: true } })
   await db.profile.create({ data: { id, displayName: email.split('@')[0], username: `u_${id.slice(0, 12).replace(/-/g, '')}` } })
-  await db.userRole.create({ data: { userId: id, role: 'user' } })
+  // Seed the real user_roles rows so DB-backed role checks match the Viewer.
+  // 'user' is always present (as handle_new_user does); extras are added on top.
   const roles = opts.roles ?? ['user']
+  for (const role of new Set<AppRole>(['user', ...roles])) {
+    await db.userRole.create({ data: { userId: id, role } })
+  }
   return { id, viewer: deriveViewer({ id, email, roles }) }
 }
 

@@ -99,7 +99,7 @@ Order within phase: query libs first (leaf dependencies), then actions, then pag
 
 | Task | File | Notes |
 |---|---|---|
-| [ ] REWRITE | `lib/listings/queries.ts` | use `listingVisibleWhere(viewer)`; favorites-count joins move from admin client to plain aggregate (no RLS to bypass anymore) |
+| [x] DONE | `lib/listings/queries.ts` | → `lib/db/listings.ts` (`listingVisibleWhere`, raw-SQL FTS, favorites-count via groupBy); listings.test.ts 19/19 incl. draft/reserved visibility + order-participant |
 | [x] DONE | `lib/favorites/queries.ts` | → `lib/db/favorites.ts` (Viewer-scoped); tests/authz/favorites.test.ts 12/12 |
 | [ ] REWRITE | `lib/messaging/queries.ts` | participant filters |
 | [ ] REWRITE | `lib/orders/queries.ts` | participant filters |

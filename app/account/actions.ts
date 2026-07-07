@@ -1,22 +1,17 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { updateProfileFor, updateAvatarFor, usernameAvailable } from '@/lib/db/profiles'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { USERNAME_RE, normalizeUsername } from '@/lib/profile/completion'
 
 export type ProfileFormState = { ok?: boolean; error?: string } | null
 
-/** Update the signed-in user's profile. RLS enforces id = auth.uid(). */
-export async function updateProfile(
-  _prev: ProfileFormState,
-  formData: FormData,
-): Promise<ProfileFormState> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'You must be signed in.' }
+/** Update the signed-in user's profile (column-allowlisted in the repository). */
+export async function updateProfile(_prev: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
+  const viewer = await getViewer()
+  if (!viewer) return { error: 'You must be signed in.' }
 
   const display_name = String(formData.get('display_name') ?? '').trim()
   const username = normalizeUsername(String(formData.get('username') ?? ''))
@@ -28,9 +23,7 @@ export async function updateProfile(
     return { error: 'Display name must be 2–50 characters.' }
   }
   if (!USERNAME_RE.test(username)) {
-    return {
-      error: 'Username must be 3–30 characters: lowercase letters, numbers, - or _.',
-    }
+    return { error: 'Username must be 3–30 characters: lowercase letters, numbers, - or _.' }
   }
   if (bioRaw.length > 300) {
     return { error: 'Bio must be 300 characters or fewer.' }
@@ -39,21 +32,13 @@ export async function updateProfile(
     return { error: 'Invalid emirate.' }
   }
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      display_name,
-      username,
-      bio: bioRaw || null,
-      emirate: emirateRaw || null,
-    })
-    .eq('id', user.id)
-
-  if (error) {
-    // 23505 = unique_violation (username already taken)
-    if (error.code === '23505') return { error: 'That username is already taken.' }
-    return { error: error.message }
-  }
+  const res = await updateProfileFor(viewer, {
+    displayName: display_name,
+    username,
+    bio: bioRaw || null,
+    emirate: emirateRaw || null,
+  })
+  if (!res.ok) return { error: 'That username is already taken.' }
 
   revalidatePath('/account')
   revalidatePath(`/u/${username}`)
@@ -61,48 +46,19 @@ export async function updateProfile(
 }
 
 /** Live username availability check for the edit form. */
-export async function checkUsername(
-  raw: string,
-): Promise<{ available: boolean; reason?: string }> {
+export async function checkUsername(raw: string): Promise<{ available: boolean; reason?: string }> {
   const username = normalizeUsername(raw)
-  if (!USERNAME_RE.test(username)) {
-    return { available: false, reason: 'invalid' }
-  }
-
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('username', username)
-    .maybeSingle()
-
-  if (error) return { available: false, reason: 'error' }
-  // Free if nobody has it, or it's the current user's own handle.
-  if (!data || (user && data.id === user.id)) return { available: true }
-  return { available: false, reason: 'taken' }
+  if (!USERNAME_RE.test(username)) return { available: false, reason: 'invalid' }
+  const viewer = await getViewer()
+  const available = await usernameAvailable(username, viewer?.id ?? null)
+  return available ? { available: true } : { available: false, reason: 'taken' }
 }
 
 /** Persist a newly-uploaded avatar URL. Called by the AvatarUploader. */
-export async function updateAvatar(
-  avatarUrl: string,
-): Promise<{ ok?: boolean; error?: string }> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'You must be signed in.' }
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({ avatar_url: avatarUrl })
-    .eq('id', user.id)
-
-  if (error) return { error: error.message }
-
+export async function updateAvatar(avatarUrl: string): Promise<{ ok?: boolean; error?: string }> {
+  const viewer = await getViewer()
+  if (!viewer) return { error: 'You must be signed in.' }
+  await updateAvatarFor(viewer, avatarUrl)
   revalidatePath('/account')
   return { ok: true }
 }

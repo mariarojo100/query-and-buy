@@ -89,9 +89,11 @@ Order within phase: query libs first (leaf dependencies), then actions, then pag
 
 > **In progress (test-as-I-go).** A persistent local target Postgres (Docker,
 > from `db/baseline`) + `tests/authz/` harness verify allow AND deny per domain.
-> `npm run test:authz` (needs `DATABASE_URL` → local target DB). Done so far:
-> **favorites** (12/12), **saved-searches** (12/12), **notifications +
-> preferences** (10/10) — all incl. cross-user deny.
+> `npm run test:authz` (needs `DATABASE_URL` → local target DB). Done so far
+> (53 assertions, all incl. cross-user deny): **favorites** (12),
+> **saved-searches** (12), **notifications + preferences** (10),
+> **account/profiles** (14 — incl. the column-allowlist proof: trust/verified
+> columns unreachable via profile update), **reports** (3), **feedback** (2).
 
 ### 4a. Query libraries → repositories
 

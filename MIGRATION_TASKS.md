@@ -122,7 +122,7 @@ Order within phase: query libs first (leaf dependencies), then actions, then pag
 | [ ] REWRITE | `app/sell/actions.ts` | createListing/updateListing in transactions (listing + images rows) |
 | [ ] REWRITE | `app/sell/aiActions.ts` | only client swap (categories read) |
 | [ ] REWRITE | `app/messages/actions.ts` | sendMessage transaction asserts participant + not-blocked (RLS #16) |
-| [ ] REWRITE | `app/orders/actions.ts` | negotiation engine → `lib/db/system/orders.ts` with explicit participant asserts + transactions around cross-entity transitions (offer accept → order + listing reserved; complete → sold) — this is the file needing the most care in the whole migration |
+| [x] DONE | `app/orders/actions.ts` + `lib/orders/queries.ts` | → `lib/db/orders.ts` (full state machine; participant asserts on every transition; order+listing transitions in one transaction; contact-reveal gated on both-confirm). orders.test.ts 25/25 walking the whole lifecycle + deny cases |
 | [ ] REWRITE | `app/favorites/actions.ts`, `app/saved-searches/actions.ts`, `app/notifications/actions.ts`, `app/feedback/actions.ts`, `app/reports/actions.ts` | owner-pinned CRUD |
 | [ ] REWRITE | `app/reviews/actions.ts` | submitReview transaction re-validating order state (RLS #24) |
 | [ ] REWRITE | `app/account/actions.ts` | profile update with column allowlist (RLS #4) |

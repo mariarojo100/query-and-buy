@@ -54,7 +54,7 @@ export default async function AccountOverviewPage() {
           repeatBuyers={repeatBuyers}
           recentReviews={recentReviews}
         />
-        <ProfileCompletion profile={profile} phoneVerified={profile.phone_verified} />
+        <ProfileCompletion profile={profile} />
       </div>
       <div className="lg:col-span-2">
         <div className="rounded-3xl border border-border bg-card p-5 shadow-soft sm:p-6">

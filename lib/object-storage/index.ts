@@ -26,13 +26,23 @@ export { S3StorageDriver } from '@/lib/object-storage/s3'
  * cutover is all that's needed to switch hosts.
  */
 export function publicUrl(bucket: BucketName | string, key: string): string {
-  const base = process.env.NEXT_PUBLIC_STORAGE_BASE_URL
-  if (base) return `${base.replace(/\/$/, '')}/${bucket}/${key}`
-  const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (supabase) return `${supabase.replace(/\/$/, '')}/storage/v1/object/public/${bucket}/${key}`
-  return `/${bucket}/${key}`
-}
+  switch (bucket) {
+    case 'avatars':
+      return `https://avatars.queryandbuy.com/${key}`
 
+    case 'listing-images':
+      return `https://images.queryandbuy.com/${key}`
+
+    default: {
+      // Fallback to Supabase if still needed during migration
+      const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabase) {
+        return `${supabase.replace(/\/$/, '')}/storage/v1/object/public/${bucket}/${key}`
+      }
+      return `/${bucket}/${key}`
+    }
+  }
+}
 let cached: StorageDriver | undefined
 
 /** The shared storage driver, built lazily from env on first use. */

@@ -2,8 +2,13 @@
 import React from 'react'
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useAuth } from '@/auth/AuthContext'
+import { useInbox } from '@/queries/messaging'
 
 export default function TabsLayout() {
+  const { user } = useAuth()
+  const inbox = useInbox(!!user)
+  const unread = inbox.data?.unreadCount ?? 0
   return (
     <Tabs
       screenOptions={{
@@ -27,7 +32,12 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="inbox"
-        options={{ title: 'Chats', tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-outline" color={color} size={size} /> }}
+        options={{
+          title: 'Chats',
+          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-outline" color={color} size={size} />,
+          tabBarBadge: unread > 0 ? (unread > 9 ? '9+' : unread) : undefined,
+          tabBarBadgeStyle: { backgroundColor: '#0e5a43', color: '#fff', fontSize: 10 },
+        }}
       />
       <Tabs.Screen
         name="account"

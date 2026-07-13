@@ -51,6 +51,22 @@ export default function AccountScreen() {
           </Pressable>
 
           <Pressable
+            onPress={() => router.push('/account/listings' as never)}
+            className="mt-3 flex-row items-center justify-between rounded-qb border border-border bg-card p-4 dark:border-border-dark dark:bg-card-dark"
+          >
+            <Text className="font-medium text-ink dark:text-ink-dark">My listings</Text>
+            <Ionicons name="chevron-forward" size={18} color="#8a8578" />
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/account/notifications' as never)}
+            className="mt-3 flex-row items-center justify-between rounded-qb border border-border bg-card p-4 dark:border-border-dark dark:bg-card-dark"
+          >
+            <Text className="font-medium text-ink dark:text-ink-dark">Notifications</Text>
+            <Ionicons name="chevron-forward" size={18} color="#8a8578" />
+          </Pressable>
+
+          <Pressable
             onPress={() =>
               Alert.alert('Sign out', 'Sign out of Query & Buy?', [
                 { text: 'Cancel', style: 'cancel' },

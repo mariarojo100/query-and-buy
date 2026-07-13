@@ -1,7 +1,11 @@
-/** Edit profile — display name, username (live availability), bio, emirate. */
+/** Edit profile — avatar upload, display name, username (live availability), bio, emirate. */
 import React, { useEffect, useState } from 'react'
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Image } from 'expo-image'
+import * as ImagePicker from 'expo-image-picker'
+import * as ImageManipulator from 'expo-image-manipulator'
+import { File } from 'expo-file-system'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { EMIRATES } from '@qb/shared'
@@ -18,6 +22,38 @@ export default function EditProfileScreen() {
   const [emirate, setEmirate] = useState<string | null>(null)
   const [available, setAvailable] = useState<boolean | null>(null)
   const [busy, setBusy] = useState(false)
+  const [avatarBusy, setAvatarBusy] = useState(false)
+
+  const changeAvatar = async () => {
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1 })
+    if (res.canceled || !res.assets[0]) return
+    setAvatarBusy(true)
+    try {
+      const small = await ImageManipulator.manipulateAsync(
+        res.assets[0].uri,
+        [{ resize: { width: 512 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
+      )
+      const file = new File(small.uri)
+      const bytes = await file.arrayBuffer()
+      const presign = await api<{ slot: { url: string; headers: Record<string, string> }; publicUrl: string }>(
+        '/uploads/avatar',
+        { body: { contentType: 'image/jpeg', sizeBytes: bytes.byteLength } },
+      )
+      const put = await fetch(presign.slot.url, {
+        method: 'PUT',
+        headers: { 'content-type': 'image/jpeg', ...presign.slot.headers },
+        body: bytes,
+      })
+      if (!put.ok) throw new Error(`Upload failed (${put.status}).`)
+      await api('/me/avatar', { body: { avatarUrl: presign.publicUrl } })
+      await refreshUser()
+    } catch (e) {
+      Alert.alert('Could not update photo', e instanceof ApiError ? e.message : 'Try again.')
+    } finally {
+      setAvatarBusy(false)
+    }
+  }
 
   useEffect(() => {
     void api<{ profile: { bio: string | null; emirate: string | null } | null }>('/me').then((me) => {
@@ -66,6 +102,18 @@ export default function EditProfileScreen() {
       </View>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         <ScrollView contentContainerStyle={{ padding: 20 }}>
+          <Pressable onPress={() => void changeAvatar()} className="mb-6 items-center">
+            <View className="h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary-light">
+              {avatarBusy ? (
+                <ActivityIndicator color="#0e5a43" />
+              ) : user?.avatarUrl ? (
+                <Image source={{ uri: user.avatarUrl }} style={{ width: '100%', height: '100%' }} />
+              ) : (
+                <Text className="text-2xl font-bold text-primary">{(user?.displayName ?? 'U').slice(0, 1).toUpperCase()}</Text>
+              )}
+            </View>
+            <Text className="mt-2 text-sm font-medium text-primary dark:text-primary-light">Change photo</Text>
+          </Pressable>
           <Field label="Display name" value={displayName} onChangeText={setDisplayName} />
           <Field
             label="Username"

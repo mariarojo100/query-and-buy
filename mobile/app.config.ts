@@ -13,6 +13,7 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
+  icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'ae.queryandbuy.app',
     supportsTablet: false,
@@ -20,6 +21,10 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'ae.queryandbuy.app',
+    adaptiveIcon: {
+      foregroundImage: './assets/adaptive-icon.png',
+      backgroundColor: '#0e5a43',
+    },
     edgeToEdgeEnabled: true,
     intentFilters: [
       {
@@ -30,7 +35,16 @@ const config: ExpoConfig = {
       },
     ],
   },
-  plugins: ['expo-router', 'expo-secure-store', 'expo-font', 'expo-notifications'],
+  plugins: [
+    'expo-router',
+    'expo-secure-store',
+    'expo-font',
+    'expo-notifications',
+    [
+      'expo-splash-screen',
+      { image: './assets/splash.png', imageWidth: 220, backgroundColor: '#faf9f6' },
+    ],
+  ],
   experiments: { typedRoutes: true },
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://queryandbuy.com',

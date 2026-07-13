@@ -1,4 +1,4 @@
-import { createServiceClient } from '@/utils/supabase/admin'
+import { recordEmailFailure } from '@/lib/db/system/email'
 
 const FROM = process.env.EMAIL_FROM ?? 'Query & Buy <onboarding@resend.dev>'
 const MAX_ATTEMPTS = 3
@@ -71,12 +71,11 @@ function log(status: 'sent' | 'skipped' | 'failed', opts: SendOpts, extra: Recor
 
 async function recordFailure(opts: SendOpts, error: string) {
   try {
-    const admin = createServiceClient()
-    await admin.from('email_failures').insert({
-      to_email: opts.to ?? null,
+    await recordEmailFailure({
+      toEmail: opts.to ?? null,
       template: opts.template ?? null,
       error,
-      payload: (opts.payload ?? null) as never,
+      payload: opts.payload ?? null,
     })
   } catch {
     /* logging must never throw */

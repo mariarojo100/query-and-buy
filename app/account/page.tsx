@@ -1,5 +1,5 @@
-import { createClient } from '@/utils/supabase/server'
-import { createServiceClient } from '@/utils/supabase/admin'
+import { getViewer } from '@/lib/auth/session'
+import { profileById, repeatBuyersFor } from '@/lib/db/profiles'
 import { getSellerReputation } from '@/lib/reputation/queries'
 import { getProfileReviews } from '@/lib/reviews/queries'
 import { getActivity } from '@/lib/account/activity'
@@ -18,20 +18,10 @@ type TrustProfile = Profile & {
 }
 
 export default async function AccountOverviewPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) return null
 
-  const { data } = await supabase
-    .from('profiles')
-    .select(
-      'id, username, display_name, avatar_url, bio, emirate, badge_level, listings_count, member_since, email_verified, phone_verified, reports_count',
-    )
-    .eq('id', user.id)
-    .maybeSingle()
-  const profile = data as TrustProfile | null
+  const profile = (await profileById(user.id)) as TrustProfile | null
   if (!profile) return null
 
   const [rep, recentReviews, activity] = await Promise.all([
@@ -40,21 +30,7 @@ export default async function AccountOverviewPage() {
     getActivity(profile.id, profile.member_since, 12),
   ])
 
-  let repeatBuyers = 0
-  try {
-    const admin = createServiceClient()
-    const { data: rows } = await admin
-      .from('orders')
-      .select('buyer_id')
-      .eq('seller_id', profile.id)
-      .eq('status', 'completed')
-    const counts = new Map<string, number>()
-    for (const r of (rows ?? []) as { buyer_id: string }[])
-      counts.set(r.buyer_id, (counts.get(r.buyer_id) ?? 0) + 1)
-    repeatBuyers = [...counts.values()].filter((n) => n >= 2).length
-  } catch {
-    /* no service role → 0 */
-  }
+  const repeatBuyers = await repeatBuyersFor(profile.id)
 
   const trust = computeTrust({
     display_name: profile.display_name,

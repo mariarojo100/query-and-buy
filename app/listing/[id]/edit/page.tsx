@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { ChevronLeftIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { EditListingForm } from '@/components/listing/EditListingForm'
-import { getListingForEdit } from '@/lib/listings/queries'
+import { getListingForEdit, getActiveCategories } from '@/lib/listings/queries'
 import type { Category } from '@/components/sell/CategorySelect'
 
 export const metadata = { title: 'Edit listing · Query & Buy' }
@@ -16,22 +16,14 @@ export default async function EditListingPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) redirect(`/login?redirectTo=/listing/${id}/edit`)
 
   // getListingForEdit returns null for non-owners → 404 (owner-only).
   const listing = await getListingForEdit(id)
   if (!listing) notFound()
 
-  const { data } = await supabase
-    .from('categories')
-    .select('id, name_en, parent_id, position')
-    .eq('is_active', true)
-    .order('position', { ascending: true })
-  const categories = (data ?? []) as Category[]
+  const categories = (await getActiveCategories()) as Category[]
 
   return (
     <>

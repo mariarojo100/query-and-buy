@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'migrate/**']
   pull_request:
     branches: [main]
 
@@ -16,9 +16,35 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - run: npm ci # postinstall runs `prisma generate` → produces lib/generated/prisma
       - run: npm run lint
+      - run: npm run check:boundaries # data-access import fence (lib/db/README.md)
     # NOTE: `next build` is intentionally not duplicated here — Vercel runs the
     # full production build (with project env vars) on every push to main, which
     # is the authoritative build gate. To also build in CI, add a job that sets
     # NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY from repo secrets.
+
+  authz-tests:
+    name: Authorization suite (allow/deny) — Prisma vs Postgres
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci # postinstall generates the Prisma client
+      - name: Start Postgres 17 (PostGIS + pgvector) and build the target schema
+        run: |
+          set -euo pipefail
+          docker run -d --name qbdb -e POSTGRES_PASSWORD=pw -p 5432:5432 postgis/postgis:17-3.5
+          for i in $(seq 1 60); do docker exec qbdb pg_isready -U postgres >/dev/null 2>&1 && break; sleep 2; done
+          docker exec qbdb bash -c 'apt-get update -qq && apt-get install -y -qq postgresql-17-pgvector >/dev/null'
+          docker exec qbdb psql -U postgres -c "create database queryandbuy template template1;"
+          for f in db/baseline/0000_extensions.sql db/baseline/0001_schema.sql db/baseline/0002_auth_tables.sql db/seed.sql; do
+            docker exec -i qbdb psql -U postgres -d queryandbuy -v ON_ERROR_STOP=1 -q < "$f"
+          done
+      - name: Run authz integration suite
+        env:
+          DATABASE_URL: postgresql://postgres:pw@localhost:5432/queryandbuy
+        run: npm run test:authz

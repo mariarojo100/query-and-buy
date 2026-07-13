@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Loader2Icon } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/utils/supabase/client'
+import { signIn } from 'next-auth/react'
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -31,27 +31,17 @@ function GoogleIcon({ className }: { className?: string }) {
 export function GoogleSignInButton({ next }: { next?: string }) {
   const [loading, setLoading] = useState(false)
 
-  async function signIn() {
+  async function startGoogle() {
     if (loading) return
     setLoading(true)
     try {
       // Send the user to the page they originally wanted (?redirectTo) or home.
       const redirectTo = new URLSearchParams(window.location.search).get('redirectTo')
       const target = next ?? (redirectTo && redirectTo.startsWith('/') ? redirectTo : '/')
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(target)}`,
-        },
-      })
-      if (error) {
-        toast.error('Could not start Google sign-in. Please try again.')
-        setLoading(false)
-      }
+      await signIn('google', { callbackUrl: target })
       // On success the browser redirects to Google — keep the spinner showing.
     } catch {
-      toast.error('Network error. Check your connection and try again.')
+      toast.error('Could not start Google sign-in. Please try again.')
       setLoading(false)
     }
   }
@@ -59,7 +49,7 @@ export function GoogleSignInButton({ next }: { next?: string }) {
   return (
     <button
       type="button"
-      onClick={signIn}
+      onClick={startGoogle}
       disabled={loading}
       aria-label="Continue with Google"
       className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-input bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 shadow-sm transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-70"

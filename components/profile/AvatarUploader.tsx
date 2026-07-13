@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { createClient } from '@/utils/supabase/client'
+import { getAvatarUploadUrl } from '@/app/uploads/actions'
 import { updateAvatar } from '@/app/account/actions'
 import { initials } from '@/components/profile/ProfileHeader'
 
@@ -44,18 +44,11 @@ export function AvatarUploader({
 
     setUploading(true)
     try {
-      const supabase = createClient()
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
-      const path = `${userId}/${Date.now()}.${ext}`
+      const { slot, publicUrl, error } = await getAvatarUploadUrl({ contentType: file.type, sizeBytes: file.size })
+      if (error || !slot || !publicUrl) throw new Error(error ?? 'Upload failed.')
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { cacheControl: '3600', upsert: true })
-      if (uploadError) throw uploadError
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('avatars').getPublicUrl(path)
+      const put = await fetch(slot.url, { method: 'PUT', headers: slot.headers, body: file })
+      if (!put.ok) throw new Error('Upload failed.')
 
       const res = await updateAvatar(publicUrl)
       if (res.error) throw new Error(res.error)

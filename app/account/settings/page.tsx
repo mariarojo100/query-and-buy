@@ -1,9 +1,14 @@
 import Link from 'next/link'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { profileById } from '@/lib/db/profiles'
 import { signOut } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm'
+// NOTE: Phone verification (the <PhoneVerification> card) is deferred WIP kept
+// out of the migration branch — its component + action still run on Supabase.
+// Re-add the card here when that feature is wired to the target stack; the
+// accountPhoneE164() helper in lib/db/profiles is ready for it.
 import { NotificationPreferences } from '@/components/notifications/NotificationPreferences'
 import { getMyPreferences } from '@/lib/notifications/preferences'
 import type { Profile } from '@/lib/profile/completion'
@@ -11,20 +16,10 @@ import type { Profile } from '@/lib/profile/completion'
 export const metadata = { title: 'Settings · Query & Buy' }
 
 export default async function AccountSettingsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) return null
 
-  const { data } = await supabase
-    .from('profiles')
-    .select(
-      'id, username, display_name, avatar_url, bio, emirate, badge_level, listings_count, member_since',
-    )
-    .eq('id', user.id)
-    .maybeSingle()
-  const profile = data as Profile | null
+  const profile = (await profileById(user.id)) as Profile | null
   if (!profile) return null
 
   const prefs = await getMyPreferences()

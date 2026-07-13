@@ -1,6 +1,7 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { getActiveCategories } from '@/lib/listings/queries'
 import {
   getProvider,
   CONFIDENCE_THRESHOLD,
@@ -51,25 +52,18 @@ function confident(fc: Confident<string> | undefined): string | null {
 
 /** Generate an editable listing draft from photos. Never throws — returns {ok:false}. */
 export async function generateListingDraft(images: AiImageInput[]): Promise<AiDraftResult> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'You must be signed in.' }
+  const viewer = await getViewer()
+  if (!viewer) return { ok: false, error: 'You must be signed in.' }
   if (!images?.length) return { ok: false, error: 'Add at least one photo first.' }
 
   // Cost/abuse guard: cap AI generations per user (best-effort, per-instance).
-  if (!enforceRateLimit('ai.draft', user.id, 12, 60_000).allowed) {
+  if (!enforceRateLimit('ai.draft', viewer.id, 12, 60_000).allowed) {
     return { ok: false, error: 'You are generating listings too quickly. Please wait a moment and try again.' }
   }
 
   const photos = images.slice(0, 5) // req: 1–5 photos
 
-  const { data: cats } = await supabase
-    .from('categories')
-    .select('id, slug, name_en')
-    .eq('is_active', true)
-  const categories = (cats ?? []) as { id: string; slug: string; name_en: string }[]
+  const categories = await getActiveCategories()
   const slugToId = new Map(categories.map((c) => [c.slug, c.id]))
 
   let raw

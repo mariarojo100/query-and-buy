@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { TrendingUpIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SearchControls } from '@/components/search/SearchControls'
@@ -72,10 +72,7 @@ export default async function HomePage({
     sort: parsed.sort,
   })
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   const favoritedIds = await getFavoritedIds(listings.map((l) => l.id))
   const counts = hasFilters ? undefined : await getCategoryCounts(categories)
   const trending = hasFilters ? [] : await getTrendingSearches(8)

@@ -1,5 +1,5 @@
 import { StarIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ReviewList } from '@/components/reviews/ReviewList'
 import { Stars } from '@/components/reviews/Stars'
@@ -8,10 +8,7 @@ import { getProfileReviews, getReviewStats } from '@/lib/reviews/queries'
 export const metadata = { title: 'Reviews · Query & Buy' }
 
 export default async function AccountReviewsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) return null
 
   const [stats, reviews] = await Promise.all([

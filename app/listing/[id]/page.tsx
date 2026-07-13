@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronLeftIcon, PencilIcon, ShieldCheckIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { ImageGallery } from '@/components/listing/ImageGallery'
 import { ContactSellerButton } from '@/components/listing/ContactSellerButton'
@@ -77,10 +77,7 @@ export default async function ListingDetailPage({
   const listing = await getListingById(id)
   if (!listing) notFound()
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   const isOwner = user?.id === listing.seller_id
   const favorited = (await getFavoritedIds([listing.id])).has(listing.id)
 

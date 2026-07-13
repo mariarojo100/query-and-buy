@@ -1,132 +1,100 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-import { SITE_URL } from '@/lib/site'
+import { AuthError } from 'next-auth'
+import { signIn, signOut as authSignOut } from '@/lib/auth/nextauth'
+import { registerWithPassword, beginPasswordReset, completePasswordReset, SignupError } from '@/lib/auth/signup'
+import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/email/auth-emails'
 import { logger } from '@/lib/logger'
 
 export type AuthState = { error: string } | null
 
 /**
- * Email/password sign up. The public.users + profiles + user_roles rows are
- * created by the `handle_new_user` DB trigger — not here.
- *
- * With "Confirm email" OFF, signUp returns a session and the user is logged in.
- * With it ON, no session is returned and the user must confirm via /auth/confirm.
+ * Email/password sign up. Creates the account bundle (lib/auth/signup →
+ * lib/db/auth, replacing the handle_new_user trigger), emails a verification
+ * link, then establishes a session via Auth.js Credentials.
  */
-export async function signup(
-  _prev: AuthState,
-  formData: FormData,
-): Promise<AuthState> {
+export async function signup(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get('email') ?? '').trim()
   const password = String(formData.get('password') ?? '')
+  if (!email || !password) return { error: 'Email and password are required.' }
 
-  if (!email || !password) {
-    return { error: 'Email and password are required.' }
+  try {
+    const { emailVerifyToken } = await registerWithPassword({ email, password })
+    await sendVerificationEmail(email.toLowerCase(), emailVerifyToken)
+  } catch (e) {
+    if (e instanceof SignupError) return { error: e.message }
+    throw e
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase.auth.signUp({ email, password })
-
-  if (error) {
-    return { error: error.message }
+  try {
+    await signIn('credentials', { email, password, redirectTo: '/account' })
+  } catch (e) {
+    if (e instanceof AuthError) return { error: 'Account created — please log in.' }
+    throw e // NEXT_REDIRECT
   }
-
-  // Email confirmation ON → a user is returned but no session yet.
-  if (data.user && !data.session) {
-    redirect('/login?message=Check your email to confirm your account')
-  }
-
-  revalidatePath('/account')
-  redirect('/account')
+  return null
 }
 
-/** Email/password login. */
-export async function login(
-  _prev: AuthState,
-  formData: FormData,
-): Promise<AuthState> {
+/** Email/password login via Auth.js Credentials. */
+export async function login(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get('email') ?? '').trim()
   const password = String(formData.get('password') ?? '')
+  if (!email || !password) return { error: 'Email and password are required.' }
 
-  if (!email || !password) {
-    return { error: 'Email and password are required.' }
+  try {
+    await signIn('credentials', { email, password, redirectTo: '/account' })
+  } catch (e) {
+    if (e instanceof AuthError) {
+      // Generic message so we don't reveal whether an account exists.
+      logger.security('auth.login', 'failed login attempt', { reason: e.type })
+      return { error: 'Invalid email or password.' }
+    }
+    throw e // NEXT_REDIRECT
   }
-
-  const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-
-  if (error) {
-    // Log the real reason; show a generic message so we don't reveal whether an
-    // account exists (account-enumeration defence). Keep the "confirm email"
-    // hint because it's actionable and not enumeration-sensitive.
-    logger.security('auth.login', 'failed login attempt', { reason: error.message })
-    const msg = /confirm/i.test(error.message)
-      ? 'Please confirm your email before logging in — check your inbox.'
-      : 'Invalid email or password.'
-    return { error: msg }
-  }
-
-  revalidatePath('/account')
-  redirect('/account')
+  return null
 }
 
 /** Sign out and return to the login page. */
-export async function signOut() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
-  revalidatePath('/', 'layout')
-  redirect('/login')
+export async function signOut(): Promise<void> {
+  await authSignOut({ redirectTo: '/login' })
 }
 
 /**
- * Step 1 of password reset: email a recovery link. The link lands on
- * /auth/callback (PKCE exchange) which forwards to /reset-password. We ALWAYS
- * report success so an attacker can't probe which emails are registered.
+ * Step 1 of password reset: email a reset link. We ALWAYS report success so an
+ * attacker can't probe which emails are registered.
  */
-export async function requestPasswordReset(
-  _prev: AuthState,
-  formData: FormData,
-): Promise<AuthState> {
+export async function requestPasswordReset(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get('email') ?? '').trim()
   if (!email) return { error: 'Enter your email address.' }
 
-  const supabase = await createClient()
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${SITE_URL}/auth/callback?next=/reset-password`,
-  })
-  if (error) logger.security('auth.reset', 'reset request error', { reason: error.message })
+  try {
+    const token = await beginPasswordReset(email)
+    if (token) await sendPasswordResetEmail(email.toLowerCase(), token)
+  } catch (e) {
+    logger.security('auth.reset', 'reset request error', { reason: e instanceof Error ? e.message : 'unknown' })
+  }
 
   redirect(
-    '/login?message=' +
-      encodeURIComponent('If an account exists for that email, we’ve sent a reset link.'),
+    '/login?message=' + encodeURIComponent('If an account exists for that email, we’ve sent a reset link.'),
   )
 }
 
-/**
- * Step 2 of password reset: the user arrives in a recovery session (via the
- * callback) and sets a new password. Requires an active session.
- */
-export async function updatePassword(
-  _prev: AuthState,
-  formData: FormData,
-): Promise<AuthState> {
+/** Step 2 of password reset: set a new password using the emailed token. */
+export async function updatePassword(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const password = String(formData.get('password') ?? '')
+  const token = String(formData.get('token') ?? '')
   if (password.length < 8) return { error: 'Password must be at least 8 characters.' }
+  if (!token) return { error: 'Your reset link is invalid. Please request a new one.' }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Your reset link has expired. Please request a new one.' }
-
-  const { error } = await supabase.auth.updateUser({ password })
-  if (error) {
-    logger.security('auth.reset', 'password update failed', { reason: error.message })
-    return { error: 'Could not update your password. Please try again.' }
+  let ok = false
+  try {
+    ok = await completePasswordReset(token, password)
+  } catch (e) {
+    if (e instanceof SignupError) return { error: e.message }
+    throw e
   }
+  if (!ok) return { error: 'Your reset link has expired. Please request a new one.' }
 
-  revalidatePath('/', 'layout')
-  redirect('/account')
+  redirect('/login?message=' + encodeURIComponent('Password updated — please log in.'))
 }

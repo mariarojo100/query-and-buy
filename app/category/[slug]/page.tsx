@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronLeftIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SearchControls } from '@/components/search/SearchControls'
 import { CategoryChips } from '@/components/listing/CategoryChips'
@@ -67,10 +67,7 @@ export default async function CategoryPage({
     sort: parsed.sort,
   })
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   const favoritedIds = await getFavoritedIds(listings.map((l) => l.id))
 
   return (

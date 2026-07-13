@@ -17,10 +17,9 @@ import {
 } from '@/components/ui/select'
 import { CategorySelect, type Category } from '@/components/sell/CategorySelect'
 import { createListing } from '@/app/sell/actions'
-import { createClient } from '@/utils/supabase/client'
+import { getListingUploadUrls } from '@/app/uploads/actions'
 import { EMIRATES } from '@/lib/profile/emirates'
 import { CONDITIONS } from '@/lib/listings/conditions'
-import { LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
 import { generateListingDraft, type AiDraft, type AiPricing } from '@/app/sell/aiActions'
 import { fileToAiImage } from '@/lib/ai/image-client'
@@ -143,18 +142,15 @@ export function CreateListingForm({
 
     setSubmitting(true)
     try {
-      const supabase = createClient()
-      const groupId = crypto.randomUUID()
+      const { slots, error: presignError } = await getListingUploadUrls(
+        pics.map((p) => ({ contentType: p.file.type, sizeBytes: p.file.size })),
+      )
+      if (presignError || !slots) throw new Error(presignError ?? 'Image upload failed.')
       const images = []
       for (let i = 0; i < pics.length; i++) {
-        const { file } = pics[i]
-        const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-        const key = `${userId}/${groupId}/${i}.${ext}`
-        const { error } = await supabase.storage
-          .from(LISTING_IMAGES_BUCKET)
-          .upload(key, file, { cacheControl: '3600', upsert: true })
-        if (error) throw new Error(`Image upload failed: ${error.message}`)
-        images.push({ storage_key: key, position: i })
+        const put = await fetch(slots[i].url, { method: 'PUT', headers: slots[i].headers, body: pics[i].file })
+        if (!put.ok) throw new Error('Image upload failed.')
+        images.push({ storage_key: slots[i].key, position: i })
       }
 
       const res = await createListing({

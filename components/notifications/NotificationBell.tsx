@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useTransition } from 'react'
+import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { BellIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { createClient } from '@/utils/supabase/client'
+import { usePollingRefresh } from '@/lib/hooks/usePollingRefresh'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -28,21 +28,9 @@ export function NotificationBell({
   const router = useRouter()
   const [, start] = useTransition()
 
-  // Realtime: refresh the header when a new notification arrives.
-  useEffect(() => {
-    const supabase = createClient()
-    const channel = supabase
-      .channel(`notif:${userId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        () => router.refresh(),
-      )
-      .subscribe()
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [userId, router])
+  // Poll for new notifications while the tab is visible (replaces Realtime).
+  void userId // no longer needed for a subscription; kept for the component API
+  usePollingRefresh(30000)
 
   function openItem(n: AppNotification) {
     if (!n.read_at) start(async () => {

@@ -1,4 +1,5 @@
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { recentlyViewedIdsFor, recommendedIdsFor } from '@/lib/db/personalization'
 import {
   getCategoryBySlug,
   getFilteredListings,
@@ -14,73 +15,24 @@ const ACTIVE_ORDER_STATES = ['negotiating', 'offer_sent', 'offer_accepted', 'awa
 
 /** Listings the signed-in user recently opened, most recent first. */
 export async function getRecentlyViewed(limit = 8): Promise<FeedListing[]> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return []
-  const { data } = await supabase
-    .from('listing_views')
-    .select('listing_id')
-    .order('viewed_at', { ascending: false })
-    .limit(limit)
-  const ids = ((data ?? []) as { listing_id: string }[]).map((r) => r.listing_id)
-  return getListingsByIds(ids)
+  const viewer = await getViewer()
+  if (!viewer) return []
+  return getListingsByIds(await recentlyViewedIdsFor(viewer, limit))
 }
 
 /** Active listings in categories the user recently viewed (excludes own + seen). */
 export async function getRecommended(limit = 8): Promise<FeedListing[]> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return []
-
-  const { data: views } = await supabase
-    .from('listing_views')
-    .select('listing_id')
-    .order('viewed_at', { ascending: false })
-    .limit(20)
-  const viewedIds = ((views ?? []) as { listing_id: string }[]).map((r) => r.listing_id)
-  if (viewedIds.length === 0) return []
-
-  const { data: viewed } = await supabase
-    .from('listings')
-    .select('id, category_id')
-    .in('id', viewedIds)
-  const catIds = [
-    ...new Set(
-      ((viewed ?? []) as { category_id: string | null }[])
-        .map((l) => l.category_id)
-        .filter((c): c is string => !!c),
-    ),
-  ]
-  if (catIds.length === 0) return []
-
-  const { data: recs } = await supabase
-    .from('listings')
-    .select('id, seller_id')
-    .in('category_id', catIds)
-    .eq('status', 'active')
-    .is('deleted_at', null)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(limit + viewedIds.length + 5)
-  const recIds = ((recs ?? []) as { id: string; seller_id: string }[])
-    .filter((r) => r.seller_id !== user.id && !viewedIds.includes(r.id))
-    .map((r) => r.id)
-    .slice(0, limit)
-  return getListingsByIds(recIds)
+  const viewer = await getViewer()
+  if (!viewer) return []
+  return getListingsByIds(await recommendedIdsFor(viewer, limit))
 }
 
 export type ContinueItem = OrderListItem & { role: 'buyer' | 'seller' }
 
 /** In-progress negotiations (active orders) for the user, newest first. */
 export async function getContinueNegotiation(limit = 6): Promise<ContinueItem[]> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return []
+  const viewer = await getViewer()
+  if (!viewer) return []
 
   const [buyer, seller] = await Promise.all([getBuyerOrders(), getSellerOrders()])
   const tagged: ContinueItem[] = [

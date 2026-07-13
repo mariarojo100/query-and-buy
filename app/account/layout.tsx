@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
+import { profileById } from '@/lib/db/profiles'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { ProfileHero } from '@/components/account/ProfileHero'
 import { AccountTabs } from '@/components/account/AccountTabs'
@@ -9,20 +10,10 @@ import { getSellerReputation } from '@/lib/reputation/queries'
 import type { Profile } from '@/lib/profile/completion'
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) redirect('/login?redirectTo=/account')
 
-  const { data } = await supabase
-    .from('profiles')
-    .select(
-      'id, username, display_name, avatar_url, bio, emirate, badge_level, listings_count, member_since',
-    )
-    .eq('id', user.id)
-    .maybeSingle()
-  const profile = data as Profile | null
+  const profile = (await profileById(user.id)) as Profile | null
 
   if (!profile) {
     return (

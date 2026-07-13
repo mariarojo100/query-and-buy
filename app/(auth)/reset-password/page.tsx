@@ -1,7 +1,9 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/brand/Logo'
 import { updatePassword, type AuthState } from '@/app/(auth)/actions'
@@ -22,9 +24,37 @@ function SubmitButton() {
   )
 }
 
-export default function ResetPasswordPage() {
+function ResetForm() {
   const [state, formAction] = useActionState<AuthState, FormData>(updatePassword, null)
+  const token = useSearchParams().get('token') ?? ''
 
+  return (
+    <form action={formAction} className="flex flex-col gap-4">
+      <input type="hidden" name="token" value={token} />
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
+        New password
+        <input
+          type="password"
+          name="password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          className={inputClass}
+        />
+      </label>
+
+      {state?.error && (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {state.error}
+        </p>
+      )}
+
+      <SubmitButton />
+    </form>
+  )
+}
+
+export default function ResetPasswordPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-7 px-6 py-12">
       <div className="text-center">
@@ -37,27 +67,9 @@ export default function ResetPasswordPage() {
         </p>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          New password
-          <input
-            type="password"
-            name="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            className={inputClass}
-          />
-        </label>
-
-        {state?.error && (
-          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {state.error}
-          </p>
-        )}
-
-        <SubmitButton />
-      </form>
+      <Suspense fallback={null}>
+        <ResetForm />
+      </Suspense>
 
       <p className="text-center text-sm text-muted-foreground">
         <Link

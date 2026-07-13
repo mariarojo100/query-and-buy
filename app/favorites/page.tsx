@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { HeartIcon } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
+import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -11,10 +11,7 @@ import { getUserFavorites } from '@/lib/favorites/queries'
 export const metadata = { title: 'Favorites · Query & Buy' }
 
 export default async function FavoritesPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getViewer()
   if (!user) redirect('/login?redirectTo=/favorites')
 
   const listings = await getUserFavorites()

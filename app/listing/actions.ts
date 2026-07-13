@@ -1,44 +1,27 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
-import { createServiceClient } from '@/utils/supabase/admin'
+import { getViewer } from '@/lib/auth/session'
+import { bumpViewCount, recordListingView } from '@/lib/db/listings'
 import { track } from '@/lib/analytics'
 
 /**
- * Record a listing view: bumps view_count (service client — listing RLS is
- * owner-only for updates) and, for signed-in users, upserts a recently-viewed
- * row. Best-effort — never throws, never blocks rendering.
+ * Record a listing view: bumps view_count and, for signed-in users, upserts a
+ * recently-viewed row. Best-effort — never throws, never blocks rendering.
  */
 export async function recordView(listingId: string): Promise<{ ok?: boolean }> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const viewer = await getViewer()
 
   try {
-    const admin = createServiceClient()
-    const { data: cur } = await admin
-      .from('listings')
-      .select('view_count')
-      .eq('id', listingId)
-      .maybeSingle()
-    if (cur) {
-      await admin
-        .from('listings')
-        .update({ view_count: ((cur as { view_count: number }).view_count ?? 0) + 1 })
-        .eq('id', listingId)
-    }
+    await bumpViewCount(listingId)
   } catch {
     /* view counting is best-effort */
   }
-
-  if (user) {
-    await supabase
-      .from('listing_views')
-      .upsert(
-        { user_id: user.id, listing_id: listingId, viewed_at: new Date().toISOString() },
-        { onConflict: 'user_id,listing_id' },
-      )
+  if (viewer) {
+    try {
+      await recordListingView(viewer, listingId)
+    } catch {
+      /* best-effort */
+    }
   }
   track('listing_viewed', { listingId })
   return { ok: true }

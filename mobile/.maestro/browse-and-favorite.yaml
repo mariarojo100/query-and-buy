@@ -1,0 +1,13 @@
+# Browse → open a listing → sign in → favorite it.
+appId: ae.queryandbuy.app
+---
+- launchApp
+- assertVisible: "Query & Buy"
+- assertVisible: "Recently added"
+- tapOn:
+    text: "AED .*"
+    index: 0
+- assertVisible: "Message seller"
+- back
+- tapOn: "Saved"
+- assertVisible: "Sign in"

@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Query & Buy — Next.js 15 web app + self-managed Postgres",
+  "description": "Query & Buy \u2014 Next.js 15 web app + self-managed Postgres",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "mobile"
   ],
   "scripts": {
     "dev": "next dev",

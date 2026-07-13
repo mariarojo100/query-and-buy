@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Query & Buy — Next.js 15 web app + Supabase",
+  "description": "Query & Buy — Next.js 15 web app + self-managed Postgres",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -26,6 +29,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1080.0",
+    "@qb/shared": "*",
+    "jose": "^5.9.6",
+    "zod": "^3.24.1",
     "@aws-sdk/s3-request-presigner": "^3.1080.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",

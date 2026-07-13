@@ -3,12 +3,11 @@
  */
 import '../global.css'
 import React, { useEffect } from 'react'
-import { AppState } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query'
 import { AuthProvider } from '@/auth/AuthContext'
-import { usePush } from '@/push/usePush'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,11 +25,15 @@ function useAppStateFocus() {
   }, [])
 }
 
-/** Runs inside the providers: registers push tokens + routes notification taps. */
-function PushGate() {
-  usePush()
-  return null
-}
+/**
+ * Registers push tokens + routes notification taps. Native-only — on web the
+ * gate is a no-op and the native push module is never required into the bundle.
+ */
+const PushGate: React.ComponentType =
+  Platform.OS === 'web'
+    ? () => null
+    : // eslint-disable-next-line @typescript-eslint/no-require-imports
+      (require('@/push/usePush') as typeof import('@/push/usePush')).PushGate
 
 export default function RootLayout() {
   useAppStateFocus()

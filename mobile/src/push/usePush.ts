@@ -41,6 +41,12 @@ async function getPushToken(): Promise<string | null> {
   return token.data
 }
 
+/** Native gate component — mount once inside the providers. */
+export function PushGate(): null {
+  usePush()
+  return null
+}
+
 export function usePush(): void {
   const { user } = useAuth()
   const router = useRouter()

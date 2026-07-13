@@ -5,8 +5,18 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["app", "src", "*.ts", "*.d.ts", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": [
+    "app",
+    "src",
+    "*.ts",
+    "*.d.ts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
+  ]
 }

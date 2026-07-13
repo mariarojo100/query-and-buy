@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Query & Buy — Next.js 15 web app + self-managed Postgres",
+  "description": "Query & Buy \u2014 Next.js 15 web app + self-managed Postgres",
   "workspaces": [
     "packages/*",
     "mobile"
@@ -68,5 +68,10 @@
     "tailwindcss": "^4",
     "tsx": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "nativewind": {
+      "tailwindcss": "^3.4.19"
+    }
   }
 }

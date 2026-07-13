@@ -25,9 +25,9 @@ export default function SellScreen() {
             <Text className="text-base font-semibold text-white">Sign in to sell</Text>
           </Pressable>
         ) : (
-          <View className="mt-6 rounded-full border border-border px-6 py-3 dark:border-border-dark">
-            <Text className="text-sm font-medium text-muted dark:text-muted-dark">Photo listing flow — coming in the next build</Text>
-          </View>
+          <Pressable onPress={() => router.push('/sell/new')} className="mt-6 rounded-full bg-primary px-8 py-3.5 active:opacity-90">
+            <Text className="text-base font-semibold text-white">Start with photos</Text>
+          </Pressable>
         )}
       </View>
     </SafeAreaView>

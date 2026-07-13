@@ -24,6 +24,7 @@ export default function RootLayout() {
           <Stack.Screen name="listing/[id]" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="(auth)/login" options={{ presentation: 'modal' }} />
           <Stack.Screen name="(auth)/signup" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="sell/new" options={{ presentation: 'fullScreenModal' }} />
           <Stack.Screen name="search" />
         </Stack>
       </AuthProvider>

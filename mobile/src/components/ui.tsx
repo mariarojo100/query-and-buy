@@ -1,10 +1,55 @@
 /**
  * src/components/ui — the small design-system primitives (NativeWind).
  * Visual language mirrors the web app: emerald primary, warm neutrals,
- * rounded-3xl cards, generous spacing.
+ * rounded-3xl cards, generous spacing. Press feedback = subtle scale;
+ * loading surfaces pulse instead of sitting static.
  */
-import React from 'react'
+import React, { useEffect } from 'react'
 import { ActivityIndicator, Pressable, Text, TextInput, View, type TextInputProps } from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated'
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+
+/** Pressable that springs to 97% while pressed — the app's standard press feel. */
+export function ScalePressable({
+  children,
+  className,
+  onPress,
+  onLongPress,
+  disabled,
+}: {
+  children: React.ReactNode
+  className?: string
+  onPress?: () => void
+  onLongPress?: () => void
+  disabled?: boolean
+}) {
+  const scale = useSharedValue(1)
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      disabled={disabled}
+      onPressIn={() => {
+        scale.value = withSpring(0.97, { damping: 20, stiffness: 300 })
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 20, stiffness: 300 })
+      }}
+      className={className}
+      style={style}
+    >
+      {children}
+    </AnimatedPressable>
+  )
+}
 
 export function PrimaryButton({
   title,
@@ -18,17 +63,17 @@ export function PrimaryButton({
   disabled?: boolean
 }) {
   return (
-    <Pressable
+    <ScalePressable
       onPress={onPress}
       disabled={disabled || loading}
-      className={`h-13 items-center justify-center rounded-full bg-primary px-6 py-3.5 active:opacity-90 ${disabled || loading ? 'opacity-60' : ''}`}
+      className={`h-13 items-center justify-center rounded-full bg-primary px-6 py-3.5 ${disabled || loading ? 'opacity-60' : ''}`}
     >
       {loading ? (
         <ActivityIndicator color="#fff" />
       ) : (
         <Text className="text-base font-semibold text-white">{title}</Text>
       )}
-    </Pressable>
+    </ScalePressable>
   )
 }
 
@@ -70,7 +115,17 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   )
 }
 
-/** Shimmerless skeleton block (kept simple; animation pass comes in polish). */
+/** Pulsing skeleton block — opacity breathes while content loads. */
 export function Skeleton({ className }: { className?: string }) {
-  return <View className={`rounded-2xl bg-border/60 dark:bg-border-dark/60 ${className ?? ''}`} />
+  const opacity = useSharedValue(0.55)
+  useEffect(() => {
+    opacity.value = withRepeat(withTiming(1, { duration: 700 }), -1, true)
+  }, [opacity])
+  const style = useAnimatedStyle(() => ({ opacity: opacity.value }))
+  return (
+    <Animated.View
+      style={style}
+      className={`rounded-2xl bg-border/60 dark:bg-border-dark/60 ${className ?? ''}`}
+    />
+  )
 }

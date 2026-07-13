@@ -13,6 +13,7 @@ import { formatPrice, CONDITIONS, EMIRATES } from '@qb/shared'
 import { useListing, useToggleFavorite } from '@/queries'
 import { openConversation } from '@/queries/messaging'
 import { reportContent } from '@/lib/moderation'
+import { tick } from '@/lib/haptics'
 import { useAuth } from '@/auth/AuthContext'
 import { listingImageUrl } from '@/lib/images'
 import { ListingCard } from '@/components/ListingCard'
@@ -79,7 +80,14 @@ export default function ListingScreen() {
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
           <Pressable
-            onPress={() => (user ? toggle.mutate(listing.id) : router.push('/(auth)/login'))}
+            onPress={() => {
+              if (!user) {
+                router.push('/(auth)/login')
+                return
+              }
+              tick()
+              toggle.mutate(listing.id)
+            }}
             className="absolute right-4 top-3 h-10 w-10 items-center justify-center rounded-full bg-black/40"
           >
             <Ionicons name={isFavorited ? 'heart' : 'heart-outline'} size={22} color={isFavorited ? '#e2574c' : '#fff'} />

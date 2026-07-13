@@ -34,6 +34,7 @@ import {
 import { ApiError } from '@/api/client'
 import { listingImageUrl } from '@/lib/images'
 import { reportContent, blockUser } from '@/lib/moderation'
+import { success, tick } from '@/lib/haptics'
 import { ErrorState } from '@/components/ui'
 
 function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversationId: string }) {
@@ -139,7 +140,10 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
             <Text className="py-2 text-xs text-muted dark:text-muted-dark">Waiting for the other party to confirm…</Text>
           ) : (
             <Pressable
-              onPress={() => orderAction.mutate({ orderId: current.id, action: 'confirm' }, { onError: err })}
+              onPress={() => {
+                success()
+                orderAction.mutate({ orderId: current.id, action: 'confirm' }, { onError: err })
+              }}
               className="rounded-full bg-primary px-5 py-2"
             >
               <Text className="text-xs font-semibold text-white">Confirm deal</Text>
@@ -169,7 +173,10 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
         ) : (
           <View className="mt-2 flex-row justify-center gap-2">
             <Pressable
-              onPress={() => respond.mutate({ offerId: pending.id, action: 'accept' }, { onError: err })}
+              onPress={() => {
+                success()
+                respond.mutate({ offerId: pending.id, action: 'accept' }, { onError: err })
+              }}
               className="rounded-full bg-primary px-5 py-2"
             >
               <Text className="text-xs font-semibold text-white">Accept</Text>
@@ -266,6 +273,7 @@ export default function ConversationScreen() {
   const submit = () => {
     const body = text.trim()
     if (!body) return
+    tick()
     setText('')
     send.mutate(body, {
       onError: (e) => {

@@ -3,12 +3,13 @@
  * emirate + relative time. Mirrors the web card's hierarchy.
  */
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { formatPrice, EMIRATES } from '@qb/shared'
 import type { FeedListingDto } from '@qb/shared'
 import { listingImageUrl } from '@/lib/images'
+import { ScalePressable } from '@/components/ui'
 
 function timeAgo(iso: string | null): string {
   if (!iso) return ''
@@ -26,9 +27,9 @@ export function ListingCard({ listing }: { listing: FeedListingDto }) {
   const cover = listingImageUrl(listing.cover_key)
 
   return (
-    <Pressable
+    <ScalePressable
       onPress={() => router.push(`/listing/${listing.id}`)}
-      className="mb-3 flex-1 overflow-hidden rounded-qb border border-border bg-card active:opacity-95 dark:border-border-dark dark:bg-card-dark"
+      className="mb-3 flex-1 overflow-hidden rounded-qb border border-border bg-card dark:border-border-dark dark:bg-card-dark"
     >
       <View className="aspect-square w-full bg-border/40 dark:bg-border-dark/40">
         {cover ? (
@@ -53,6 +54,6 @@ export function ListingCard({ listing }: { listing: FeedListingDto }) {
           {timeAgo(listing.published_at)}
         </Text>
       </View>
-    </Pressable>
+    </ScalePressable>
   )
 }

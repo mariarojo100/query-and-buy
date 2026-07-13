@@ -24,6 +24,7 @@ import { CONDITIONS, EMIRATES, formatPrice } from '@qb/shared'
 import { api, ApiError } from '@/api/client'
 import { useCategories } from '@/queries'
 import { pickPhotos, uploadPhotos, generateDraft, type AiDraft, type PickedPhoto } from '@/sell/pipeline'
+import { success, warn } from '@/lib/haptics'
 import { PrimaryButton } from '@/components/ui'
 
 type UploadState = 'idle' | 'uploading' | 'done' | 'error'
@@ -124,8 +125,10 @@ export default function SellNewScreen() {
           images: uploadedKeys,
         },
       })
+      success()
       router.replace(`/listing/${res.id}`)
     } catch (e) {
+      warn()
       Alert.alert('Could not publish', e instanceof ApiError ? e.message : 'Try again in a moment.')
     } finally {
       setPublishing(false)

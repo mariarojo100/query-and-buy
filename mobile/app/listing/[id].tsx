@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { formatPrice, CONDITIONS, EMIRATES } from '@qb/shared'
 import { useListing, useToggleFavorite } from '@/queries'
+import { openConversation } from '@/queries/messaging'
 import { useAuth } from '@/auth/AuthContext'
 import { listingImageUrl } from '@/lib/images'
 import { ListingCard } from '@/components/ListingCard'
@@ -46,12 +47,17 @@ export default function ListingScreen() {
   const emirate = EMIRATES.find((e) => e.value === listing.emirate)?.label
   const condition = CONDITIONS.find((c) => c.value === listing.condition)?.label
 
-  const onMessage = () => {
+  const onMessage = async () => {
     if (!user) {
       router.push('/(auth)/login')
       return
     }
-    Alert.alert('Chat', 'Messaging arrives in the next build — the conversation API is already live.')
+    try {
+      const { conversationId } = await openConversation(listing.id)
+      router.push(`/conversation/${conversationId}`)
+    } catch (e) {
+      Alert.alert('Not possible', e instanceof Error ? e.message : 'Try again.')
+    }
   }
 
   return (
@@ -140,7 +146,7 @@ export default function ListingScreen() {
 
       {/* CTA bar */}
       <View className="border-t border-border bg-card px-5 pb-2 pt-3 dark:border-border-dark dark:bg-card-dark">
-        <Pressable onPress={onMessage} className="items-center rounded-full bg-primary py-3.5 active:opacity-90">
+        <Pressable onPress={() => void onMessage()} className="items-center rounded-full bg-primary py-3.5 active:opacity-90">
           <Text className="text-base font-semibold text-white">Message seller</Text>
         </Pressable>
       </View>

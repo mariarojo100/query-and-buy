@@ -43,13 +43,21 @@ export default function AccountScreen() {
           </View>
 
           <Pressable
+            onPress={() => router.push('/account/edit')}
+            className="mt-4 flex-row items-center justify-between rounded-qb border border-border bg-card p-4 dark:border-border-dark dark:bg-card-dark"
+          >
+            <Text className="font-medium text-ink dark:text-ink-dark">Edit profile</Text>
+            <Ionicons name="chevron-forward" size={18} color="#8a8578" />
+          </Pressable>
+
+          <Pressable
             onPress={() =>
               Alert.alert('Sign out', 'Sign out of Query & Buy?', [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Sign out', style: 'destructive', onPress: () => void logout() },
               ])
             }
-            className="mt-4 flex-row items-center justify-between rounded-qb border border-border bg-card p-4 dark:border-border-dark dark:bg-card-dark"
+            className="mt-3 flex-row items-center justify-between rounded-qb border border-border bg-card p-4 dark:border-border-dark dark:bg-card-dark"
           >
             <Text className="font-medium text-danger">Sign out</Text>
             <Ionicons name="log-out-outline" size={20} color="#b3402a" />

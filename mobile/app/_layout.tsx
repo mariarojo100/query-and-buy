@@ -2,10 +2,11 @@
  * Root layout — providers (TanStack Query, Auth) + the navigation stack.
  */
 import '../global.css'
-import React from 'react'
+import React, { useEffect } from 'react'
+import { AppState } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query'
 import { AuthProvider } from '@/auth/AuthContext'
 
 const queryClient = new QueryClient({
@@ -14,7 +15,18 @@ const queryClient = new QueryClient({
   },
 })
 
+/** Mirror the web's visibility-aware polling: intervals pause when backgrounded. */
+function useAppStateFocus() {
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      focusManager.setFocused(state === 'active')
+    })
+    return () => sub.remove()
+  }, [])
+}
+
 export default function RootLayout() {
+  useAppStateFocus()
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

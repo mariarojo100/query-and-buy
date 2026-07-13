@@ -155,3 +155,49 @@ export async function accountPhoneE164(id: string): Promise<string | null> {
   const u = await db.user.findUnique({ where: { id }, select: { phoneE164: true } })
   return u?.phoneE164 ?? null
 }
+
+/**
+ * Delete the viewer's own account (App Store / Play Store requirement).
+ * Soft-delete + anonymize in one transaction: the users row keeps its id (so
+ * conversations/orders/reviews of OTHER users stay intact) but all personal
+ * data is removed and every session ends. Irreversible from the app's side.
+ */
+export async function deleteAccountFor(viewer: Viewer): Promise<void> {
+  const now = new Date()
+  await db.$transaction([
+    // Kill all sessions + devices first.
+    db.refreshToken.updateMany({ where: { userId: viewer.id, revokedAt: null }, data: { revokedAt: now } }),
+    db.pushToken.deleteMany({ where: { userId: viewer.id } }),
+    // Remove credentials + linked providers (prevents any re-login as this row).
+    db.authCredential.deleteMany({ where: { userId: viewer.id } }),
+    db.authAccount.deleteMany({ where: { userId: viewer.id } }),
+    db.authVerificationToken.deleteMany({ where: { userId: viewer.id } }),
+    // Anonymize identity.
+    db.user.update({
+      where: { id: viewer.id },
+      data: {
+        status: 'deleted',
+        deletedAt: now,
+        email: null,
+        phoneE164: null,
+        hasEmailVerified: false,
+        hasMobileVerified: false,
+      },
+    }),
+    db.profile.update({
+      where: { id: viewer.id },
+      data: {
+        displayName: 'Deleted user',
+        username: null,
+        avatarUrl: null,
+        bio: null,
+        emailVerified: false,
+      },
+    }),
+    // Take their inventory off the marketplace.
+    db.listing.updateMany({
+      where: { sellerId: viewer.id, status: { in: ['active', 'draft', 'reserved'] } },
+      data: { status: 'deleted', deletedAt: now },
+    }),
+  ])
+}

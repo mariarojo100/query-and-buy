@@ -6,14 +6,20 @@ import { z } from 'zod'
 import { EMIRATE_VALUES } from '../constants'
 
 export const UpdateProfileSchema = z.object({
-  displayName: z.string().trim().min(2, 'Name is too short.').max(60, 'Name is too long.').optional(),
+  displayName: z
+    .string()
+    .trim()
+    .min(2, 'Display name must be 2–50 characters.')
+    .max(50, 'Display name must be 2–50 characters.'),
   username: z
     .string()
     .trim()
     .toLowerCase()
-    .regex(/^[a-z0-9_]{3,30}$/, 'Username: 3–30 chars, letters/numbers/underscore.')
-    .optional(),
-  bio: z.string().trim().max(500, 'Bio is too long.').optional(),
+    .regex(
+      /^[a-z0-9_-]{3,30}$/,
+      'Username must be 3–30 characters: lowercase letters, numbers, - or _.',
+    ),
+  bio: z.string().trim().max(300, 'Bio must be 300 characters or fewer.').optional(),
   emirate: z.enum(EMIRATE_VALUES as [string, ...string[]]).optional(),
 })
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>

@@ -45,7 +45,7 @@ export const ListingFiltersSchema = z.object({
   featured: z.coerce.boolean().optional(),
   sinceDays: z.coerce.number().pipe(z.union([z.literal(1), z.literal(7), z.literal(30)])).optional(),
   sort: z.enum(SORT_VALUES).default('newest'),
-  cursor: z.string().optional(),
+  offset: z.coerce.number().int().nonnegative().default(0),
   limit: z.coerce.number().int().min(1).max(50).default(24),
 })
 export type ListingFilters = z.infer<typeof ListingFiltersSchema>

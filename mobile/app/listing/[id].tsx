@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { formatPrice, CONDITIONS, EMIRATES } from '@qb/shared'
 import { useListing, useToggleFavorite } from '@/queries'
 import { openConversation } from '@/queries/messaging'
+import { reportContent } from '@/lib/moderation'
 import { useAuth } from '@/auth/AuthContext'
 import { listingImageUrl } from '@/lib/images'
 import { ListingCard } from '@/components/ListingCard'
@@ -82,6 +83,12 @@ export default function ListingScreen() {
             className="absolute right-4 top-3 h-10 w-10 items-center justify-center rounded-full bg-black/40"
           >
             <Ionicons name={isFavorited ? 'heart' : 'heart-outline'} size={22} color={isFavorited ? '#e2574c' : '#fff'} />
+          </Pressable>
+          <Pressable
+            onPress={() => (user ? reportContent({ listingId: listing.id }) : router.push('/(auth)/login'))}
+            className="absolute right-4 top-16 h-10 w-10 items-center justify-center rounded-full bg-black/40"
+          >
+            <Ionicons name="flag-outline" size={18} color="#fff" />
           </Pressable>
         </View>
 

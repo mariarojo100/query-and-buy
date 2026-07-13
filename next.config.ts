@@ -57,7 +57,14 @@ const nextConfig: NextConfig = {
     authInterrupts: true,
   },
   async headers() {
-    return [{ source: '/:path*', headers: SECURITY_HEADERS }]
+    return [
+      { source: '/:path*', headers: SECURITY_HEADERS },
+      // Apple universal-links file is extensionless — force the JSON type.
+      {
+        source: '/.well-known/apple-app-site-association',
+        headers: [{ key: 'Content-Type', value: 'application/json' }],
+      },
+    ]
   },
   images: {
     formats: ['image/avif', 'image/webp'],

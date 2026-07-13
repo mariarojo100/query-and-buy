@@ -30,7 +30,7 @@ const config: ExpoConfig = {
       },
     ],
   },
-  plugins: ['expo-router', 'expo-secure-store', 'expo-font'],
+  plugins: ['expo-router', 'expo-secure-store', 'expo-font', 'expo-notifications'],
   experiments: { typedRoutes: true },
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://queryandbuy.com',

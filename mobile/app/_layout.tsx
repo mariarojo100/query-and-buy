@@ -8,6 +8,7 @@ import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query'
 import { AuthProvider } from '@/auth/AuthContext'
+import { usePush } from '@/push/usePush'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,11 +26,18 @@ function useAppStateFocus() {
   }, [])
 }
 
+/** Runs inside the providers: registers push tokens + routes notification taps. */
+function PushGate() {
+  usePush()
+  return null
+}
+
 export default function RootLayout() {
   useAppStateFocus()
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <PushGate />
         <StatusBar style="auto" />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />

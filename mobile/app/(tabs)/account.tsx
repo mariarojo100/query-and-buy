@@ -62,6 +62,14 @@ export default function AccountScreen() {
             <Text className="font-medium text-danger">Sign out</Text>
             <Ionicons name="log-out-outline" size={20} color="#b3402a" />
           </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/account/delete')}
+            className="mt-3 flex-row items-center justify-between p-4"
+          >
+            <Text className="text-sm text-muted dark:text-muted-dark">Delete account</Text>
+            <Ionicons name="chevron-forward" size={16} color="#8a8578" />
+          </Pressable>
         </View>
       )}
     </SafeAreaView>

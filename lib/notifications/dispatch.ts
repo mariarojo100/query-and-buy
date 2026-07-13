@@ -1,5 +1,6 @@
 import { insertNotification, emailPrefsFor, recipientEmailInfo } from '@/lib/db/system/notifications'
 import { sendEmail } from '@/lib/email/send'
+import { sendPush } from '@/lib/notifications/push'
 import { buildEmail, type EmailKind, type EmailData } from '@/lib/email/templates'
 
 type PrefCategory = 'offer' | 'chat' | 'order' | 'review' | 'marketing'
@@ -86,6 +87,16 @@ export async function dispatch(input: DispatchInput): Promise<void> {
   } catch {
     /* ignore */
   }
+
+  // 1b) mobile push — fire-and-forget (sendPush never throws); devices are
+  // registered via POST /api/v1/push-tokens.
+  void sendPush({
+    recipientId: input.recipientId,
+    type: input.type,
+    title: input.title,
+    body: input.body,
+    link: input.link,
+  })
 
   // 2) email — verified address (req 6) + respects the recipient's preferences
   if (input.email) {

@@ -33,6 +33,7 @@ import {
 } from '@/queries/messaging'
 import { ApiError } from '@/api/client'
 import { listingImageUrl } from '@/lib/images'
+import { reportContent, blockUser } from '@/lib/moderation'
 import { ErrorState } from '@/components/ui'
 
 function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversationId: string }) {
@@ -296,6 +297,24 @@ export default function ConversationScreen() {
               {conv?.listing ? `${conv.listing.title_en} · ${formatPrice(conv.listing.price_fils, conv.listing.currency)}` : ''}
             </Text>
           </View>
+        </Pressable>
+        <Pressable
+          hitSlop={10}
+          onPress={() => {
+            if (!conv?.other) return
+            const other = conv.other
+            Alert.alert(other.display_name, undefined, [
+              { text: 'Report user', onPress: () => reportContent({ reportedUserId: other.id }) },
+              {
+                text: 'Block user',
+                style: 'destructive',
+                onPress: () => blockUser(other.id, other.display_name, () => router.back()),
+              },
+              { text: 'Cancel', style: 'cancel' },
+            ])
+          }}
+        >
+          <Ionicons name="ellipsis-horizontal" size={20} color="#8a8578" />
         </Pressable>
       </View>
 

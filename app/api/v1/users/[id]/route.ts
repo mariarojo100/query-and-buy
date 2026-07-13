@@ -1,6 +1,8 @@
 /**
  * GET /api/v1/users/:username — public seller profile: profile card, active
  * listings, review stats + recent reviews (read-only in mobile v1).
+ * NOTE: the segment is named [id] to share the level with users/[id]/block
+ * (Next.js allows one param name per path level); the value is a USERNAME.
  */
 import { profileByUsername } from '@/lib/db/profiles'
 import { sellerListings } from '@/lib/db/listings'
@@ -9,10 +11,10 @@ import { ok, notFound, handle } from '@/lib/api/respond'
 
 export async function GET(
   _req: Request,
-  ctx: { params: Promise<{ username: string }> },
+  ctx: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   return handle(async () => {
-    const { username } = await ctx.params
+    const { id: username } = await ctx.params
     const profile = await profileByUsername(username.toLowerCase())
     if (!profile) return notFound('Profile')
 

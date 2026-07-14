@@ -1,10 +1,11 @@
 /**
- * ListingCard — the feed card (2-col grid): cover image, price, title,
- * emirate + relative time. Mirrors the web card's hierarchy.
+ * ListingCard — the feed card (2-col grid): 4:3 cover with a considered
+ * no-photo treatment, price-first hierarchy, quiet meta line.
  */
 import React from 'react'
 import { Text, View } from 'react-native'
 import { Image } from 'expo-image'
+import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { formatPrice, EMIRATES } from '@qb/shared'
 import type { FeedListingDto } from '@qb/shared'
@@ -29,30 +30,42 @@ export function ListingCard({ listing }: { listing: FeedListingDto }) {
   return (
     <ScalePressable
       onPress={() => router.push(`/listing/${listing.id}`)}
-      className="mb-3 flex-1 overflow-hidden rounded-qb border border-border bg-card dark:border-border-dark dark:bg-card-dark"
+      className="mb-3 flex-1 overflow-hidden rounded-2xl border border-border/70 bg-card dark:border-border-dark dark:bg-card-dark"
     >
-      <View className="aspect-square w-full bg-border/40 dark:bg-border-dark/40">
+      <View style={{ aspectRatio: 4 / 3 }} className="w-full overflow-hidden bg-primary-light/50 dark:bg-border-dark/30">
         {cover ? (
-          <Image source={{ uri: cover }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={150} />
-        ) : null}
+          <Image
+            source={{ uri: cover }}
+            style={{ width: '100%', height: '100%' }}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <View className="h-full w-full items-center justify-center">
+            <Ionicons name="image-outline" size={26} color="#0e5a4355" />
+            <Text className="mt-1 text-[10px] font-medium text-primary/40 dark:text-muted-dark">No photo yet</Text>
+          </View>
+        )}
         {listing.is_featured ? (
-          <View className="absolute left-2 top-2 rounded-full bg-accent px-2 py-0.5">
-            <Text className="text-[10px] font-bold uppercase text-white">Featured</Text>
+          <View className="absolute left-2 top-2 rounded-full bg-accent px-2.5 py-1">
+            <Text className="text-[9px] font-bold uppercase tracking-wide text-white">Featured</Text>
           </View>
         ) : null}
       </View>
-      <View className="p-3">
-        <Text className="text-base font-bold text-primary dark:text-primary-light">
+      <View className="px-3 pb-3 pt-2.5">
+        <Text className="text-[15px] font-extrabold tracking-tight text-primary dark:text-primary-light">
           {formatPrice(listing.price_fils, listing.currency)}
         </Text>
-        <Text numberOfLines={2} className="mt-0.5 text-sm text-ink dark:text-ink-dark">
+        <Text numberOfLines={1} className="mt-1 text-[13px] font-medium leading-snug text-ink dark:text-ink-dark">
           {listing.title_en}
         </Text>
-        <Text className="mt-1 text-xs text-muted dark:text-muted-dark">
-          {emirate}
-          {emirate && listing.published_at ? ' · ' : ''}
-          {timeAgo(listing.published_at)}
-        </Text>
+        <View className="mt-1.5 flex-row items-center">
+          <Ionicons name="location-outline" size={11} color="#8a8578" />
+          <Text numberOfLines={1} className="ml-0.5 flex-1 text-[11px] text-muted dark:text-muted-dark">
+            {emirate}
+          </Text>
+          <Text className="text-[11px] text-muted dark:text-muted-dark">{timeAgo(listing.published_at)}</Text>
+        </View>
       </View>
     </ScalePressable>
   )

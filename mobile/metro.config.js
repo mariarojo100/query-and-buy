@@ -14,13 +14,22 @@ config.resolver.nodeModulesPaths = [
 ]
 
 // Dedupe React across the workspace: the Next.js app at the root ships its own
-// react/react-dom (Tailwind v4 pins them differently), which Metro would
-// otherwise resolve for some modules — producing the "Invalid hook call /
-// two copies of React" crash, especially on web. Pin to the mobile copy.
-config.resolver.extraNodeModules = {
-  react: path.resolve(projectRoot, 'node_modules/react'),
-  'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),
-  'react-native-web': path.resolve(workspaceRoot, 'node_modules/react-native-web'),
+// react/react-dom, and a module resolving that copy while react-native-web
+// initialized the mobile copy crashes with "Invalid hook call / two copies of
+// React". extraNodeModules is only a FALLBACK (it can't override a successful
+// resolution), so force it with a custom resolver: every react/react-dom/
+// scheduler request — from any importer — resolves to the mobile copy.
+const FORCE_SINGLETON = ['react', 'react-dom', 'scheduler']
+const defaultResolveRequest = config.resolver.resolveRequest
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const pkg = moduleName.split('/')[0]
+  if (FORCE_SINGLETON.includes(pkg)) {
+    return {
+      type: 'sourceFile',
+      filePath: require.resolve(moduleName, { paths: [projectRoot] }),
+    }
+  }
+  return (defaultResolveRequest ?? context.resolveRequest)(context, moduleName, platform)
 }
 
 module.exports = withNativeWind(config, { input: './global.css' })

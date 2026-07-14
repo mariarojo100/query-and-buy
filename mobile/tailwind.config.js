@@ -19,12 +19,12 @@ module.exports = {
         border: '#e7e4dd',
         muted: '#8a8578',
         ink: '#1d1c18',
-        // Dark mode pairs
-        'background-dark': '#161511',
-        'card-dark': '#211f1a',
-        'border-dark': '#35322a',
-        'muted-dark': '#a29d8f',
-        'ink-dark': '#f2f0ea',
+        // Dark mode pairs (cards step clearly off the canvas)
+        'background-dark': '#131210',
+        'card-dark': '#26231d',
+        'border-dark': '#3d3930',
+        'muted-dark': '#a8a293',
+        'ink-dark': '#f4f2ec',
         danger: '#b3402a',
       },
       borderRadius: { qb: 24 },

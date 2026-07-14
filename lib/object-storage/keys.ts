@@ -27,6 +27,22 @@ export const BUCKETS = {
 
 export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS]['name']
 
+/**
+ * Public read URL for an object. Each bucket is served from its own Cloudflare
+ * R2 custom domain — the single source of truth for public URLs (no env var).
+ * These are the only two public buckets.
+ */
+export function bucketPublicUrl(bucket: BucketName, key: string): string {
+  switch (bucket) {
+    case 'avatars':
+      return `https://avatars.queryandbuy.com/${key}`
+    case 'listing-images':
+      return `https://images.queryandbuy.com/${key}`
+    default:
+      throw new Error(`Unknown storage bucket: ${bucket as string}`)
+  }
+}
+
 /** The image MIME types both buckets allow (migrations 110011 / 110013). */
 export const ALLOWED_IMAGE_MIME = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const
 export type AllowedImageMime = (typeof ALLOWED_IMAGE_MIME)[number]

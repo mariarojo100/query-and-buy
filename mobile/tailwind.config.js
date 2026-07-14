@@ -1,7 +1,8 @@
 /**
- * Tailwind (NativeWind v4) — tokens ported from the web app's theme so the
- * mobile app is visually the same brand: deep emerald primary, warm neutral
- * surfaces, rounded-3xl cards, soft shadows.
+ * Query & Buy design tokens (NativeWind v4).
+ * Light-first premium palette; dark mode kept as a tuned secondary theme.
+ * Single source for color — components must not hardcode hex values
+ * (icon colors use the ICON constants in src/theme/colors.ts).
  */
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -10,24 +11,24 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Brand (mirrors the web emerald/dark-green palette)
-        primary: { DEFAULT: '#0e5a43', dark: '#0a4433', light: '#e8f2ee' },
-        accent: '#c8a24a',
-        // Surfaces
-        background: '#faf9f6',
-        card: '#ffffff',
-        border: '#e7e4dd',
-        muted: '#8a8578',
-        ink: '#1d1c18',
-        // Dark mode pairs (cards step clearly off the canvas)
-        'background-dark': '#131210',
-        'card-dark': '#26231d',
-        'border-dark': '#3d3930',
-        'muted-dark': '#a8a293',
-        'ink-dark': '#f4f2ec',
-        danger: '#b3402a',
+        // Brand
+        primary: { DEFAULT: '#0B6B50', dark: '#074A39', light: '#E9F2EE' },
+        accent: { DEFAULT: '#D9B95B', deep: '#8A6D1F' },
+        danger: '#C84141',
+        // Light surfaces
+        background: '#F7F8F6',
+        card: '#FFFFFF',
+        border: '#E5E8E2',
+        ink: '#151714',
+        muted: '#666B64',
+        // Dark surfaces (secondary theme, same hue family)
+        'background-dark': '#121411',
+        'card-dark': '#1D211C',
+        'border-dark': '#333831',
+        'ink-dark': '#F2F4F0',
+        'muted-dark': '#9AA096',
       },
-      borderRadius: { qb: 24 },
+      borderRadius: { qb: 20, img: 16 },
     },
   },
   plugins: [],

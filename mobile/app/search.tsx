@@ -15,11 +15,14 @@ import type { FeedListingDto } from '@qb/shared'
 
 export default function SearchScreen() {
   const router = useRouter()
-  const params = useLocalSearchParams<{ category?: string; label?: string }>()
-  const [text, setText] = useState('')
-  const [filters, setFilters] = useState<Record<string, string>>(
-    params.category ? { category: params.category, sort: 'newest' } : { sort: 'newest' },
-  )
+  const params = useLocalSearchParams<{ category?: string; label?: string; q?: string }>()
+  const [text, setText] = useState(params.q ?? '')
+  const [filters, setFilters] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = { sort: 'newest' }
+    if (params.q) initial.q = params.q
+    else if (params.category) initial.category = params.category
+    return initial
+  })
   const [aiUsed, setAiUsed] = useState(false)
   const [parsing, setParsing] = useState(false)
 

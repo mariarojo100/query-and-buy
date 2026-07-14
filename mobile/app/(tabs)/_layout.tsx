@@ -1,9 +1,35 @@
-/** Tab bar — Home · Sell · Inbox · Favorites · Account (marketplace convention). */
+/**
+ * Tab bar — Home · Explore · Sell · Inbox · Profile.
+ * Sell is the raised emerald action; Saved lives under Profile (the
+ * favorites route stays registered but hidden from the bar).
+ */
 import React from 'react'
+import { Platform, View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { useInbox } from '@/queries/messaging'
+import { COLORS } from '@/theme/colors'
+
+function SellButton({ color: _c, size: _s }: { color: string; size: number }) {
+  return (
+    <View
+      className="items-center justify-center rounded-full bg-primary"
+      style={{
+        width: 52,
+        height: 52,
+        marginTop: Platform.OS === 'ios' ? -18 : -22,
+        shadowColor: COLORS.primaryDark,
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 6,
+      }}
+    >
+      <Ionicons name="add" size={28} color="#fff" />
+    </View>
+  )
+}
 
 export default function TabsLayout() {
   const { user } = useAuth()
@@ -13,36 +39,55 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#0e5a43',
-        tabBarInactiveTintColor: '#8a8578',
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.muted,
+        tabBarLabelStyle: { fontSize: 10.5, fontWeight: '600' },
+        tabBarStyle: { borderTopColor: COLORS.border },
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'Browse', tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" color={color} size={size} /> }}
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} />
+          ),
+        }}
       />
       <Tabs.Screen
-        name="favorites"
-        options={{ title: 'Saved', tabBarIcon: ({ color, size }) => <Ionicons name="heart-outline" color={color} size={size} /> }}
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'compass' : 'compass-outline'} color={color} size={size} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="sell"
-        options={{ title: 'Sell', tabBarIcon: ({ color, size }) => <Ionicons name="add-circle" color={color} size={size + 6} /> }}
+        options={{ title: 'Sell', tabBarIcon: SellButton, tabBarLabelStyle: { fontSize: 10.5, fontWeight: '700', color: COLORS.primary } }}
       />
       <Tabs.Screen
         name="inbox"
         options={{
-          title: 'Chats',
-          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-outline" color={color} size={size} />,
+          title: 'Inbox',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} color={color} size={size} />
+          ),
           tabBarBadge: unread > 0 ? (unread > 9 ? '9+' : unread) : undefined,
-          tabBarBadgeStyle: { backgroundColor: '#0e5a43', color: '#fff', fontSize: 10 },
+          tabBarBadgeStyle: { backgroundColor: COLORS.primary, color: '#fff', fontSize: 10 },
         }}
       />
       <Tabs.Screen
         name="account"
-        options={{ title: 'Account', tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" color={color} size={size} /> }}
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} color={color} size={size} />
+          ),
+        }}
       />
+      <Tabs.Screen name="favorites" options={{ href: null }} />
     </Tabs>
   )
 }

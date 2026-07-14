@@ -115,6 +115,63 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   )
 }
 
+/** Small status badge: featured (gold), verified (emerald), neutral. */
+export function Badge({
+  label,
+  tone = 'neutral',
+  icon,
+}: {
+  label: string
+  tone?: 'featured' | 'verified' | 'neutral'
+  icon?: React.ReactNode
+}) {
+  const tones = {
+    featured: 'bg-accent',
+    verified: 'bg-primary',
+    neutral: 'bg-ink/70',
+  } as const
+  return (
+    <View className={`flex-row items-center rounded-full px-2 py-[3px] ${tones[tone]}`}>
+      {icon}
+      <Text className="text-[9.5px] font-bold uppercase tracking-wide text-white">{label}</Text>
+    </View>
+  )
+}
+
+/** Tappable pill chip (popular searches, filters). */
+export function Chip({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className="rounded-full border border-border bg-card px-3.5 py-2 active:bg-primary-light dark:border-border-dark dark:bg-card-dark"
+    >
+      <Text className="text-[12.5px] font-medium text-ink dark:text-ink-dark">{label}</Text>
+    </Pressable>
+  )
+}
+
+/** Section header row: title + optional action ("See all"). */
+export function SectionHeader({
+  title,
+  action,
+  onAction,
+}: {
+  title: string
+  action?: string
+  onAction?: () => void
+}) {
+  return (
+    <View className="flex-row items-baseline justify-between px-6">
+      <Text className="text-[17px] font-bold tracking-tight text-ink dark:text-ink-dark">{title}</Text>
+      {action && onAction ? (
+        <Pressable onPress={onAction} hitSlop={8}>
+          <Text className="text-[13px] font-semibold text-primary dark:text-primary-light">{action}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  )
+}
+
 /** Pulsing skeleton block — opacity breathes while content loads. */
 export function Skeleton({ className }: { className?: string }) {
   const opacity = useSharedValue(0.55)

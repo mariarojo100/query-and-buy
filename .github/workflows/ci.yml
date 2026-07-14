@@ -19,10 +19,10 @@ jobs:
       - run: npm ci # postinstall runs `prisma generate` → produces lib/generated/prisma
       - run: npm run lint
       - run: npm run check:boundaries # data-access import fence (lib/db/README.md)
-    # NOTE: `next build` is intentionally not duplicated here — Vercel runs the
-    # full production build (with project env vars) on every push to main, which
-    # is the authoritative build gate. To also build in CI, add a job that sets
-    # NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY from repo secrets.
+    # NOTE: `next build` is intentionally not duplicated here — the production
+    # build runs on the deploy target with its own env vars, which is the
+    # authoritative build gate. To also build in CI, add a job that sets the
+    # required env (DATABASE_URL, AUTH_SECRET, STORAGE_*) from repo secrets.
 
   authz-tests:
     name: Authorization suite (allow/deny) — Prisma vs Postgres

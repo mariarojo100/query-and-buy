@@ -20,10 +20,9 @@ export type { StorageDriver, PresignedUpload } from '@/lib/object-storage/driver
 export { S3StorageDriver } from '@/lib/object-storage/s3'
 
 /**
- * Public URL for a public-bucket object. Prefers the target host
- * (NEXT_PUBLIC_STORAGE_BASE_URL); until cutover sets that, it falls back to the
- * Supabase Storage public path so images still render. Flipping the env var at
- * cutover is all that's needed to switch hosts.
+ * Public URL for a public-bucket object. The two live buckets are served from
+ * their Cloudflare R2 custom domains; any other bucket falls back to the generic
+ * storage host (NEXT_PUBLIC_STORAGE_BASE_URL) or a relative path.
  */
 export function publicUrl(bucket: BucketName | string, key: string): string {
   switch (bucket) {
@@ -34,11 +33,8 @@ export function publicUrl(bucket: BucketName | string, key: string): string {
       return `https://images.queryandbuy.com/${key}`
 
     default: {
-      // Fallback to Supabase if still needed during migration
-      const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL
-      if (supabase) {
-        return `${supabase.replace(/\/$/, '')}/storage/v1/object/public/${bucket}/${key}`
-      }
+      const base = process.env.NEXT_PUBLIC_STORAGE_BASE_URL
+      if (base) return `${base.replace(/\/$/, '')}/${bucket}/${key}`
       return `/${bucket}/${key}`
     }
   }

@@ -131,7 +131,7 @@ export function OrderCard({ order, role }: { order: OrderListItem; role: 'buyer'
         </p>
       )}
       {cancelledDeal && (
-        <p className="mt-3 border-t border-border pt-3 text-xs text-amber-700 dark:text-amber-400">
+        <p className="mt-3 border-t border-border pt-3 text-xs text-gold">
           {role === 'seller'
             ? 'Re-activated — back in search.'
             : 'Reservation cancelled by the seller.'}

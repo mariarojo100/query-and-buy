@@ -257,7 +257,7 @@ export function CreateListingForm({
             </Button>
           </div>
           {aiWarning && (
-            <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="rounded-md border border-gold/40 bg-gold/10 px-3 py-2 text-xs text-foreground">
               {aiWarning}
             </p>
           )}
@@ -269,7 +269,7 @@ export function CreateListingForm({
                   title={`${d.confidence}% confidence`}
                   className={`rounded-full border px-2 py-0.5 text-xs ${
                     d.confidence < 70
-                      ? 'border-amber-300 bg-amber-50 text-amber-800'
+                      ? 'border-gold/40 bg-gold/10 text-foreground'
                       : 'bg-background text-muted-foreground'
                   }`}
                 >

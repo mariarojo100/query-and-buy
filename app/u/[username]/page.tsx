@@ -125,8 +125,8 @@ export default async function PublicProfilePage({
     <>
       <SiteHeader />
       <main className="mx-auto w-full max-w-5xl px-5 pb-16 sm:px-8">
-        {/* Cover — soft brand gradient with a whisper of gold, not a flat block */}
-        <div className="relative mt-2 h-40 overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-success shadow-soft sm:h-56">
+        {/* Cover — ink with a warm bronze shift, not a flat block */}
+        <div className="relative mt-2 h-40 overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-gold shadow-soft sm:h-56">
           <div
             className="absolute inset-0 opacity-[0.12]"
             style={{

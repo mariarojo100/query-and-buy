@@ -57,7 +57,7 @@ export function ReputationCard({
         </div>
         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-700 transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-gold transition-all"
             style={{ width: `${trustScore}%` }}
           />
         </div>

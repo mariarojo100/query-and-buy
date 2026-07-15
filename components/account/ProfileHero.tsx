@@ -41,7 +41,7 @@ export function ProfileHero({
   return (
     <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
       {/* gradient banner */}
-      <div className="relative h-24 bg-gradient-to-br from-primary to-emerald-800 sm:h-32">
+      <div className="relative h-24 bg-gradient-to-br from-primary to-primary/85 sm:h-32">
         <div className="absolute -right-8 -top-10 size-48 rounded-full bg-white/10" />
         <div className="absolute -bottom-20 left-10 size-56 rounded-full bg-gold/15" />
       </div>

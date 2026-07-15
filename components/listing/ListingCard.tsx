@@ -58,7 +58,7 @@ export function ListingCard({
               </span>
             )}
             {verified && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-emerald-900 shadow-sm backdrop-blur">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-neutral-800 shadow-sm backdrop-blur">
                 <BadgeCheckIcon className="size-3.5 text-gold" />
                 Verified
               </span>

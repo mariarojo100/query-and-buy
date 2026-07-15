@@ -93,7 +93,7 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
             {status === 'checking' && (
               <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
             )}
-            {status === 'available' && <CheckIcon className="size-4 text-emerald-600" />}
+            {status === 'available' && <CheckIcon className="size-4 text-success" />}
             {(status === 'taken' || status === 'invalid') && (
               <XIcon className="size-4 text-destructive" />
             )}

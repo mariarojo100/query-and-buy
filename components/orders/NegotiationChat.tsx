@@ -487,9 +487,9 @@ function NegotiationDock({
           </div>
         ))}
       {cancelledDeal && (
-        <div className="mx-3 mt-3 flex items-center gap-2 rounded-2xl border border-amber-300/60 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-950/20">
-          <RotateCcwIcon className="size-4 text-amber-600 dark:text-amber-400" />
-          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+        <div className="mx-3 mt-3 flex items-center gap-2 rounded-2xl border border-gold/40 bg-gold/10 p-4">
+          <RotateCcwIcon className="size-4 text-gold" />
+          <p className="text-sm font-medium text-foreground">
             {role === 'seller'
               ? 'You re-activated this listing — it’s back in search.'
               : 'Reservation cancelled by the seller — the item is available again.'}
@@ -658,7 +658,7 @@ function NegotiationDock({
           size="icon"
           disabled={pending || !text.trim()}
           aria-label="Send"
-          className="size-11 shrink-0 rounded-full bg-gradient-to-br from-primary to-emerald-800 shadow-sm transition hover:opacity-95"
+          className="size-11 shrink-0 rounded-full bg-primary shadow-sm transition hover:opacity-90"
         >
           <SendIcon className="size-4" />
         </Button>

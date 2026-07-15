@@ -180,7 +180,7 @@ export default function SellNewScreen() {
     <View className="flex-1 bg-background dark:bg-background-dark">
       <SafeAreaView edges={['top']}>
         <View className="flex-row items-center px-4 py-2">
-          <Pressable onPress={() => router.back()} hitSlop={10} className="h-10 w-10 items-center justify-center">
+          <Pressable onPress={() => router.back()} hitSlop={10} className="h-10 w-10 items-center justify-center" accessibilityLabel="Close">
             <Ionicons name="close" size={26} color={iconColor} />
           </Pressable>
           <Text className="ml-1 text-[18px] font-extrabold text-ink dark:text-ink-dark">New listing</Text>
@@ -212,7 +212,7 @@ export default function SellNewScreen() {
                       <Text className="text-[9px] font-bold uppercase tracking-wide text-white">Cover</Text>
                     </View>
                   ) : null}
-                  <Pressable onPress={() => removePhoto(i)} className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full bg-ink">
+                  <Pressable onPress={() => removePhoto(i)} className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full bg-ink" accessibilityLabel="Remove photo">
                     <Ionicons name="close" size={13} color="#fff" />
                   </Pressable>
                 </View>

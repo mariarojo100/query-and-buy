@@ -96,7 +96,7 @@ export default function EditProfileScreen() {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
       <View className="flex-row items-center px-4 py-2">
-        <Pressable onPress={() => router.back()} hitSlop={10}>
+        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Go back">
           <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
         <Text className="ml-2 text-[18px] font-extrabold text-ink dark:text-ink-dark">Edit profile</Text>

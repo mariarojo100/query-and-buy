@@ -261,7 +261,7 @@ function OfferComposer({
 }) {
   return (
     <View className="mt-2 flex-row items-center gap-2">
-      <Pressable onPress={onSuggest} className="h-10 w-10 items-center justify-center rounded-full bg-primary-light">
+      <Pressable onPress={onSuggest} className="h-10 w-10 items-center justify-center rounded-full bg-primary-light" accessibilityLabel="Suggest an offer with AI">
         {suggesting ? <ActivityIndicator size="small" color={COLORS.primary} /> : <Ionicons name="sparkles" size={16} color={COLORS.primary} />}
       </Pressable>
       <TextInput
@@ -314,7 +314,7 @@ export default function ConversationScreen() {
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-background dark:bg-background-dark">
       {/* Header */}
       <View className="flex-row items-center border-b border-border px-2 py-2 dark:border-border-dark">
-        <Pressable onPress={() => router.back()} hitSlop={10} className="h-10 w-10 items-center justify-center">
+        <Pressable onPress={() => router.back()} hitSlop={10} className="h-10 w-10 items-center justify-center" accessibilityLabel="Go back">
           <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
         <Pressable
@@ -336,6 +336,7 @@ export default function ConversationScreen() {
         <Pressable
           hitSlop={10}
           className="h-10 w-10 items-center justify-center"
+          accessibilityLabel="More options"
           onPress={() => {
             if (!conv?.other) return
             const other = conv.other
@@ -425,6 +426,7 @@ export default function ConversationScreen() {
           <ScalePressable
             onPress={submit}
             disabled={!text.trim() || send.isPending}
+            accessibilityLabel="Send message"
             className={`h-11 w-11 items-center justify-center rounded-full bg-primary ${!text.trim() ? 'opacity-40' : ''}`}
           >
             <Ionicons name="arrow-up" size={20} color="#fff" />

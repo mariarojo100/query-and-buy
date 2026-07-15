@@ -59,7 +59,7 @@ export default function SearchScreen() {
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
       {/* Search header */}
       <View className="flex-row items-center gap-2 px-4 pb-3 pt-2">
-        <Pressable onPress={() => router.back()} hitSlop={10}>
+        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Go back">
           <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
         <View className="flex-1 flex-row items-center rounded-full border border-border bg-card px-4 dark:border-border-dark dark:bg-card-dark">

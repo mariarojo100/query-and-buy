@@ -25,12 +25,14 @@ export function ScalePressable({
   onPress,
   onLongPress,
   disabled,
+  accessibilityLabel,
 }: {
   children: React.ReactNode
   className?: string
   onPress?: () => void
   onLongPress?: () => void
   disabled?: boolean
+  accessibilityLabel?: string
 }) {
   const scale = useSharedValue(1)
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
@@ -39,6 +41,7 @@ export function ScalePressable({
       onPress={onPress}
       onLongPress={onLongPress}
       disabled={disabled}
+      accessibilityLabel={accessibilityLabel}
       onPressIn={() => {
         scale.value = withSpring(0.97, { damping: 20, stiffness: 300 })
       }}

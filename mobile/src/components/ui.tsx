@@ -24,9 +24,13 @@ import Animated, {
 } from 'react-native-reanimated'
 import { COLORS } from '@/theme/colors'
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
-
-/** Pressable that springs to 97% while pressed — the app's standard press feel. */
+/**
+ * Pressable that springs to 97% while pressed — the app's standard press feel.
+ * The className lives on a plain Pressable (NativeWind applies reliably there);
+ * the spring transform animates a nested Animated.View. Do NOT put className on
+ * an Animated.createAnimatedComponent(Pressable) — NativeWind drops it when a
+ * style prop is also present, which silently strips backgrounds/radii.
+ */
 export function ScalePressable({
   children,
   className,
@@ -49,24 +53,26 @@ export function ScalePressable({
   const scale = useSharedValue(1)
   const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
   return (
-    <AnimatedPressable
-      accessibilityRole="button"
-      onPress={onPress}
-      onLongPress={onLongPress}
-      disabled={disabled}
-      accessibilityLabel={accessibilityLabel}
-      hitSlop={hitSlop}
-      onPressIn={() => {
-        scale.value = withSpring(0.97, { damping: 22, stiffness: 320 })
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, { damping: 22, stiffness: 320 })
-      }}
-      className={className}
-      style={[aStyle, style]}
-    >
-      {children}
-    </AnimatedPressable>
+    <Animated.View style={aStyle}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        onLongPress={onLongPress}
+        disabled={disabled}
+        accessibilityLabel={accessibilityLabel}
+        hitSlop={hitSlop}
+        onPressIn={() => {
+          scale.value = withSpring(0.97, { damping: 22, stiffness: 320 })
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, { damping: 22, stiffness: 320 })
+        }}
+        className={className}
+        style={style}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
   )
 }
 

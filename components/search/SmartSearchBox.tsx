@@ -198,7 +198,7 @@ export function SmartSearchBox({ trending = [] }: { trending?: string[] }) {
           autoComplete="off"
           className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground"
         />
-        <Button type="submit" disabled={loading || !text.trim()} className="shrink-0 rounded-full px-5">
+        <Button type="submit" disabled={loading} className="shrink-0 rounded-full px-5">
           {loading ? <Loader2Icon className="size-4 animate-spin" /> : 'Search'}
         </Button>
       </form>

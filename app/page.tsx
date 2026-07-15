@@ -145,7 +145,7 @@ export default async function HomePage({
                   <Link
                     key={q}
                     href={`/?q=${encodeURIComponent(q)}`}
-                    className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition hover:border-gold/40 hover:text-foreground"
+                    className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground shadow-soft transition hover:border-gold/40 hover:bg-accent/40 hover:text-foreground"
                   >
                     {q}
                   </Link>
@@ -165,7 +165,7 @@ export default async function HomePage({
                     <Link
                       key={t.query}
                       href={`/?q=${encodeURIComponent(t.query)}`}
-                      className="lift rounded-full border border-border bg-card px-3.5 py-1.5 text-sm shadow-soft transition hover:border-gold/40 hover:text-foreground"
+                      className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground shadow-soft transition hover:border-gold/40 hover:bg-accent/40 hover:text-foreground"
                     >
                       {t.query}
                     </Link>

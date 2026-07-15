@@ -21,3 +21,14 @@ export async function loadViewer(id: string, email: string | null): Promise<View
   })
   return deriveViewer({ id, email, roles: rows.map((r) => r.role) })
 }
+
+/**
+ * Viewer for a bearer-token user (lib/api/auth.ts), or null when the account
+ * is deleted/banned — API access ends immediately even if a token is live.
+ * Email comes from the DB here (access tokens carry only the user id).
+ */
+export async function loadViewerIfActive(id: string): Promise<Viewer | null> {
+  const user = await db.user.findUnique({ where: { id }, select: { email: true, status: true } })
+  if (!user || user.status === 'deleted' || user.status === 'banned') return null
+  return loadViewer(id, user.email)
+}

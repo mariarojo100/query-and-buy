@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["TEAMID_PLACEHOLDER.ae.queryandbuy.app"],
+        "paths": ["/listing/*", "/messages/*", "/u/*"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+# Email/password sign-in with the seeded demo user (set via env).
+appId: ae.queryandbuy.app
+env:
+  EMAIL: demo@queryandbuy.ae
+  PASSWORD: Demo!2026
+---
+- launchApp
+- tapOn: "Account"
+- tapOn: "Sign in"
+- tapOn: "Email"
+- inputText: ${EMAIL}
+- tapOn: "Password"
+- inputText: ${PASSWORD}
+- tapOn: "Sign in"
+- assertVisible: "Edit profile"

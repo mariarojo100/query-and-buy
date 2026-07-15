@@ -121,6 +121,8 @@ export type ListingFilters = {
   sinceDays?: number
   sort?: SortKey
   limit?: number
+  /** Rows to skip — offset pagination for the mobile API's infinite feed. */
+  offset?: number
 }
 
 export type CategoryLite = {
@@ -303,6 +305,7 @@ export async function filteredListings(filters: ListingFilters = {}): Promise<{ 
     where ${where}
     ${orderBySql(filters.sort)}
     limit ${limit}
+    offset ${filters.offset ?? 0}
   `)
   const countRes = await db.$queryRaw<{ count: number }[]>(
     Prisma.sql`select count(*)::int as count from listings l where ${where}`,

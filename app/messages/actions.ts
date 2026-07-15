@@ -2,9 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
-import { createConversationFor, markConversationReadFor, sendMessageFor } from '@/lib/db/messaging'
-import { detectProhibitedContact, CONTACT_BLOCK_MESSAGE } from '@/lib/safety/contact'
-import { dispatch } from '@/lib/notifications/dispatch'
+import { createConversationFor, markConversationReadFor } from '@/lib/db/messaging'
+import { sendMessageAs } from '@/lib/messaging/service'
 
 /**
  * Open (or create) the conversation between the current user (buyer) and a
@@ -29,7 +28,11 @@ export async function markConversationRead(conversationId: string): Promise<{ ok
   return { ok }
 }
 
-/** Send a message in a conversation (participant + not-blocked enforced in the repo). */
+/**
+ * Send a message in a conversation. Validation, contact protection, and the
+ * recipient notification live in lib/messaging/service.ts (shared with the
+ * mobile API).
+ */
 export async function sendMessage(
   conversationId: string,
   body: string,
@@ -37,27 +40,8 @@ export async function sendMessage(
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in.' }
 
-  const text = body.trim()
-  if (!text) return { error: 'Message is empty.' }
-  if (text.length > 2000) return { error: 'Message is too long (max 2000 characters).' }
-
-  // Contact protection: prohibited content is NEVER written to the database.
-  if (detectProhibitedContact(text)) return { error: CONTACT_BLOCK_MESSAGE, blocked: true }
-
-  const res = await sendMessageFor(viewer, conversationId, text)
-  if (!res.ok) {
-    if (res.reason === 'blocked') return { error: 'This conversation is blocked.', blocked: true }
-    return { error: 'You are not part of this conversation.' }
-  }
-
-  // Notify the other participant (in-app only — no email per message).
-  await dispatch({
-    recipientId: res.recipientId,
-    type: 'new_message',
-    title: 'New message',
-    body: text.slice(0, 80),
-    link: `/messages/${conversationId}`,
-  })
+  const res = await sendMessageAs(viewer, conversationId, body)
+  if (!res.ok) return { error: res.error, blocked: res.blocked }
 
   revalidatePath(`/messages/${conversationId}`)
   revalidatePath('/messages')

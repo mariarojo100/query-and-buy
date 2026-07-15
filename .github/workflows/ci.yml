@@ -41,10 +41,15 @@ jobs:
           for i in $(seq 1 60); do docker exec qbdb pg_isready -U postgres >/dev/null 2>&1 && break; sleep 2; done
           docker exec qbdb bash -c 'apt-get update -qq && apt-get install -y -qq postgresql-17-pgvector >/dev/null'
           docker exec qbdb psql -U postgres -c "create database queryandbuy template template1;"
-          for f in db/baseline/0000_extensions.sql db/baseline/0001_schema.sql db/baseline/0002_auth_tables.sql db/seed.sql; do
+          for f in db/baseline/0000_extensions.sql db/baseline/0001_schema.sql db/baseline/0002_auth_tables.sql db/migrations/0003_api_tables.sql db/seed.sql; do
             docker exec -i qbdb psql -U postgres -d queryandbuy -v ON_ERROR_STOP=1 -q < "$f"
           done
       - name: Run authz integration suite
         env:
           DATABASE_URL: postgresql://postgres:pw@localhost:5432/queryandbuy
         run: npm run test:authz
+      - name: Run /api/v1 integration suite
+        env:
+          DATABASE_URL: postgresql://postgres:pw@localhost:5432/queryandbuy
+          API_JWT_SECRET: ci-only-api-jwt-secret-0123456789abcdef
+        run: npm run test:api

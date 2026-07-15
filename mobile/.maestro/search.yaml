@@ -1,0 +1,8 @@
+# Natural-language search returns results.
+appId: ae.queryandbuy.app
+---
+- launchApp
+- tapOn: "Search naturally.*"
+- inputText: "phone under 3000"
+- pressKey: enter
+- assertVisible: ".*results.*"

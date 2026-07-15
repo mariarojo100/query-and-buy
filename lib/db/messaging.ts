@@ -12,6 +12,7 @@
  */
 import { db } from '@/lib/db'
 import { messageVisibleWhere } from '@/lib/authz/policies'
+import { blockExistsBetween, blockedIdsFor } from '@/lib/db/blocks'
 import type { Viewer } from '@/lib/authz/viewer'
 
 export type Participant = { id: string; display_name: string; avatar_url: string | null; username: string | null }
@@ -74,8 +75,15 @@ async function participantMapFor(ids: string[]): Promise<Map<string, Participant
 }
 
 export async function conversationsFor(viewer: Viewer): Promise<InboxItem[]> {
+  const blocked = await blockedIdsFor(viewer)
   const convs = await db.conversation.findMany({
-    where: { OR: [{ buyerId: viewer.id }, { sellerId: viewer.id }] },
+    where: {
+      OR: [{ buyerId: viewer.id }, { sellerId: viewer.id }],
+      // Hide threads with users blocked in either direction (App Store UGC).
+      ...(blocked.size > 0
+        ? { NOT: [{ buyerId: { in: [...blocked] } }, { sellerId: { in: [...blocked] } }] }
+        : {}),
+    },
     orderBy: [{ lastMessageAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
     select: {
       id: true,
@@ -199,6 +207,9 @@ export async function createConversationFor(
   const listing = await db.listing.findUnique({ where: { id: listingId }, select: { sellerId: true } })
   if (!listing) return { error: 'Listing not found.' }
   if (listing.sellerId === viewer.id) return { error: "You can't message yourself." }
+  if (await blockExistsBetween(viewer.id, listing.sellerId)) {
+    return { error: 'You can’t message this seller.' }
+  }
 
   const key = { listingId_buyerId: { listingId, buyerId: viewer.id } }
   const existing = await db.conversation.findUnique({ where: key, select: { id: true } })
@@ -244,6 +255,8 @@ export async function sendMessageFor(viewer: Viewer, conversationId: string, tex
   })
   if (!conv || (conv.buyerId !== viewer.id && conv.sellerId !== viewer.id)) return { ok: false, reason: 'not_participant' }
   if (conv.status === 'blocked') return { ok: false, reason: 'blocked' }
+  const otherId = viewer.id === conv.buyerId ? conv.sellerId : conv.buyerId
+  if (await blockExistsBetween(viewer.id, otherId)) return { ok: false, reason: 'blocked' }
 
   await db.$transaction([
     db.message.create({ data: { conversationId, senderId: viewer.id, body: text } }),

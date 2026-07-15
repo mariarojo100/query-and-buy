@@ -1,17 +1,39 @@
 /**
  * Programmatic color constants — for props that can't take Tailwind classes
- * (icon `color`, navigator options). Mirrors tailwind.config.js exactly.
+ * (Ionicons `color`, navigator/tab-bar options, shadow colors). Mirrors
+ * tailwind.config.js exactly. Keep the two in sync.
  */
 export const COLORS = {
+  // Brand
   primary: '#0B6B50',
   primaryDark: '#074A39',
-  primaryLight: '#E9F2EE',
-  accent: '#D9B95B',
-  accentDeep: '#8A6D1F',
-  danger: '#C84141',
-  ink: '#151714',
-  muted: '#666B64',
-  border: '#E5E8E2',
+  primaryLight: '#E4EEE8',
+  primaryTint: '#F0F6F2',
+  accent: '#B2842F',
+  accentDeep: '#7C5A17',
+  accentLight: '#F3EAD4',
+  // Status
+  danger: '#C13B3B',
+  success: '#1E8A5F',
+  warning: '#B37F22',
+  info: '#2E6BB0',
+  // Light surfaces
+  background: '#F5F4EF',
+  sunken: '#ECEAE2',
   card: '#FFFFFF',
-  background: '#F7F8F6',
+  border: '#E7E4DA',
+  borderStrong: '#D5D1C5',
+  ink: '#17190F',
+  inkSoft: '#565A4D',
+  muted: '#868A7B',
+  // Dark surfaces (layered)
+  backgroundDark: '#0E1411',
+  sunkenDark: '#121A16',
+  cardDark: '#18211D',
+  elevatedDark: '#202B26',
+  borderDark: '#29332D',
+  borderStrongDark: '#3B473F',
+  inkDark: '#EEF1EA',
+  inkSoftDark: '#AFB6AA',
+  mutedDark: '#7E867B',
 } as const

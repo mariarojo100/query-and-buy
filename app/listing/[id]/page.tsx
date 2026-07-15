@@ -144,22 +144,18 @@ export default async function ListingDetailPage({
           </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
-          {/* Gallery + description */}
-          <div className="lg:col-span-7">
+        {/* Blocks stay in reading order for narrow screens — gallery, then the
+            title/price/CTA details, then the long description. On lg the explicit
+            grid placement restores the two-column layout: gallery top-left, sticky
+            details on the right (spanning both rows), description bottom-left. */}
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:gap-x-12 lg:gap-y-8">
+          {/* Gallery */}
+          <div className="lg:col-span-7 lg:col-start-1 lg:row-start-1">
             <ImageGallery keys={listing.images.map((i) => i.storage_key)} title={listing.title_en} />
-
-            {/* Description sits directly under the image */}
-            <section className="mt-8 border-t border-border pt-8">
-              <p className="eyebrow">Description</p>
-              <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
-                {listing.description}
-              </p>
-            </section>
           </div>
 
           {/* Details */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2">
             <div className="lg:sticky lg:top-24">
               <p className="eyebrow">{listing.category_name ?? 'Listing'}</p>
               <h1 className="font-display mt-3 text-3xl leading-tight tracking-tight sm:text-[2.5rem]">
@@ -227,6 +223,14 @@ export default async function ListingDetailPage({
               )}
             </div>
           </div>
+
+          {/* Description — after the details on mobile; bottom-left (row 2) on lg. */}
+          <section className="border-t border-border pt-8 lg:col-span-7 lg:col-start-1 lg:row-start-2">
+            <p className="eyebrow">Description</p>
+            <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
+              {listing.description}
+            </p>
+          </section>
         </div>
 
         {related.length > 0 && (

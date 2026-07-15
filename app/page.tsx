@@ -123,7 +123,16 @@ export default async function HomePage({
             <div className="space-y-6">
               <SearchControls categories={categories} hideSearch />
               <CategoryChips categories={categories} activeSlug={parsed.categorySlug} />
-              <div className="pt-2">{feed}</div>
+              <div className="pt-2">
+                <ListingResults
+                  listings={listings}
+                  count={count}
+                  favoritedIds={favoritedIds}
+                  authed={!!user}
+                  query={parsed.q}
+                  resetHref="/"
+                />
+              </div>
             </div>
           </section>
         ) : (

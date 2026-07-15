@@ -35,7 +35,34 @@ import { ApiError } from '@/api/client'
 import { listingImageUrl } from '@/lib/images'
 import { reportContent, blockUser } from '@/lib/moderation'
 import { success, tick } from '@/lib/haptics'
-import { ErrorState } from '@/components/ui'
+import { COLORS } from '@/theme/colors'
+import { ErrorState, ScalePressable } from '@/components/ui'
+
+function fmtTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+function sameDay(a: string, b: string): boolean {
+  return new Date(a).toDateString() === new Date(b).toDateString()
+}
+function fmtDay(iso: string): string {
+  const d = new Date(iso)
+  const today = new Date()
+  const yest = new Date()
+  yest.setDate(today.getDate() - 1)
+  if (d.toDateString() === today.toDateString()) return 'Today'
+  if (d.toDateString() === yest.toDateString()) return 'Yesterday'
+  return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: d.getFullYear() === today.getFullYear() ? undefined : 'numeric' })
+}
+
+function DaySeparator({ label }: { label: string }) {
+  return (
+    <View className="my-3 flex-row items-center justify-center">
+      <View className="rounded-full bg-border/70 px-3 py-1 dark:bg-card-dark">
+        <Text className="text-[11px] font-semibold text-muted dark:text-muted-dark">{label}</Text>
+      </View>
+    </View>
+  )
+}
 
 function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversationId: string }) {
   const { conversation, order } = data
@@ -235,13 +262,13 @@ function OfferComposer({
   return (
     <View className="mt-2 flex-row items-center gap-2">
       <Pressable onPress={onSuggest} className="h-10 w-10 items-center justify-center rounded-full bg-primary-light">
-        {suggesting ? <ActivityIndicator size="small" color="#0e5a43" /> : <Ionicons name="sparkles" size={16} color="#0e5a43" />}
+        {suggesting ? <ActivityIndicator size="small" color={COLORS.primary} /> : <Ionicons name="sparkles" size={16} color={COLORS.primary} />}
       </Pressable>
       <TextInput
         value={amount}
         onChangeText={setAmount}
-        placeholder="AED"
-        placeholderTextColor="#a29d8f"
+        placeholder="Enter amount (AED)"
+        placeholderTextColor={COLORS.muted}
         keyboardType="numeric"
         className="h-10 flex-1 rounded-full border border-border bg-background px-4 text-sm text-ink dark:border-border-dark dark:bg-background-dark dark:text-ink-dark"
       />
@@ -286,28 +313,29 @@ export default function ConversationScreen() {
   return (
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-background dark:bg-background-dark">
       {/* Header */}
-      <View className="flex-row items-center border-b border-border px-3 py-2 dark:border-border-dark">
-        <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name="chevron-back" size={26} color="#0e5a43" />
+      <View className="flex-row items-center border-b border-border px-2 py-2 dark:border-border-dark">
+        <Pressable onPress={() => router.back()} hitSlop={10} className="h-10 w-10 items-center justify-center">
+          <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
         <Pressable
           onPress={() => conv?.listing && router.push(`/listing/${conv.listing.id}`)}
-          className="ml-1 flex-1 flex-row items-center"
+          className="flex-1 flex-row items-center"
         >
-          <View className="h-9 w-9 overflow-hidden rounded-xl bg-border/40 dark:bg-border-dark/40">
+          <View className="h-10 w-10 overflow-hidden rounded-xl bg-primary-light dark:bg-card-dark">
             {cover ? <Image source={{ uri: cover }} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : null}
           </View>
-          <View className="ml-2 flex-1">
-            <Text numberOfLines={1} className="text-sm font-semibold text-ink dark:text-ink-dark">
+          <View className="ml-2.5 flex-1">
+            <Text numberOfLines={1} className="text-[15px] font-bold text-ink dark:text-ink-dark">
               {conv?.other?.display_name ?? '…'}
             </Text>
-            <Text numberOfLines={1} className="text-xs text-muted dark:text-muted-dark">
+            <Text numberOfLines={1} className="text-[12px] text-muted dark:text-muted-dark">
               {conv?.listing ? `${conv.listing.title_en} · ${formatPrice(conv.listing.price_fils, conv.listing.currency)}` : ''}
             </Text>
           </View>
         </Pressable>
         <Pressable
           hitSlop={10}
+          className="h-10 w-10 items-center justify-center"
           onPress={() => {
             if (!conv?.other) return
             const other = conv.other
@@ -322,29 +350,61 @@ export default function ConversationScreen() {
             ])
           }}
         >
-          <Ionicons name="ellipsis-horizontal" size={20} color="#8a8578" />
+          <Ionicons name="ellipsis-horizontal" size={20} color={COLORS.muted} />
         </Pressable>
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1" keyboardVerticalOffset={8}>
-        {/* Messages (inverted) */}
+        {/* Listing context banner */}
+        {conv?.listing ? (
+          <Pressable
+            onPress={() => router.push(`/listing/${conv.listing!.id}`)}
+            className="mx-4 mt-3 flex-row items-center rounded-2xl border border-border bg-card p-2.5 active:opacity-95 dark:border-border-dark dark:bg-card-dark"
+          >
+            <View className="h-11 w-11 overflow-hidden rounded-xl bg-primary-light dark:bg-background-dark">
+              {cover ? <Image source={{ uri: cover }} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : null}
+            </View>
+            <View className="ml-2.5 flex-1">
+              <Text numberOfLines={1} className="text-[13px] font-semibold text-ink dark:text-ink-dark">{conv.listing.title_en}</Text>
+              <Text className="text-[13px] font-bold text-primary dark:text-primary-light">
+                {formatPrice(conv.listing.price_fils, conv.listing.currency)}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.muted} />
+          </Pressable>
+        ) : null}
+
+        {/* Messages */}
         <View className="flex-1">
           {q.isLoading ? (
-            <ActivityIndicator className="mt-10" color="#0e5a43" />
+            <ActivityIndicator className="mt-10" color={COLORS.primary} />
           ) : (
             <FlashList
               data={messages}
               maintainVisibleContentPosition={{ startRenderingFromBottom: true, autoscrollToBottomThreshold: 0.2 }}
               keyExtractor={(item: ConversationMessageDto) => item.id}
-              renderItem={({ item }: { item: ConversationMessageDto }) => {
+              renderItem={({ item, index }: { item: ConversationMessageDto; index: number }) => {
                 const mine = item.sender_id === conv?.meId
+                const prev = messages[index - 1]
+                const showDay = !prev || !sameDay(prev.created_at, item.created_at)
                 return (
-                  <View className={`mx-4 my-1 max-w-[80%] rounded-2xl px-3.5 py-2.5 ${mine ? 'self-end rounded-br-md bg-primary' : 'self-start rounded-bl-md bg-card dark:bg-card-dark'}`}>
-                    <Text className={`text-[15px] ${mine ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>{item.body}</Text>
+                  <View>
+                    {showDay ? <DaySeparator label={fmtDay(item.created_at)} /> : null}
+                    <View className={`mx-4 my-0.5 max-w-[80%] px-3.5 py-2.5 ${mine
+                      ? 'self-end rounded-2xl rounded-br-md bg-primary'
+                      : 'self-start rounded-2xl rounded-bl-md border border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
+                    >
+                      <Text className={`text-[15px] leading-[20px] ${mine ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>
+                        {item.body ?? ''}
+                      </Text>
+                      <Text className={`mt-1 self-end text-[10px] ${mine ? 'text-white/65' : 'text-muted dark:text-muted-dark'}`}>
+                        {fmtTime(item.created_at)}
+                      </Text>
+                    </View>
                   </View>
                 )
               }}
-              contentContainerStyle={{ paddingVertical: 10 }}
+              contentContainerStyle={{ paddingVertical: 12 }}
             />
           )}
         </View>
@@ -353,22 +413,22 @@ export default function ConversationScreen() {
         {q.data ? <OfferPanel data={q.data} conversationId={id} /> : null}
 
         {/* Composer */}
-        <View className="flex-row items-center gap-2 border-t border-border px-4 py-2 dark:border-border-dark">
+        <View className="flex-row items-end gap-2 border-t border-border px-4 py-2.5 dark:border-border-dark">
           <TextInput
             value={text}
             onChangeText={setText}
             placeholder="Message…"
-            placeholderTextColor="#a29d8f"
+            placeholderTextColor={COLORS.muted}
             multiline
-            className="max-h-24 flex-1 rounded-3xl border border-border bg-card px-4 py-2.5 text-[15px] text-ink dark:border-border-dark dark:bg-card-dark dark:text-ink-dark"
+            className="max-h-28 min-h-[44px] flex-1 rounded-3xl border border-border bg-card px-4 py-3 text-[15px] text-ink dark:border-border-dark dark:bg-card-dark dark:text-ink-dark"
           />
-          <Pressable
+          <ScalePressable
             onPress={submit}
             disabled={!text.trim() || send.isPending}
-            className={`h-10 w-10 items-center justify-center rounded-full bg-primary ${!text.trim() ? 'opacity-50' : ''}`}
+            className={`h-11 w-11 items-center justify-center rounded-full bg-primary ${!text.trim() ? 'opacity-40' : ''}`}
           >
             <Ionicons name="arrow-up" size={20} color="#fff" />
-          </Pressable>
+          </ScalePressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

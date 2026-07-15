@@ -6,8 +6,22 @@ import React, { useEffect } from 'react'
 import { AppState, Platform } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import * as SplashScreen from 'expo-splash-screen'
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+} from '@expo-google-fonts/inter'
 import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query'
 import { AuthProvider } from '@/auth/AuthContext'
+import { installInterTypography } from '@/theme/typography'
+
+// Install the Inter weight→family mapping before any Text renders.
+installInterTypography()
+void SplashScreen.preventAutoHideAsync()
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +51,17 @@ const PushGate: React.ComponentType =
 
 export default function RootLayout() {
   useAppStateFocus()
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  })
+  useEffect(() => {
+    if (fontsLoaded) void SplashScreen.hideAsync()
+  }, [fontsLoaded])
+  if (!fontsLoaded) return null
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

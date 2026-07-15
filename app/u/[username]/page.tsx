@@ -198,8 +198,8 @@ export default async function PublicProfilePage({
           </div>
         </div>
 
-        {/* Reputation stat band */}
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {/* Reputation stat band — one cohesive strip, hairline-divided, not 5 floating cards. */}
+        <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border shadow-soft sm:grid-cols-3 lg:grid-cols-5">
           <StatCard label={stats.average != null ? 'Rating' : 'No ratings yet'}>
             {stats.average != null ? (
               <div className="flex items-center gap-2">
@@ -338,7 +338,7 @@ export default async function PublicProfilePage({
 /** Uniform stat tile — equal height, value on top, label beneath. */
 function StatCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-h-[92px] flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-soft">
+    <div className="flex min-h-[92px] flex-col justify-between bg-card p-4">
       <div className="min-h-8">{children}</div>
       <p className="eyebrow mt-2">{label}</p>
     </div>

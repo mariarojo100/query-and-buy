@@ -121,7 +121,7 @@ export default async function HomePage({
               <SmartSearchBox />
             </div>
             <div className="space-y-6">
-              <SearchControls categories={categories} hideSearch />
+              <SearchControls categories={categories} hideSearch hideCategory />
               <CategoryChips categories={categories} activeSlug={parsed.categorySlug} />
               <div className="pt-2">
                 <ListingResults

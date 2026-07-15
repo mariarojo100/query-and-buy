@@ -10,9 +10,15 @@ const STORAGE_API_ORIGIN = (() => {
   }
 })()
 
+const isDev = process.env.NODE_ENV !== 'production'
+
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  // Next.js dev evaluates modules and HMR updates via eval(), which a strict
+  // script-src blocks — leaving the app server-rendered but never hydrated
+  // (nothing interactive) during local development. 'unsafe-eval' is added in
+  // dev only; the production CSP stays strict (no eval in production builds).
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://avatars.queryandbuy.com https://images.queryandbuy.com https://lh3.googleusercontent.com",
   "font-src 'self' data:",

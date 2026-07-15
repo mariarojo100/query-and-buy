@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SafeListingImage } from '@/components/listing/SafeListingImage'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 
 export function ImageGallery({
@@ -17,8 +17,15 @@ export function ImageGallery({
 
   if (keys.length === 0) {
     return (
-      <div className="flex aspect-[4/3] w-full items-center justify-center rounded-xl border bg-muted text-muted-foreground">
-        <ImageIcon className="size-10 opacity-40" />
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+        <div className="flex size-full flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-accent via-muted to-secondary/70">
+          <span className="font-display select-none text-4xl leading-none tracking-tight text-primary/40">
+            Q&amp;B
+          </span>
+          <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/70">
+            No photo
+          </span>
+        </div>
       </div>
     )
   }
@@ -26,10 +33,9 @@ export function ImageGallery({
   return (
     <div className="space-y-3">
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
-        <Image
+        <SafeListingImage
           src={publicUrl(LISTING_IMAGES_BUCKET, keys[active])}
           alt={title}
-          fill
           sizes="(max-width: 1024px) 100vw, 60vw"
           className="object-cover"
           priority

@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import { BadgeCheckIcon, EyeIcon, ImageIcon, MapPinIcon } from 'lucide-react'
+import { BadgeCheckIcon, EyeIcon, MapPinIcon } from 'lucide-react'
+import { SafeListingImage } from '@/components/listing/SafeListingImage'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
 import { FavoriteButton } from '@/components/listing/FavoriteButton'
@@ -30,18 +30,19 @@ export function ListingCard({
     <Link href={`/listing/${listing.id}`} className="lift group block focus-visible:outline-none">
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted shadow-soft transition-shadow duration-300 group-hover:shadow-float group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2">
         {listing.cover_key ? (
-          <Image
+          <SafeListingImage
             src={publicUrl(LISTING_IMAGES_BUCKET, listing.cover_key)}
             alt={listing.title_en}
-            fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
           />
         ) : (
-          <div className="flex size-full items-center justify-center text-muted-foreground">
-            <ImageIcon className="size-8 opacity-30" />
+          <div className="flex size-full items-center justify-center bg-gradient-to-br from-accent via-muted to-secondary/70">
+            <span className="font-display select-none text-3xl tracking-tight text-primary/40">
+              Q&amp;B
+            </span>
           </div>
         )}
 

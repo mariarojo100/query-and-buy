@@ -89,10 +89,22 @@ export async function createUserAccount(input: CreateUserAccountInput): Promise<
 export async function getCredentialByEmail(email: string) {
   const user = await db.user.findUnique({
     where: { email },
-    select: { id: true, email: true, status: true, authCredential: { select: { passwordHash: true } } },
+    select: {
+      id: true,
+      email: true,
+      status: true,
+      hasEmailVerified: true,
+      authCredential: { select: { passwordHash: true } },
+    },
   })
   if (!user?.authCredential) return null
-  return { userId: user.id, email: user.email, status: user.status, passwordHash: user.authCredential.passwordHash }
+  return {
+    userId: user.id,
+    email: user.email,
+    status: user.status,
+    emailVerified: user.hasEmailVerified,
+    passwordHash: user.authCredential.passwordHash,
+  }
 }
 
 /** Set (or replace) a user's password hash — used by reset and by OAuth users adding a password. */

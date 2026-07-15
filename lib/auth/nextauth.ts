@@ -32,6 +32,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const cred = await getCredentialByEmail(email)
         if (!cred || cred.status === 'banned' || cred.status === 'deleted') return null
         if (!(await verifyPassword(password, cred.passwordHash))) return null
+        // Email must be confirmed before the account can be used. The login
+        // action detects this case and re-sends the confirmation link.
+        if (!cred.emailVerified) return null
         return { id: cred.userId, email: cred.email ?? email }
       },
     }),

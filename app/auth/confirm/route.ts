@@ -10,7 +10,9 @@ import { markEmailVerified } from '@/lib/db/auth'
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const token = searchParams.get('token')
-  const next = searchParams.get('next') ?? '/account'
+  const next =
+    searchParams.get('next') ??
+    '/login?message=' + encodeURIComponent('Email confirmed — you can now sign in.')
 
   if (token) {
     const redeemed = await redeemToken(token, 'email_verify')

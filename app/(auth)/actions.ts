@@ -7,14 +7,21 @@ import { registerWithPassword, beginPasswordReset, completePasswordReset, Signup
 import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/email/auth-emails'
 import { getViewer } from '@/lib/auth/session'
 import { issueToken } from '@/lib/auth/tokens'
+import { getCredentialByEmail } from '@/lib/db/auth'
+import { verifyPassword } from '@/lib/auth/password'
 import { logger } from '@/lib/logger'
+
+const CHECK_INBOX_MESSAGE =
+  'Account created. We’ve emailed you a confirmation link — confirm your email, then sign in.'
 
 export type AuthState = { error: string } | null
 
 /**
  * Email/password sign up. Creates the account bundle (lib/auth/signup →
- * lib/db/auth, replacing the handle_new_user trigger), emails a verification
- * link, then establishes a session via Auth.js Credentials.
+ * lib/db/auth, replacing the handle_new_user trigger) and emails a verification
+ * link. The account is NOT signed in — it is gated until the user confirms their
+ * email (login rejects unverified accounts), so we redirect to the login page
+ * with a "check your inbox" message instead of creating a session.
  */
 export async function signup(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get('email') ?? '').trim()
@@ -29,13 +36,7 @@ export async function signup(_prev: AuthState, formData: FormData): Promise<Auth
     throw e
   }
 
-  try {
-    await signIn('credentials', { email, password, redirectTo: '/account' })
-  } catch (e) {
-    if (e instanceof AuthError) return { error: 'Account created — please log in.' }
-    throw e // NEXT_REDIRECT
-  }
-  return null
+  redirect('/login?message=' + encodeURIComponent(CHECK_INBOX_MESSAGE))
 }
 
 /** Email/password login via Auth.js Credentials. */
@@ -43,6 +44,22 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
   const email = String(formData.get('email') ?? '').trim()
   const password = String(formData.get('password') ?? '')
   if (!email || !password) return { error: 'Email and password are required.' }
+
+  // If the credentials are correct but the email isn't confirmed yet, guide the
+  // user to their inbox and re-send the link — rather than a generic failure.
+  // Password is verified first, so this leaks no account-existence info.
+  const cred = await getCredentialByEmail(email.toLowerCase())
+  if (cred && !cred.emailVerified && (await verifyPassword(password, cred.passwordHash))) {
+    try {
+      const token = await issueToken(cred.userId, 'email_verify')
+      await sendVerificationEmail(email.toLowerCase(), token)
+    } catch {
+      /* non-blocking — the user can still request another link */
+    }
+    return {
+      error: 'Please confirm your email to continue — we’ve sent a fresh link to your inbox.',
+    }
+  }
 
   try {
     await signIn('credentials', { email, password, redirectTo: '/account' })

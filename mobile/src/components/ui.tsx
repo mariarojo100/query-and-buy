@@ -4,8 +4,9 @@
  * rounded-3xl cards, generous spacing. Press feedback = subtle scale;
  * loading surfaces pulse instead of sitting static.
  */
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, TextInput, View, type TextInputProps } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -13,6 +14,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
+import { COLORS } from '@/theme/colors'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
@@ -63,31 +65,47 @@ export function PrimaryButton({
   disabled?: boolean
 }) {
   return (
-    <ScalePressable
+    <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      className={`h-13 items-center justify-center rounded-full bg-primary px-6 py-3.5 ${disabled || loading ? 'opacity-60' : ''}`}
+      style={{ height: 52 }}
+      className={`items-center justify-center rounded-full bg-primary px-6 active:opacity-90 ${disabled || loading ? 'opacity-60' : ''}`}
     >
       {loading ? (
         <ActivityIndicator color="#fff" />
       ) : (
         <Text className="text-base font-semibold text-white">{title}</Text>
       )}
-    </ScalePressable>
+    </Pressable>
   )
 }
 
-export function Field(props: TextInputProps & { label: string; error?: string }) {
-  const { label, error, ...rest } = props
+export function Field(
+  props: TextInputProps & { label: string; error?: string; icon?: keyof typeof Ionicons.glyphMap },
+) {
+  const { label, error, icon, secureTextEntry, ...rest } = props
+  const isPassword = !!secureTextEntry
+  const [hidden, setHidden] = useState(isPassword)
   return (
     <View className="mb-4">
-      <Text className="mb-1.5 text-sm font-medium text-ink dark:text-ink-dark">{label}</Text>
-      <TextInput
-        placeholderTextColor="#a29d8f"
-        {...rest}
-        className={`rounded-2xl border bg-card px-4 py-3.5 text-base text-ink dark:bg-card-dark dark:text-ink-dark ${error ? 'border-danger' : 'border-border dark:border-border-dark'}`}
-      />
-      {error ? <Text className="mt-1 text-xs text-danger">{error}</Text> : null}
+      <Text className="mb-1.5 text-[13px] font-bold text-ink dark:text-ink-dark">{label}</Text>
+      <View
+        className={`flex-row items-center rounded-2xl border bg-card px-4 dark:bg-card-dark ${error ? 'border-danger' : 'border-border dark:border-border-dark'}`}
+      >
+        {icon ? <Ionicons name={icon} size={18} color={COLORS.muted} style={{ marginRight: 10 }} /> : null}
+        <TextInput
+          placeholderTextColor={COLORS.muted}
+          {...rest}
+          secureTextEntry={isPassword && hidden}
+          className="flex-1 py-3.5 text-[15px] text-ink dark:text-ink-dark"
+        />
+        {isPassword ? (
+          <Pressable onPress={() => setHidden((h) => !h)} hitSlop={8} accessibilityLabel={hidden ? 'Show password' : 'Hide password'}>
+            <Ionicons name={hidden ? 'eye-outline' : 'eye-off-outline'} size={19} color={COLORS.muted} />
+          </Pressable>
+        ) : null}
+      </View>
+      {error ? <Text className="mt-1 text-[12px] font-medium text-danger">{error}</Text> : null}
     </View>
   )
 }
@@ -111,6 +129,19 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
           <Text className="font-semibold text-white">Try again</Text>
         </Pressable>
       ) : null}
+    </View>
+  )
+}
+
+/** The brand mark — emerald magnifier tile with a gold lens dot (app-icon motif). */
+export function BrandMark() {
+  return (
+    <View className="relative h-16 w-16 items-center justify-center rounded-[20px] bg-primary">
+      <Ionicons name="search" size={28} color="#fff" />
+      <View
+        className="absolute right-2.5 top-2.5 h-3 w-3 rounded-full border-2 border-primary"
+        style={{ backgroundColor: COLORS.accent }}
+      />
     </View>
   )
 }

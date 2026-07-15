@@ -11,7 +11,7 @@
  * safely and the browser falls back to the loaded webfont via CSS.
  */
 import React from 'react'
-import { StyleSheet, Text as RNText, TextInput as RNTextInput } from 'react-native'
+import { Platform, StyleSheet, Text as RNText, TextInput as RNTextInput } from 'react-native'
 
 const FAMILY_BY_WEIGHT: Record<string, string> = {
   '100': 'Inter_400Regular',
@@ -30,7 +30,9 @@ const FAMILY_BY_WEIGHT: Record<string, string> = {
 let installed = false
 
 export function installInterTypography(): void {
-  if (installed) return
+  // Native only: react-native-web renders Text→<span> and chokes on the raw
+  // RN style array this produces (uses CSS font-family instead). Enforce it.
+  if (installed || Platform.OS === 'web') return
   installed = true
   for (const Comp of [RNText, RNTextInput] as unknown as { render?: (...a: unknown[]) => React.ReactElement }[]) {
     const original = Comp.render

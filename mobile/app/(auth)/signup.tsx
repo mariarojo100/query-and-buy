@@ -1,14 +1,16 @@
 /** Create account — /api/v1/auth/signup (same zod schema as the server). */
 import React, { useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { SignupSchema, type SignupInput } from '@qb/shared'
 import { useAuth } from '@/auth/AuthContext'
 import { ApiError } from '@/api/client'
-import { Field, PrimaryButton } from '@/components/ui'
+import { COLORS } from '@/theme/colors'
+import { BrandMark, Field, PrimaryButton } from '@/components/ui'
 
 export default function SignupScreen() {
   const router = useRouter()
@@ -36,16 +38,24 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background dark:bg-background-dark">
+      <View className="flex-row px-4 pt-1">
+        <Pressable onPress={() => router.back()} hitSlop={10} className="h-10 w-10 items-center justify-center rounded-full bg-card dark:bg-card-dark" accessibilityLabel="Close">
+          <Ionicons name="close" size={22} color={COLORS.muted} />
+        </Pressable>
+      </View>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <ScrollView contentContainerStyle={{ padding: 24, flexGrow: 1, justifyContent: 'center' }}>
-          <Text className="text-3xl font-extrabold tracking-tight text-primary dark:text-primary-light">Join Query & Buy</Text>
-          <Text className="mb-8 mt-1 text-sm text-muted dark:text-muted-dark">Buy & sell beautifully across the Emirates.</Text>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
+          <View className="mb-7 items-center">
+            <BrandMark />
+            <Text className="mt-5 text-[26px] font-extrabold tracking-tight text-ink dark:text-ink-dark">Create your account</Text>
+            <Text className="mt-1 text-center text-[14px] text-muted dark:text-muted-dark">Buy & sell beautifully across the Emirates.</Text>
+          </View>
 
           <Controller
             control={form.control}
             name="displayName"
             render={({ field, fieldState }) => (
-              <Field label="Display name" value={field.value} onChangeText={field.onChange} error={fieldState.error?.message} />
+              <Field label="Display name" icon="person-outline" placeholder="Your name" value={field.value} onChangeText={field.onChange} error={fieldState.error?.message} />
             )}
           />
           <Controller
@@ -54,6 +64,8 @@ export default function SignupScreen() {
             render={({ field, fieldState }) => (
               <Field
                 label="Email"
+                icon="mail-outline"
+                placeholder="you@email.com"
                 value={field.value}
                 onChangeText={field.onChange}
                 autoCapitalize="none"
@@ -66,16 +78,26 @@ export default function SignupScreen() {
             control={form.control}
             name="password"
             render={({ field, fieldState }) => (
-              <Field label="Password" value={field.value} onChangeText={field.onChange} secureTextEntry error={fieldState.error?.message} />
+              <Field label="Password" icon="lock-closed-outline" placeholder="At least 8 characters" value={field.value} onChangeText={field.onChange} secureTextEntry error={fieldState.error?.message} />
             )}
           />
 
-          {serverError ? <Text className="mb-3 text-sm text-danger">{serverError}</Text> : null}
+          {serverError ? (
+            <View className="mb-3 flex-row items-center rounded-2xl bg-danger/10 px-3.5 py-3">
+              <Ionicons name="alert-circle-outline" size={17} color={COLORS.danger} />
+              <Text className="ml-2 flex-1 text-[13px] font-medium text-danger">{serverError}</Text>
+            </View>
+          ) : null}
+
           <PrimaryButton title="Create account" onPress={() => void submit()} loading={busy} />
 
-          <Pressable onPress={() => router.replace('/(auth)/login')} className="mt-5 items-center py-2">
-            <Text className="text-sm text-muted dark:text-muted-dark">
-              Already have an account? <Text className="font-semibold text-primary dark:text-primary-light">Sign in</Text>
+          <Text className="mt-3 text-center text-[11px] leading-[16px] text-muted dark:text-muted-dark">
+            By creating an account you agree to Query & Buy’s Terms and acknowledge the Privacy Policy.
+          </Text>
+
+          <Pressable onPress={() => router.replace('/(auth)/login')} className="mt-4 items-center py-2">
+            <Text className="text-[14px] text-muted dark:text-muted-dark">
+              Already have an account? <Text className="font-bold text-primary dark:text-primary-light">Sign in</Text>
             </Text>
           </Pressable>
         </ScrollView>

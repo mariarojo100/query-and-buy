@@ -15,9 +15,14 @@ import { deriveViewer, type Viewer } from '@/lib/authz/viewer'
  * Auth.js session (Phase 3); roles come from user_roles.
  */
 export async function loadViewer(id: string, email: string | null): Promise<Viewer> {
-  const rows = await db.userRole.findMany({
-    where: { userId: id },
-    select: { role: true },
+  const [rows, user] = await Promise.all([
+    db.userRole.findMany({ where: { userId: id }, select: { role: true } }),
+    db.user.findUnique({ where: { id }, select: { hasEmailVerified: true } }),
+  ])
+  return deriveViewer({
+    id,
+    email,
+    roles: rows.map((r) => r.role),
+    emailVerified: user?.hasEmailVerified ?? false,
   })
-  return deriveViewer({ id, email, roles: rows.map((r) => r.role) })
 }

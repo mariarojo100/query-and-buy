@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
+import { emailUnverified } from '@/lib/authz/require-verified'
 import { getProvider } from '@/lib/ai/provider'
 import { aedToFils, formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
@@ -12,7 +13,7 @@ import * as orders from '@/lib/db/orders'
 const APP_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 const MAX_FILS = 100_000_000_00 // AED 100,000,000 sanity cap
 
-type Result = { ok?: boolean; error?: string }
+type Result = { ok?: boolean; error?: string; needVerify?: boolean }
 
 function imageUrl(coverKey: string | null): string | null {
   return coverKey ? publicUrl(LISTING_IMAGES_BUCKET, coverKey) : null
@@ -34,6 +35,8 @@ function touchAndRevalidate(conversationId: string | null) {
 export async function makeOffer(conversationId: string, amountAed: string | number): Promise<Result> {
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in.' }
+  const gate = emailUnverified(viewer)
+  if (gate) return gate
 
   const fils = aedToFils(amountAed)
   if (fils == null || fils <= 0) return { error: 'Enter a valid amount.' }

@@ -17,6 +17,7 @@ import {
   getUserIdByEmail,
   linkOAuthAccount,
   createUserAccount,
+  markEmailVerified,
 } from '@/lib/db/auth'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -54,6 +55,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const existing = await getUserIdByEmail(email)
         if (existing) {
           await linkOAuthAccount(existing, 'google', sub)
+          // Google has verified this address (email_verified !== false above), so
+          // confirm the account — otherwise a provider-verified user could still
+          // be blocked from selling/buying by a stale unverified flag.
+          await markEmailVerified(existing)
           uid = existing
         } else {
           const created = await createUserAccount({

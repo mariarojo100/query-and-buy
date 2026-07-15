@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
+import { emailUnverified } from '@/lib/authz/require-verified'
 import { createConversationFor, markConversationReadFor, sendMessageFor } from '@/lib/db/messaging'
 import { detectProhibitedContact, CONTACT_BLOCK_MESSAGE } from '@/lib/safety/contact'
 import { dispatch } from '@/lib/notifications/dispatch'
@@ -12,9 +13,11 @@ import { dispatch } from '@/lib/notifications/dispatch'
  */
 export async function createConversation(
   listingId: string,
-): Promise<{ conversationId?: string; error?: string; needAuth?: boolean }> {
+): Promise<{ conversationId?: string; error?: string; needAuth?: boolean; needVerify?: boolean }> {
   const viewer = await getViewer()
   if (!viewer) return { needAuth: true }
+  const gate = emailUnverified(viewer)
+  if (gate) return gate
   const res = await createConversationFor(viewer, listingId)
   if (res.conversationId) revalidatePath('/messages')
   return res
@@ -33,9 +36,11 @@ export async function markConversationRead(conversationId: string): Promise<{ ok
 export async function sendMessage(
   conversationId: string,
   body: string,
-): Promise<{ ok?: boolean; error?: string; blocked?: boolean }> {
+): Promise<{ ok?: boolean; error?: string; blocked?: boolean; needVerify?: boolean }> {
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in.' }
+  const gate = emailUnverified(viewer)
+  if (gate) return gate
 
   const text = body.trim()
   if (!text) return { error: 'Message is empty.' }

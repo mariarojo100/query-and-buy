@@ -83,7 +83,7 @@ export default function NotificationsScreen() {
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
-        <Text className="ml-2 flex-1 text-lg font-bold text-ink dark:text-ink-dark">Notifications</Text>
+        <Text className="ml-2 flex-1 text-[18px] font-extrabold text-ink dark:text-ink-dark">Notifications</Text>
         {(q.data?.unreadCount ?? 0) > 0 ? (
           <Pressable onPress={() => markAll.mutate()} hitSlop={8}>
             <Text className="text-sm font-medium text-primary dark:text-primary-light">Mark all read</Text>

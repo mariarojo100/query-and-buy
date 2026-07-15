@@ -99,7 +99,7 @@ export default function EditProfileScreen() {
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
-        <Text className="ml-2 text-lg font-bold text-ink dark:text-ink-dark">Edit profile</Text>
+        <Text className="ml-2 text-[18px] font-extrabold text-ink dark:text-ink-dark">Edit profile</Text>
       </View>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         <ScrollView contentContainerStyle={{ padding: 20 }}>

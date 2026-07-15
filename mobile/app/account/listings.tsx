@@ -84,7 +84,7 @@ export default function MyListingsScreen() {
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
-        <Text className="ml-2 flex-1 text-lg font-bold text-ink dark:text-ink-dark">My listings</Text>
+        <Text className="ml-2 flex-1 text-[18px] font-extrabold text-ink dark:text-ink-dark">My listings</Text>
         <Pressable onPress={() => router.push('/sell/new')} hitSlop={8}>
           <Ionicons name="add-circle" size={26} color={COLORS.primary} />
         </Pressable>

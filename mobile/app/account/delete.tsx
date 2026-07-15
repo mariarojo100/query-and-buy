@@ -50,7 +50,7 @@ export default function DeleteAccountScreen() {
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
-        <Text className="ml-2 text-lg font-bold text-ink dark:text-ink-dark">Delete account</Text>
+        <Text className="ml-2 text-[18px] font-extrabold text-ink dark:text-ink-dark">Delete account</Text>
       </View>
       <View className="flex-1 px-6 pt-6">
         <View className="rounded-qb border border-danger/30 bg-danger/5 p-5">

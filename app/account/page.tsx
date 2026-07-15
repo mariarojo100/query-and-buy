@@ -7,6 +7,7 @@ import { computeTrust } from '@/lib/trust/score'
 import { ReputationCard } from '@/components/account/ReputationCard'
 import { ActivityTimeline } from '@/components/account/ActivityTimeline'
 import { ProfileCompletion } from '@/components/profile/ProfileCompletion'
+import { VerifyEmailBanner } from '@/components/account/VerifyEmailBanner'
 import type { Profile } from '@/lib/profile/completion'
 
 export const metadata = { title: 'My profile · Query & Buy' }
@@ -46,8 +47,10 @@ export default async function AccountOverviewPage() {
   })
 
   return (
-    <div className="grid gap-6 lg:grid-cols-5">
-      <div className="space-y-6 lg:col-span-3">
+    <div className="space-y-6">
+      {!profile.email_verified && <VerifyEmailBanner email={user.email} />}
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="space-y-6 lg:col-span-3">
         <ReputationCard
           rep={rep}
           trustScore={trust.score}
@@ -56,10 +59,11 @@ export default async function AccountOverviewPage() {
         />
         <ProfileCompletion profile={profile} />
       </div>
-      <div className="lg:col-span-2">
-        <div className="rounded-3xl border border-border bg-card p-5 shadow-soft sm:p-6">
-          <h2 className="font-display mb-5 text-xl tracking-tight">Activity</h2>
-          <ActivityTimeline events={activity} />
+        <div className="lg:col-span-2">
+          <div className="rounded-3xl border border-border bg-card p-5 shadow-soft sm:p-6">
+            <h2 className="font-display mb-5 text-xl tracking-tight">Activity</h2>
+            <ActivityTimeline events={activity} />
+          </div>
         </div>
       </div>
     </div>

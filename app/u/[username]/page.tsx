@@ -144,16 +144,18 @@ export default async function PublicProfilePage({
           />
         </div>
 
-        {/* Identity */}
-        <div className="-mt-14 px-1 sm:-mt-16 sm:flex sm:items-end sm:gap-6">
-          <Avatar className="size-28 shrink-0 shadow-float ring-4 ring-background sm:size-32">
+        {/* Identity — the avatar (and only the avatar) overlaps the cover; the
+            name column stays in normal flow so a tall name/handle/meta block can
+            never ride up into the cover band. */}
+        <div className="px-1 sm:flex sm:items-start sm:gap-6">
+          <Avatar className="-mt-14 size-28 shrink-0 shadow-float ring-4 ring-background sm:-mt-16 sm:size-32">
             <AvatarImage src={profile.avatar_url ?? undefined} alt={`${name}'s profile photo`} />
             <AvatarFallback className="bg-accent text-2xl text-accent-foreground">
               {initials(name)}
             </AvatarFallback>
           </Avatar>
 
-          <div className="mt-4 min-w-0 flex-1 sm:mb-1.5 sm:mt-0">
+          <div className="mt-4 min-w-0 flex-1 sm:mt-3">
             <h1 className="font-display text-3xl leading-tight tracking-tight break-words sm:text-4xl">
               {name}
             </h1>
@@ -173,7 +175,7 @@ export default async function PublicProfilePage({
             <SellerBadges badges={rep.badges} className="mt-3" />
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mb-1.5 sm:mt-0 sm:justify-end">
+          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-0 sm:justify-end sm:self-end sm:pb-1.5">
             {isSelf ? (
               <Button variant="outline" asChild>
                 <Link href="/account/settings">

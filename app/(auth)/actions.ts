@@ -5,6 +5,8 @@ import { AuthError } from 'next-auth'
 import { signIn, signOut as authSignOut } from '@/lib/auth/nextauth'
 import { registerWithPassword, beginPasswordReset, completePasswordReset, SignupError } from '@/lib/auth/signup'
 import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/email/auth-emails'
+import { getViewer } from '@/lib/auth/session'
+import { issueToken } from '@/lib/auth/tokens'
 import { logger } from '@/lib/logger'
 
 export type AuthState = { error: string } | null
@@ -58,6 +60,26 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
 /** Sign out and return to the login page. */
 export async function signOut(): Promise<void> {
   await authSignOut({ redirectTo: '/login' })
+}
+
+/**
+ * Resend the email-verification link to the signed-in user. Lets a user who
+ * never received (or lost) the signup email re-trigger it themselves. Issues a
+ * fresh 24h token; redeeming it marks the email verified idempotently.
+ */
+export async function resendVerificationEmail(): Promise<{ ok: boolean; error?: string }> {
+  const viewer = await getViewer()
+  if (!viewer?.email) return { ok: false, error: 'You must be signed in.' }
+  try {
+    const token = await issueToken(viewer.id, 'email_verify')
+    await sendVerificationEmail(viewer.email.toLowerCase(), token)
+    return { ok: true }
+  } catch (e) {
+    logger.security('auth.resend', 'resend verification failed', {
+      reason: e instanceof Error ? e.message : 'unknown',
+    })
+    return { ok: false, error: 'Could not send right now. Please try again shortly.' }
+  }
 }
 
 /**

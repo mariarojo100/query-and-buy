@@ -29,7 +29,7 @@ type MyListing = {
 }
 
 const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
-  active: { label: 'Active', cls: 'bg-primary-light text-primary' },
+  active: { label: 'Active', cls: 'bg-primary-light dark:bg-primary/15 text-primary' },
   draft: { label: 'Paused', cls: 'bg-border/60 text-muted' },
   reserved: { label: 'Reserved', cls: 'bg-accent/20 text-accent' },
   sold: { label: 'Sold', cls: 'bg-border/60 text-muted' },

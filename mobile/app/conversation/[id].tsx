@@ -116,7 +116,7 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
   // Completed / cancelled banners
   if (status === 'completed') {
     return (
-      <View className="mx-4 mb-2 rounded-2xl bg-primary-light p-3">
+      <View className="mx-4 mb-2 rounded-2xl bg-primary-light dark:bg-primary/15 p-3">
         <Text className="text-center text-sm font-semibold text-primary">✓ Transaction completed</Text>
       </View>
     )
@@ -125,7 +125,7 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
   // Confirmed stage: contacts + seller controls
   if (status === 'confirmed' && current) {
     return (
-      <View className="mx-4 mb-2 rounded-2xl border border-primary/30 bg-primary-light p-3">
+      <View className="mx-4 mb-2 rounded-2xl border border-primary/30 bg-primary-light dark:bg-primary/15 p-3">
         <Text className="text-center text-sm font-semibold text-primary">
           Deal confirmed{current.accepted_price_fils != null ? ` · ${formatPrice(current.accepted_price_fils)}` : ''}
         </Text>
@@ -261,7 +261,7 @@ function OfferComposer({
 }) {
   return (
     <View className="mt-2 flex-row items-center gap-2">
-      <Pressable onPress={onSuggest} className="h-10 w-10 items-center justify-center rounded-full bg-primary-light" accessibilityLabel="Suggest an offer with AI">
+      <Pressable onPress={onSuggest} className="h-10 w-10 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15" accessibilityLabel="Suggest an offer with AI">
         {suggesting ? <ActivityIndicator size="small" color={COLORS.primary} /> : <Ionicons name="sparkles" size={16} color={COLORS.primary} />}
       </Pressable>
       <TextInput

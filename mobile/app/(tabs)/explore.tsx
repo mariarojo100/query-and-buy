@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useCategories, useListingFeed } from '@/queries'
 import { ListingCard } from '@/components/ListingCard'
 import { COLORS } from '@/theme/colors'
-import { CardGridSkeleton, EmptyState, ErrorState } from '@/components/ui'
+import { CardGridSkeleton, Chip, EmptyState, ErrorState } from '@/components/ui'
 import type { FeedListingDto } from '@qb/shared'
 
 export default function ExploreScreen() {
@@ -25,37 +25,28 @@ export default function ExploreScreen() {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
-      <View className="px-6 pb-1 pt-3">
-        <Text className="text-[24px] font-extrabold tracking-tight text-ink dark:text-ink-dark">Explore</Text>
+      <View className="px-5 pb-1 pt-2">
+        <Text className="text-[26px] font-extrabold tracking-tight text-ink dark:text-ink-dark">Explore</Text>
         <Pressable
           onPress={() => router.push('/search')}
           accessibilityLabel="Search the marketplace"
-          className="mt-3 flex-row items-center rounded-2xl border border-border bg-card px-4 py-3.5 dark:border-border-dark dark:bg-card-dark"
+          className="mt-3 flex-row items-center rounded-2xl border border-border bg-card px-4 dark:border-border-dark dark:bg-card-dark"
+          style={{ height: 52 }}
         >
-          <Ionicons name="search" size={17} color={COLORS.muted} />
+          <Ionicons name="search" size={18} color={COLORS.muted} />
           <Text className="ml-2.5 flex-1 text-[14px] text-muted dark:text-muted-dark">Search anything…</Text>
-          <Ionicons name="sparkles" size={14} color={COLORS.accent} />
+          <View className="flex-row items-center rounded-full bg-accent/15 px-2 py-1">
+            <Ionicons name="sparkles" size={11} color={COLORS.accentDeep} />
+            <Text className="ml-1 text-[10px] font-bold text-accent-deep">AI</Text>
+          </View>
         </Pressable>
       </View>
 
-      <View className="mt-2">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 10, gap: 8 }}>
-          <Pressable
-            onPress={() => setCategory(null)}
-            className={`rounded-full px-4 py-2 ${category === null ? 'bg-primary' : 'border border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
-          >
-            <Text className={`text-[12.5px] font-semibold ${category === null ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>All</Text>
-          </Pressable>
+      <View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 12, gap: 8 }}>
+          <Chip label="All" selected={category === null} onPress={() => setCategory(null)} />
           {(categories.data?.categories ?? []).map((c) => (
-            <Pressable
-              key={c.id}
-              onPress={() => setCategory(c.slug)}
-              className={`rounded-full px-4 py-2 ${category === c.slug ? 'bg-primary' : 'border border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
-            >
-              <Text className={`text-[12.5px] font-semibold ${category === c.slug ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>
-                {c.name_en}
-              </Text>
-            </Pressable>
+            <Chip key={c.id} label={c.name_en} selected={category === c.slug} onPress={() => setCategory(c.slug)} />
           ))}
         </ScrollView>
       </View>
@@ -78,10 +69,10 @@ export default function ExploreScreen() {
           )}
           ListHeaderComponent={
             total > 0 ? (
-              <Text className="pb-2 pl-2 text-[12px] text-muted dark:text-muted-dark">{total} live listings</Text>
+              <Text className="pb-2.5 pl-2 text-[12.5px] font-medium text-muted dark:text-muted-dark">{total} live {total === 1 ? 'listing' : 'listings'}</Text>
             ) : null
           }
-          contentContainerStyle={{ paddingHorizontal: 17, paddingTop: 6, paddingBottom: 28 }}
+          contentContainerStyle={{ paddingHorizontal: 17, paddingTop: 4, paddingBottom: 36 }}
           onEndReached={() => {
             if (feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage()
           }}

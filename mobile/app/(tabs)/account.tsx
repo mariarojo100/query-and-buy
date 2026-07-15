@@ -23,7 +23,7 @@ function MenuRow({
 }) {
   return (
     <Pressable onPress={onPress} className="flex-row items-center px-4 py-3.5 active:bg-primary-light/40 dark:active:bg-background-dark">
-      <View className={`h-9 w-9 items-center justify-center rounded-full ${danger ? 'bg-danger/10' : 'bg-primary-light'}`}>
+      <View className={`h-9 w-9 items-center justify-center rounded-full ${danger ? 'bg-danger/10' : 'bg-primary-light dark:bg-primary/15'}`}>
         <Ionicons name={icon} size={17} color={danger ? COLORS.danger : tint ?? COLORS.primary} />
       </View>
       <Text className={`ml-3 flex-1 text-[15px] font-medium ${danger ? 'text-danger' : 'text-ink dark:text-ink-dark'}`}>{label}</Text>
@@ -57,7 +57,7 @@ export default function AccountScreen() {
     return (
       <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
         <View className="flex-1 items-center justify-center px-10">
-          <View className="h-20 w-20 items-center justify-center rounded-full bg-primary-light">
+          <View className="h-20 w-20 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15">
             <Ionicons name="person-outline" size={36} color={COLORS.primary} />
           </View>
           <Text className="mt-5 text-center text-[22px] font-extrabold tracking-tight text-ink dark:text-ink-dark">Join Query & Buy</Text>
@@ -82,7 +82,7 @@ export default function AccountScreen() {
         <View className="px-5 pt-4">
           <Text className="text-[26px] font-extrabold tracking-tight text-ink dark:text-ink-dark">Profile</Text>
           <View className="mt-4 flex-row items-center rounded-qb border border-border bg-card p-4 dark:border-border-dark dark:bg-card-dark">
-            <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary-light">
+            <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary-light dark:bg-primary/15">
               {user.avatarUrl ? (
                 <Image source={{ uri: user.avatarUrl }} style={{ width: '100%', height: '100%' }} />
               ) : (

@@ -83,7 +83,7 @@ export default function SearchScreen() {
         <View className="flex-row items-center gap-2 px-5 pb-2">
           <Text className="text-sm text-muted dark:text-muted-dark">{total} results</Text>
           {aiUsed ? (
-            <View className="rounded-full bg-primary-light px-2 py-0.5">
+            <View className="rounded-full bg-primary-light dark:bg-primary/15 px-2 py-0.5">
               <Text className="text-[10px] font-bold uppercase text-primary">AI filters</Text>
             </View>
           ) : null}

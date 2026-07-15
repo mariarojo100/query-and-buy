@@ -37,7 +37,7 @@ function FieldLabel({ children, ai }: { children: React.ReactNode; ai?: boolean 
     <View className="mb-2 flex-row items-center">
       <Text className="text-[13px] font-bold text-ink dark:text-ink-dark">{children}</Text>
       {ai ? (
-        <View className="ml-2 flex-row items-center rounded-full bg-primary-light px-2 py-0.5">
+        <View className="ml-2 flex-row items-center rounded-full bg-primary-light dark:bg-primary/15 px-2 py-0.5">
           <Ionicons name="sparkles" size={9} color={COLORS.primary} />
           <Text className="ml-1 text-[9px] font-bold text-primary">AI</Text>
         </View>
@@ -196,7 +196,7 @@ export default function SellNewScreen() {
               onPress={() => void addPhotos()}
               className="items-center justify-center rounded-qb border-2 border-dashed border-border bg-card py-10 active:opacity-90 dark:border-border-dark dark:bg-card-dark"
             >
-              <View className="h-14 w-14 items-center justify-center rounded-full bg-primary-light">
+              <View className="h-14 w-14 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15">
                 <Ionicons name="camera" size={26} color={COLORS.primary} />
               </View>
               <Text className="mt-3 text-[15px] font-bold text-ink dark:text-ink-dark">Add photos</Text>
@@ -240,7 +240,7 @@ export default function SellNewScreen() {
             <Text className="mt-3 text-[12px] font-medium text-danger">Photo upload failed — remove a photo and try again.</Text>
           ) : null}
           {aiBusy ? (
-            <View className="mt-3 flex-row items-center rounded-2xl bg-primary-light p-3.5">
+            <View className="mt-3 flex-row items-center rounded-2xl bg-primary-light dark:bg-primary/15 p-3.5">
               <ActivityIndicator size="small" color={COLORS.primary} />
               <Text className="ml-2.5 text-[14px] font-semibold text-primary">Analyzing your photos…</Text>
               <Ionicons name="sparkles" size={15} color={COLORS.accent} style={{ marginLeft: 'auto' }} />

@@ -42,7 +42,7 @@ function Row({ item, onPress }: { item: InboxItemDto; onPress: () => void }) {
             </View>
           )}
         </View>
-        <View className="absolute -bottom-1 -right-1 h-6 w-6 items-center justify-center overflow-hidden rounded-full border-2 border-background bg-primary-light dark:border-background-dark">
+        <View className="absolute -bottom-1 -right-1 h-6 w-6 items-center justify-center overflow-hidden rounded-full border-2 border-background bg-primary-light dark:bg-primary/15 dark:border-background-dark">
           {item.other?.avatar_url ? (
             <Image source={{ uri: item.other.avatar_url }} style={{ width: '100%', height: '100%' }} />
           ) : (
@@ -94,7 +94,7 @@ export default function InboxScreen() {
 
       {!user ? (
         <View className="flex-1 items-center justify-center px-10">
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-primary-light">
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15">
             <Ionicons name="chatbubbles-outline" size={30} color={COLORS.primary} />
           </View>
           <Text className="mt-4 text-center text-[17px] font-bold text-ink dark:text-ink-dark">Message buyers & sellers</Text>
@@ -122,7 +122,7 @@ export default function InboxScreen() {
         </View>
       ) : items.length === 0 ? (
         <View className="flex-1 items-center justify-center px-10">
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-primary-light">
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15">
             <Ionicons name="chatbubble-ellipses-outline" size={30} color={COLORS.primary} />
           </View>
           <Text className="mt-4 text-center text-[17px] font-bold text-ink dark:text-ink-dark">No conversations yet</Text>

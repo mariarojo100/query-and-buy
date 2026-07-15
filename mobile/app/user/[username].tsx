@@ -55,7 +55,7 @@ export default function UserScreen() {
           contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 24 }}
           ListHeaderComponent={
             <View className="mb-4 mt-1 flex-row items-center rounded-qb border border-border bg-card p-4 dark:border-border-dark dark:bg-card-dark">
-              <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-primary-light">
+              <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-primary-light dark:bg-primary/15">
                 {q.data.profile.avatar_url ? (
                   <Image source={{ uri: q.data.profile.avatar_url }} style={{ width: '100%', height: '100%' }} />
                 ) : (
@@ -74,7 +74,7 @@ export default function UserScreen() {
           }
           ListEmptyComponent={
             <View className="items-center px-10 py-16">
-              <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-primary-light">
+              <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15">
                 <Ionicons name="pricetags-outline" size={28} color={COLORS.primary} />
               </View>
               <Text className="text-center text-[15px] font-bold text-ink dark:text-ink-dark">No active listings</Text>

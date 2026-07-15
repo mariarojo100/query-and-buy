@@ -112,7 +112,7 @@ export default function NotificationsScreen() {
                     : 'border-border bg-card dark:border-border-dark dark:bg-card-dark'
                 }`}
               >
-                <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-full bg-primary-light">
+                <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15">
                   <Ionicons name={ICONS[item.type] ?? 'notifications-outline'} size={17} color={COLORS.primary} />
                 </View>
                 <View className="ml-3 flex-1">

@@ -104,7 +104,7 @@ export default function EditProfileScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         <ScrollView contentContainerStyle={{ padding: 20 }}>
           <Pressable onPress={() => void changeAvatar()} className="mb-6 items-center">
-            <View className="h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary-light">
+            <View className="h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary-light dark:bg-primary/15">
               {avatarBusy ? (
                 <ActivityIndicator color={COLORS.primary} />
               ) : user?.avatarUrl ? (

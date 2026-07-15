@@ -38,7 +38,7 @@ function timeAgo(iso: string | null): string {
 function DetailCell({ icon, label, value }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string }) {
   return (
     <View className="w-1/2 flex-row items-center py-3">
-      <View className="h-9 w-9 items-center justify-center rounded-full bg-primary-light">
+      <View className="h-9 w-9 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15">
         <Ionicons name={icon} size={16} color={COLORS.primary} />
       </View>
       <View className="ml-2.5 flex-1">
@@ -109,12 +109,15 @@ export default function ListingScreen() {
         <View>
           <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16}>
             {(images.length ? images : [{ storage_key: null as string | null, position: 0 }]).map((img, i) => (
-              <View key={i} style={{ width: W, height: GALLERY_H }} className="bg-primary-light dark:bg-card-dark">
+              <View key={i} style={{ width: W, height: GALLERY_H }} className="bg-sunken dark:bg-sunken-dark">
                 {img.storage_key ? (
                   <Image source={{ uri: listingImageUrl(img.storage_key)! }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={180} />
                 ) : (
                   <View className="h-full w-full items-center justify-center">
-                    <Ionicons name="image-outline" size={40} color={COLORS.primary + '44'} />
+                    <View className="h-16 w-16 items-center justify-center rounded-3xl bg-card dark:bg-card-dark">
+                      <Ionicons name="image-outline" size={30} color={COLORS.muted} />
+                    </View>
+                    <Text className="mt-2.5 text-[12px] font-medium text-muted dark:text-muted-dark">No photos yet</Text>
                   </View>
                 )}
               </View>
@@ -166,8 +169,8 @@ export default function ListingScreen() {
               {formatPrice(listing.price_fils, listing.currency)}
             </Text>
             {listing.is_negotiable ? (
-              <View className="rounded-full bg-primary-light px-3 py-1.5">
-                <Text className="text-[11px] font-bold text-primary">Negotiable</Text>
+              <View className="rounded-full bg-primary-light px-3 py-1.5 dark:bg-primary/15">
+                <Text className="text-[11px] font-bold text-primary dark:text-primary-light">Negotiable</Text>
               </View>
             ) : null}
           </View>
@@ -200,11 +203,11 @@ export default function ListingScreen() {
             onPress={() => listing.seller?.username && router.push(`/user/${listing.seller.username}`)}
             className="mx-6 mt-6 flex-row items-center rounded-qb border border-border bg-card p-4 active:opacity-95 dark:border-border-dark dark:bg-card-dark"
           >
-            <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-primary-light">
+            <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-primary-light dark:bg-primary/15">
               {listing.seller.avatar_url ? (
                 <Image source={{ uri: listing.seller.avatar_url }} style={{ width: '100%', height: '100%' }} />
               ) : (
-                <Text className="text-[16px] font-bold text-primary">{listing.seller.display_name.slice(0, 1).toUpperCase()}</Text>
+                <Text className="text-[16px] font-bold text-primary dark:text-primary-light">{listing.seller.display_name.slice(0, 1).toUpperCase()}</Text>
               )}
             </View>
             <View className="ml-3 flex-1">

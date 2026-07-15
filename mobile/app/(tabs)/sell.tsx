@@ -14,7 +14,7 @@ export default function SellScreen() {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
       <View className="flex-1 items-center justify-center px-8">
-        <View className="h-20 w-20 items-center justify-center rounded-full bg-primary-light">
+        <View className="h-20 w-20 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15">
           <Ionicons name="camera-outline" size={36} color={COLORS.primary} />
         </View>
         <Text className="mt-5 text-center text-2xl font-extrabold text-ink dark:text-ink-dark">Snap. Sell. Done.</Text>

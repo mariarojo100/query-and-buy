@@ -2,7 +2,8 @@
  * ListingCard — the marketplace card. Image-first (4:3, rounded), price →
  * two-line title → condition · location · age. Real trust markers only:
  * Featured (listing flag) and Verified seller (email-verified from the API).
- * Heart is a live favorite toggle for signed-in users.
+ * Heart is a live favorite toggle for signed-in users. No-photo listings get
+ * an intentional branded placeholder, never a broken-image feel.
  */
 import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -51,12 +52,12 @@ export function ListingCard({ listing }: { listing: FeedListingDto }) {
   }
 
   return (
-    <ScalePressable
-      onPress={() => router.push(`/listing/${listing.id}`)}
-      className="mb-4 flex-1"
-    >
+    <ScalePressable onPress={() => router.push(`/listing/${listing.id}`)} className="mb-4 flex-1">
       {/* Image */}
-      <View style={{ aspectRatio: 4 / 3 }} className="w-full overflow-hidden rounded-img bg-primary-light dark:bg-card-dark">
+      <View
+        style={{ aspectRatio: 4 / 3 }}
+        className="w-full overflow-hidden rounded-img border border-border bg-sunken dark:border-border-dark dark:bg-sunken-dark"
+      >
         {cover && !imgFailed ? (
           <Image
             source={{ uri: cover }}
@@ -68,9 +69,11 @@ export function ListingCard({ listing }: { listing: FeedListingDto }) {
           />
         ) : (
           <View className="h-full w-full items-center justify-center">
-            <Ionicons name="image-outline" size={24} color={COLORS.primary + '55'} />
-            <Text className="mt-1 text-[10px] font-medium text-primary/40 dark:text-muted-dark">
-              {imgFailed ? "Photo didn't load" : 'No photo yet'}
+            <View className="h-11 w-11 items-center justify-center rounded-2xl bg-card dark:bg-card-dark">
+              <Ionicons name="image-outline" size={20} color={COLORS.muted} />
+            </View>
+            <Text className="mt-2 text-[10.5px] font-medium text-muted dark:text-muted-dark">
+              {imgFailed ? 'Photo unavailable' : 'No photo yet'}
             </Text>
           </View>
         )}
@@ -78,35 +81,36 @@ export function ListingCard({ listing }: { listing: FeedListingDto }) {
         <View className="absolute left-2 top-2 flex-row gap-1.5">
           {listing.is_featured ? <Badge label="Featured" tone="featured" /> : null}
         </View>
-        {/* heart — 36pt touch target */}
+        {/* heart — frosted control, 34pt touch target */}
         <Pressable
           onPress={onHeart}
-          hitSlop={6}
+          hitSlop={8}
+          accessibilityRole="button"
           accessibilityLabel={liked ? 'Remove from saved' : 'Save listing'}
-          className="absolute right-2 top-2 h-8 w-8 items-center justify-center rounded-full bg-black/35"
+          className="absolute right-2 top-2 h-9 w-9 items-center justify-center rounded-full bg-black/35"
         >
-          <Ionicons name={liked ? 'heart' : 'heart-outline'} size={17} color={liked ? '#FF6B6B' : '#fff'} />
+          <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#FF6B6B' : '#fff'} />
         </Pressable>
       </View>
 
       {/* Copy */}
       <View className="px-0.5 pt-2.5">
         <View className="flex-row items-center">
-          <Text className="flex-1 text-[16px] font-extrabold tracking-tight text-ink dark:text-ink-dark">
+          <Text className="flex-1 text-[17px] font-extrabold tracking-tight text-ink dark:text-ink-dark">
             {formatPrice(listing.price_fils, listing.currency)}
           </Text>
           {verifiedSeller ? (
-            <View className="flex-row items-center">
-              <Ionicons name="shield-checkmark" size={11} color={COLORS.primary} />
-              <Text className="ml-0.5 text-[10px] font-semibold text-primary dark:text-primary-light">Verified</Text>
+            <View className="flex-row items-center rounded-full bg-primary-light px-1.5 py-0.5 dark:bg-primary/15">
+              <Ionicons name="shield-checkmark" size={10} color={COLORS.primary} />
+              <Text className="ml-0.5 text-[9.5px] font-bold text-primary dark:text-primary-light">Verified</Text>
             </View>
           ) : null}
         </View>
-        <Text numberOfLines={2} className="mt-1 text-[13px] font-medium leading-[18px] text-ink dark:text-ink-dark">
+        <Text numberOfLines={2} className="mt-1 text-[13.5px] font-medium leading-[18px] text-ink dark:text-ink-dark">
           {listing.title_en}
         </Text>
         <Text numberOfLines={1} className="mt-1 text-[11.5px] text-muted dark:text-muted-dark">
-          {[condition, emirate].filter(Boolean).join(' · ')}
+          {[condition, emirate].filter(Boolean).join('  ·  ')}
           {listing.published_at ? `  ·  ${timeAgo(listing.published_at)}` : ''}
         </Text>
       </View>

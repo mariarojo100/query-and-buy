@@ -127,16 +127,16 @@ export default async function HomePage({
         ) : (
           <>
             {/* ---------- COMPACT HERO ---------- */}
-            <section className="animate-rise pb-8 pt-10 text-center sm:pb-10 sm:pt-14">
+            <section className="animate-rise pb-6 pt-7 text-center sm:pb-8 sm:pt-10">
               <p className="eyebrow">AI Marketplace · United Arab Emirates</p>
-              <h1 className="font-display mx-auto mt-5 max-w-3xl text-[2.6rem] leading-[1.03] tracking-tight sm:text-6xl">
+              <h1 className="font-display mx-auto mt-3.5 max-w-3xl text-[2.1rem] leading-[1.05] tracking-tight sm:text-[3.5rem]">
                 Snap. Sell. Done.
               </h1>
-              <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              <p className="mx-auto mt-3.5 max-w-lg text-[0.975rem] leading-relaxed text-muted-foreground sm:text-lg">
                 Create a listing from your photos in seconds — buy &amp; sell beautifully across the
                 Emirates.
               </p>
-              <div className="mx-auto mt-7 max-w-2xl">
+              <div className="mx-auto mt-6 max-w-2xl">
                 <SmartSearchBox trending={trending.map((t) => t.query)} />
               </div>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -277,10 +277,9 @@ export default async function HomePage({
                   <Link href="/sell">Sell yours</Link>
                 </Button>
               </div>
-              <div className="space-y-6">
-                <SearchControls categories={categories} />
+              <div className="space-y-5">
                 <CategoryChips categories={categories} activeSlug={parsed.categorySlug} />
-                <div className="pt-2">{feed}</div>
+                <div className="pt-1">{feed}</div>
               </div>
             </section>
 

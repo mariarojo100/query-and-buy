@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import {
+  ArrowUpRightIcon,
   Building2Icon,
   CarIcon,
   Gamepad2Icon,
@@ -48,15 +49,20 @@ export function CategoryShowcase({
           <Link
             key={c.id}
             href={`/category/${c.slug}`}
-            className="lift group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-shadow hover:shadow-float"
+            className="lift group relative flex min-h-[8.5rem] flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-[box-shadow,border-color] duration-300 hover:border-gold/30 hover:shadow-float focus-visible:border-gold/40"
           >
-            <div className="absolute -right-6 -top-6 size-24 rounded-full bg-accent/60 transition-transform duration-500 group-hover:scale-125" />
-            <div className="relative">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-transform duration-300 group-hover:scale-105">
-                <Icon className="size-5" />
+            {/* soft brand wash that warms on hover — subtler than a hard blob */}
+            <div className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full bg-primary/[0.04] blur-xl transition-opacity duration-500 group-hover:opacity-0" />
+            <div className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full bg-gold/[0.10] opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
+            <div className="relative flex items-start justify-between">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-primary/[0.08] text-primary ring-1 ring-inset ring-primary/10 transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:ring-primary">
+                <Icon className="size-5" strokeWidth={1.75} />
               </span>
-              <p className="font-display mt-4 text-base leading-tight">{c.name_en}</p>
-              <p className="eyebrow mt-1.5">
+              <ArrowUpRightIcon className="size-4 -translate-x-0.5 translate-y-0.5 text-muted-foreground/30 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:text-gold" />
+            </div>
+            <div className="relative mt-6">
+              <p className="font-display text-base leading-snug">{c.name_en}</p>
+              <p className="mt-1 text-xs font-medium tracking-wide text-muted-foreground tnum">
                 {n > 0 ? `${n.toLocaleString('en-AE')} listing${n === 1 ? '' : 's'}` : 'Explore'}
               </p>
             </div>

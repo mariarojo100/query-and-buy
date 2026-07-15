@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
+import { COLORS } from '@/theme/colors'
 
 export default function SellScreen() {
   const router = useRouter()
@@ -14,7 +15,7 @@ export default function SellScreen() {
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
       <View className="flex-1 items-center justify-center px-8">
         <View className="h-20 w-20 items-center justify-center rounded-full bg-primary-light">
-          <Ionicons name="camera-outline" size={36} color="#0e5a43" />
+          <Ionicons name="camera-outline" size={36} color={COLORS.primary} />
         </View>
         <Text className="mt-5 text-center text-2xl font-extrabold text-ink dark:text-ink-dark">Snap. Sell. Done.</Text>
         <Text className="mt-2 text-center text-sm leading-relaxed text-muted dark:text-muted-dark">

@@ -14,9 +14,10 @@ import {
   ScrollView,
   Text,
   TextInput,
+  useColorScheme,
   View,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -24,14 +25,48 @@ import { CONDITIONS, EMIRATES, formatPrice } from '@qb/shared'
 import { api, ApiError } from '@/api/client'
 import { useCategories } from '@/queries'
 import { pickPhotos, uploadPhotos, generateDraft, type AiDraft, type PickedPhoto } from '@/sell/pipeline'
-import { success, warn } from '@/lib/haptics'
+import { success, warn, tick } from '@/lib/haptics'
+import { COLORS } from '@/theme/colors'
 import { PrimaryButton } from '@/components/ui'
 
 type UploadState = 'idle' | 'uploading' | 'done' | 'error'
 
+/** Section label with an optional AI-filled chip. */
+function FieldLabel({ children, ai }: { children: React.ReactNode; ai?: boolean }) {
+  return (
+    <View className="mb-2 flex-row items-center">
+      <Text className="text-[13px] font-bold text-ink dark:text-ink-dark">{children}</Text>
+      {ai ? (
+        <View className="ml-2 flex-row items-center rounded-full bg-primary-light px-2 py-0.5">
+          <Ionicons name="sparkles" size={9} color={COLORS.primary} />
+          <Text className="ml-1 text-[9px] font-bold text-primary">AI</Text>
+        </View>
+      ) : null}
+    </View>
+  )
+}
+
+/** Selectable pill used for category / condition / emirate. */
+function Pill({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={() => {
+        tick()
+        onPress()
+      }}
+      className={`flex-row items-center rounded-full border px-3.5 py-2 ${selected ? 'border-primary bg-primary' : 'border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
+    >
+      {selected ? <Ionicons name="checkmark" size={13} color="#fff" style={{ marginRight: 4 }} /> : null}
+      <Text className={`text-[12.5px] font-semibold ${selected ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>{label}</Text>
+    </Pressable>
+  )
+}
+
 export default function SellNewScreen() {
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const categories = useCategories()
+  const iconColor = useColorScheme() === 'dark' ? '#F2F4F0' : COLORS.ink
 
   const [photos, setPhotos] = useState<PickedPhoto[]>([])
   const [uploadState, setUploadState] = useState<UploadState>('idle')
@@ -51,21 +86,23 @@ export default function SellNewScreen() {
 
   const aiFilled = useMemo(() => new Set<string>(), [draft]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const addPhotos = useCallback(async () => {
-    const picked = await pickPhotos(photos.length)
-    if (!picked.length) return
-    const all = [...photos, ...picked]
-    setPhotos(all)
-
-    // Kick off uploads + AI draft in parallel (first pick only for the AI).
+  const runUpload = useCallback((list: PickedPhoto[]) => {
     setUploadState('uploading')
     setProgress(0)
-    uploadPhotos(all, (done, total) => setProgress(done / total))
+    uploadPhotos(list, (done, total) => setProgress(done / total))
       .then((keys) => {
         setUploadedKeys(keys)
         setUploadState('done')
       })
       .catch(() => setUploadState('error'))
+  }, [])
+
+  const addPhotos = useCallback(async () => {
+    const picked = await pickPhotos(photos.length)
+    if (!picked.length) return
+    const all = [...photos, ...picked]
+    setPhotos(all)
+    runUpload(all)
 
     if (!draft && !aiBusy) {
       setAiBusy(true)
@@ -88,21 +125,14 @@ export default function SellNewScreen() {
         })
         .finally(() => setAiBusy(false))
     }
-  }, [photos, draft, aiBusy, aiFilled])
+  }, [photos, draft, aiBusy, aiFilled, runUpload])
 
   const removePhoto = (i: number) => {
     const next = photos.filter((_, idx) => idx !== i)
     setPhotos(next)
     setUploadedKeys([])
-    setUploadState(next.length ? 'uploading' : 'idle')
-    if (next.length) {
-      uploadPhotos(next, (done, total) => setProgress(done / total))
-        .then((keys) => {
-          setUploadedKeys(keys)
-          setUploadState('done')
-        })
-        .catch(() => setUploadState('error'))
-    }
+    if (next.length) runUpload(next)
+    else setUploadState('idle')
   }
 
   const publish = async () => {
@@ -135,204 +165,231 @@ export default function SellNewScreen() {
     }
   }
 
-  const AiChip = ({ show }: { show: boolean }) =>
-    show ? (
-      <View className="ml-2 flex-row items-center rounded-full bg-primary-light px-2 py-0.5">
-        <Ionicons name="sparkles" size={10} color="#0e5a43" />
-        <Text className="ml-1 text-[10px] font-bold text-primary">AI</Text>
-      </View>
-    ) : null
-
   const pricing = draft?.pricing
+  const uploading = uploadState === 'uploading'
+  const missing: string[] = []
+  if (!photos.length) missing.push('photos')
+  if (!title.trim()) missing.push('a title')
+  if (!categoryId) missing.push('category')
+  if (!condition) missing.push('condition')
+  if (!emirate) missing.push('emirate')
+  if (!priceAed) missing.push('a price')
+  const canPublish = missing.length === 0 && !uploading
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
-      <View className="flex-row items-center px-4 py-2">
-        <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name="close" size={26} color="#0e5a43" />
-        </Pressable>
-        <Text className="ml-2 text-lg font-bold text-ink dark:text-ink-dark">Sell an item</Text>
-      </View>
+    <View className="flex-1 bg-background dark:bg-background-dark">
+      <SafeAreaView edges={['top']}>
+        <View className="flex-row items-center px-4 py-2">
+          <Pressable onPress={() => router.back()} hitSlop={10} className="h-10 w-10 items-center justify-center">
+            <Ionicons name="close" size={26} color={iconColor} />
+          </Pressable>
+          <Text className="ml-1 text-[18px] font-extrabold text-ink dark:text-ink-dark">New listing</Text>
+        </View>
+      </SafeAreaView>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-          {/* Photos */}
-          <View className="flex-row flex-wrap gap-2">
-            {photos.map((p, i) => (
-              <View key={i} className="relative">
-                <Image source={{ uri: p.uri }} style={{ width: 86, height: 86, borderRadius: 16 }} contentFit="cover" />
-                {i === 0 ? (
-                  <View className="absolute bottom-1 left-1 rounded-full bg-black/60 px-1.5 py-0.5">
-                    <Text className="text-[9px] font-bold text-white">COVER</Text>
-                  </View>
-                ) : null}
-                <Pressable onPress={() => removePhoto(i)} className="absolute -right-1.5 -top-1.5 h-5 w-5 items-center justify-center rounded-full bg-ink">
-                  <Ionicons name="close" size={12} color="#fff" />
-                </Pressable>
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
+          {/* ── Photos ─────────────────────────────────────────────── */}
+          <FieldLabel>Photos</FieldLabel>
+          {photos.length === 0 ? (
+            <Pressable
+              onPress={() => void addPhotos()}
+              className="items-center justify-center rounded-qb border-2 border-dashed border-border bg-card py-10 active:opacity-90 dark:border-border-dark dark:bg-card-dark"
+            >
+              <View className="h-14 w-14 items-center justify-center rounded-full bg-primary-light">
+                <Ionicons name="camera" size={26} color={COLORS.primary} />
               </View>
-            ))}
-            {photos.length < 8 && (
-              <Pressable
-                onPress={() => void addPhotos()}
-                className="h-[86px] w-[86px] items-center justify-center rounded-2xl border-2 border-dashed border-border dark:border-border-dark"
-              >
-                <Ionicons name="camera-outline" size={26} color="#8a8578" />
-                <Text className="mt-0.5 text-[10px] font-medium text-muted dark:text-muted-dark">Add photos</Text>
-              </Pressable>
-            )}
-          </View>
+              <Text className="mt-3 text-[15px] font-bold text-ink dark:text-ink-dark">Add photos</Text>
+              <Text className="mt-1 text-[12px] text-muted dark:text-muted-dark">Up to 8 · the first is your cover</Text>
+            </Pressable>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+              {photos.map((p, i) => (
+                <View key={i} className="relative">
+                  <Image source={{ uri: p.uri }} style={{ width: 100, height: 100, borderRadius: 16 }} contentFit="cover" />
+                  {i === 0 ? (
+                    <View className="absolute bottom-1.5 left-1.5 rounded-full bg-black/65 px-2 py-0.5">
+                      <Text className="text-[9px] font-bold uppercase tracking-wide text-white">Cover</Text>
+                    </View>
+                  ) : null}
+                  <Pressable onPress={() => removePhoto(i)} className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full bg-ink">
+                    <Ionicons name="close" size={13} color="#fff" />
+                  </Pressable>
+                </View>
+              ))}
+              {photos.length < 8 ? (
+                <Pressable
+                  onPress={() => void addPhotos()}
+                  className="h-[100px] w-[100px] items-center justify-center rounded-2xl border-2 border-dashed border-border dark:border-border-dark"
+                >
+                  <Ionicons name="add" size={28} color={COLORS.muted} />
+                  <Text className="text-[10px] font-medium text-muted dark:text-muted-dark">Add</Text>
+                </Pressable>
+              ) : null}
+            </ScrollView>
+          )}
 
           {/* Upload / AI status */}
-          {uploadState === 'uploading' && (
+          {uploading ? (
             <View className="mt-3 flex-row items-center">
-              <ActivityIndicator size="small" color="#0e5a43" />
-              <Text className="ml-2 text-xs text-muted dark:text-muted-dark">Uploading photos… {Math.round(progress * 100)}%</Text>
+              <ActivityIndicator size="small" color={COLORS.primary} />
+              <Text className="ml-2 text-[12px] text-muted dark:text-muted-dark">Uploading photos… {Math.round(progress * 100)}%</Text>
             </View>
-          )}
-          {uploadState === 'error' && (
-            <Text className="mt-3 text-xs text-danger">Photo upload failed — remove a photo and try again.</Text>
-          )}
-          {aiBusy && (
-            <View className="mt-3 flex-row items-center rounded-2xl bg-primary-light p-3">
-              <ActivityIndicator size="small" color="#0e5a43" />
-              <Text className="ml-2 text-sm font-medium text-primary">Analyzing your photos…</Text>
+          ) : null}
+          {uploadState === 'error' ? (
+            <Text className="mt-3 text-[12px] font-medium text-danger">Photo upload failed — remove a photo and try again.</Text>
+          ) : null}
+          {aiBusy ? (
+            <View className="mt-3 flex-row items-center rounded-2xl bg-primary-light p-3.5">
+              <ActivityIndicator size="small" color={COLORS.primary} />
+              <Text className="ml-2.5 text-[14px] font-semibold text-primary">Analyzing your photos…</Text>
+              <Ionicons name="sparkles" size={15} color={COLORS.accent} style={{ marginLeft: 'auto' }} />
             </View>
-          )}
-          {draft?.warning && (
-            <View className="mt-3 rounded-2xl border border-accent/40 bg-accent/10 p-3">
-              <Text className="text-sm text-ink dark:text-ink-dark">{draft.warning}</Text>
+          ) : null}
+          {draft?.warning ? (
+            <View className="mt-3 flex-row items-start rounded-2xl border border-accent/40 bg-accent/10 p-3.5">
+              <Ionicons name="warning-outline" size={16} color={COLORS.accentDeep} style={{ marginTop: 1 }} />
+              <Text className="ml-2 flex-1 text-[13px] leading-[18px] text-ink dark:text-ink-dark">{draft.warning}</Text>
             </View>
-          )}
+          ) : null}
 
-          {/* Title */}
-          <View className="mt-6">
-            <View className="flex-row items-center">
-              <Text className="text-sm font-medium text-ink dark:text-ink-dark">Title</Text>
-              <AiChip show={!!draft?.title} />
-            </View>
+          {/* ── Title ──────────────────────────────────────────────── */}
+          <View className="mt-7">
+            <FieldLabel ai={!!draft?.title}>Title</FieldLabel>
             <TextInput
               value={title}
               onChangeText={setTitle}
               placeholder="What are you selling?"
-              placeholderTextColor="#a29d8f"
-              className="mt-1.5 rounded-2xl border border-border bg-card px-4 py-3.5 text-base text-ink dark:border-border-dark dark:bg-card-dark dark:text-ink-dark"
+              placeholderTextColor={COLORS.muted}
+              className="rounded-2xl border border-border bg-card px-4 py-3.5 text-[15px] text-ink dark:border-border-dark dark:bg-card-dark dark:text-ink-dark"
             />
           </View>
 
-          {/* Description */}
-          <View className="mt-4">
-            <View className="flex-row items-center">
-              <Text className="text-sm font-medium text-ink dark:text-ink-dark">Description</Text>
-              <AiChip show={!!draft?.description} />
-            </View>
+          {/* ── Description ────────────────────────────────────────── */}
+          <View className="mt-5">
+            <FieldLabel ai={!!draft?.description}>Description</FieldLabel>
             <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder="Condition, what's included, why you're selling…"
-              placeholderTextColor="#a29d8f"
+              placeholderTextColor={COLORS.muted}
               multiline
               numberOfLines={5}
               textAlignVertical="top"
-              className="mt-1.5 min-h-28 rounded-2xl border border-border bg-card px-4 py-3.5 text-base text-ink dark:border-border-dark dark:bg-card-dark dark:text-ink-dark"
+              className="min-h-28 rounded-2xl border border-border bg-card px-4 py-3.5 text-[15px] leading-[21px] text-ink dark:border-border-dark dark:bg-card-dark dark:text-ink-dark"
             />
           </View>
 
-          {/* Category */}
-          <Text className="mt-5 text-sm font-medium text-ink dark:text-ink-dark">Category</Text>
-          <View className="mt-2 flex-row flex-wrap gap-2">
-            {(categories.data?.categories ?? []).map((c) => (
-              <Pressable
-                key={c.id}
-                onPress={() => setCategoryId(c.id)}
-                className={`rounded-full border px-3.5 py-2 ${categoryId === c.id ? 'border-primary bg-primary' : 'border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
-              >
-                <Text className={`text-xs font-medium ${categoryId === c.id ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>{c.name_en}</Text>
-              </Pressable>
-            ))}
+          {/* ── Category ───────────────────────────────────────────── */}
+          <View className="mt-6">
+            <FieldLabel ai={!!draft?.categoryId}>Category</FieldLabel>
+            <View className="flex-row flex-wrap gap-2">
+              {(categories.data?.categories ?? []).map((c) => (
+                <Pill key={c.id} label={c.name_en} selected={categoryId === c.id} onPress={() => setCategoryId(c.id)} />
+              ))}
+            </View>
           </View>
 
-          {/* Condition + Emirate */}
-          <Text className="mt-5 text-sm font-medium text-ink dark:text-ink-dark">Condition</Text>
-          <View className="mt-2 flex-row flex-wrap gap-2">
-            {CONDITIONS.map((c) => (
-              <Pressable
-                key={c.value}
-                onPress={() => setCondition(c.value)}
-                className={`rounded-full border px-3.5 py-2 ${condition === c.value ? 'border-primary bg-primary' : 'border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
-              >
-                <Text className={`text-xs font-medium ${condition === c.value ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>{c.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-          <Text className="mt-5 text-sm font-medium text-ink dark:text-ink-dark">Emirate</Text>
-          <View className="mt-2 flex-row flex-wrap gap-2">
-            {EMIRATES.map((e) => (
-              <Pressable
-                key={e.value}
-                onPress={() => setEmirate(e.value)}
-                className={`rounded-full border px-3.5 py-2 ${emirate === e.value ? 'border-primary bg-primary' : 'border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
-              >
-                <Text className={`text-xs font-medium ${emirate === e.value ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>{e.label}</Text>
-              </Pressable>
-            ))}
+          {/* ── Condition ──────────────────────────────────────────── */}
+          <View className="mt-6">
+            <FieldLabel ai={!!draft?.condition}>Condition</FieldLabel>
+            <View className="flex-row flex-wrap gap-2">
+              {CONDITIONS.map((c) => (
+                <Pill key={c.value} label={c.label} selected={condition === c.value} onPress={() => setCondition(c.value)} />
+              ))}
+            </View>
           </View>
 
-          {/* AI price suggestion */}
+          {/* ── Emirate ────────────────────────────────────────────── */}
+          <View className="mt-6">
+            <FieldLabel>Emirate</FieldLabel>
+            <View className="flex-row flex-wrap gap-2">
+              {EMIRATES.map((e) => (
+                <Pill key={e.value} label={e.label} selected={emirate === e.value} onPress={() => setEmirate(e.value)} />
+              ))}
+            </View>
+          </View>
+
+          {/* ── AI price suggestion ────────────────────────────────── */}
           {pricing && (pricing.quickSaleAed || pricing.fairMarketAed || pricing.premiumAed) ? (
-            <View className="mt-6 rounded-qb border border-border bg-card p-4 dark:border-border-dark dark:bg-card-dark">
+            <View className="mt-7 rounded-qb border border-accent/30 bg-accent/[0.06] p-4">
               <View className="flex-row items-center">
-                <Ionicons name="sparkles" size={14} color="#c8a24a" />
-                <Text className="ml-1.5 text-sm font-semibold text-ink dark:text-ink-dark">AI price suggestion</Text>
-                <Text className="ml-auto text-xs text-muted dark:text-muted-dark">{pricing.confidence}% confidence</Text>
+                <Ionicons name="sparkles" size={15} color={COLORS.accent} />
+                <Text className="ml-1.5 text-[14px] font-bold text-ink dark:text-ink-dark">Suggested price</Text>
+                <View className="ml-auto rounded-full bg-accent/15 px-2 py-0.5">
+                  <Text className="text-[10px] font-bold text-accent-deep">{pricing.confidence}% confident</Text>
+                </View>
               </View>
               <View className="mt-3 flex-row gap-2">
                 {(
                   [
                     { label: 'Quick sale', value: pricing.quickSaleAed },
                     { label: 'Typical', value: pricing.fairMarketAed },
-                    { label: 'Top of range', value: pricing.premiumAed },
+                    { label: 'Top range', value: pricing.premiumAed },
                   ] as const
                 ).map(
                   (tier) =>
                     tier.value != null && (
                       <Pressable
                         key={tier.label}
-                        onPress={() => setPriceAed(String(tier.value))}
-                        className={`flex-1 rounded-2xl border p-3 ${String(tier.value) === priceAed ? 'border-primary bg-primary-light' : 'border-border dark:border-border-dark'}`}
+                        onPress={() => {
+                          tick()
+                          setPriceAed(String(tier.value))
+                        }}
+                        className={`flex-1 items-center rounded-2xl border p-3 ${String(tier.value) === priceAed ? 'border-primary bg-primary-light' : 'border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
                       >
-                        <Text className="text-[10px] font-semibold uppercase text-muted dark:text-muted-dark">{tier.label}</Text>
-                        <Text className="mt-0.5 text-sm font-bold text-ink dark:text-ink-dark">{formatPrice(tier.value * 100)}</Text>
+                        <Text className="text-[9.5px] font-bold uppercase tracking-wide text-muted dark:text-muted-dark">{tier.label}</Text>
+                        <Text className="mt-1 text-[13.5px] font-extrabold text-ink dark:text-ink-dark">{formatPrice(tier.value * 100)}</Text>
                       </Pressable>
                     ),
                 )}
               </View>
               {pricing.reasoning ? (
-                <Text className="mt-3 text-xs leading-relaxed text-muted dark:text-muted-dark">{pricing.reasoning}</Text>
+                <Text className="mt-3 text-[12px] leading-[17px] text-muted dark:text-muted-dark">{pricing.reasoning}</Text>
               ) : null}
             </View>
           ) : null}
 
-          {/* Price */}
-          <Text className="mt-5 text-sm font-medium text-ink dark:text-ink-dark">Price (AED)</Text>
-          <TextInput
-            value={priceAed}
-            onChangeText={setPriceAed}
-            placeholder="0"
-            placeholderTextColor="#a29d8f"
-            keyboardType="numeric"
-            className="mt-1.5 rounded-2xl border border-border bg-card px-4 py-3.5 text-base text-ink dark:border-border-dark dark:bg-card-dark dark:text-ink-dark"
-          />
-
-          <View className="mt-8">
-            <PrimaryButton
-              title={publishing ? 'Publishing…' : 'Publish listing'}
-              onPress={() => void publish()}
-              loading={publishing}
-              disabled={!photos.length || !title.trim() || !priceAed || !categoryId || !condition || !emirate}
-            />
+          {/* ── Price ──────────────────────────────────────────────── */}
+          <View className="mt-6">
+            <FieldLabel>Price</FieldLabel>
+            <View className="flex-row items-center rounded-2xl border border-border bg-card px-4 dark:border-border-dark dark:bg-card-dark">
+              <Text className="text-[15px] font-bold text-muted dark:text-muted-dark">AED</Text>
+              <TextInput
+                value={priceAed}
+                onChangeText={setPriceAed}
+                placeholder="0"
+                placeholderTextColor={COLORS.muted}
+                keyboardType="numeric"
+                className="ml-2 flex-1 py-3.5 text-[17px] font-bold text-ink dark:text-ink-dark"
+              />
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+
+      {/* ── Sticky publish bar ───────────────────────────────────── */}
+      <View
+        className="border-t border-border bg-card px-5 pt-3 dark:border-border-dark dark:bg-card-dark"
+        style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+      >
+        {!canPublish ? (
+          <Text className="mb-2 text-center text-[11.5px] text-muted dark:text-muted-dark">
+            {uploading ? 'Finishing photo upload…' : `Still needed: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? '…' : ''}`}
+          </Text>
+        ) : (
+          <View className="mb-2 flex-row items-center justify-between">
+            <Text className="text-[12px] text-muted dark:text-muted-dark">Your price</Text>
+            <Text className="text-[15px] font-extrabold text-primary dark:text-primary-light">{formatPrice(Number(priceAed) * 100)}</Text>
+          </View>
+        )}
+        <PrimaryButton
+          title={publishing ? 'Publishing…' : 'Publish listing'}
+          onPress={() => void publish()}
+          loading={publishing}
+          disabled={!canPublish}
+        />
+      </View>
+    </View>
   )
 }

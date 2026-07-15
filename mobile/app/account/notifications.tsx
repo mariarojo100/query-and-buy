@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { COLORS } from '@/theme/colors'
-import { EmptyState, ErrorState } from '@/components/ui'
+import { EmptyState, ErrorState, ListRowsSkeleton } from '@/components/ui'
 
 type AppNotification = {
   id: string
@@ -93,8 +93,10 @@ export default function NotificationsScreen() {
 
       {q.isError ? (
         <ErrorState message="Couldn't load notifications." onRetry={() => void q.refetch()} />
-      ) : (q.data?.notifications.length ?? 0) === 0 && !q.isLoading ? (
-        <EmptyState title="You're all caught up" body="Messages, offers, and order updates land here." />
+      ) : q.isLoading ? (
+        <ListRowsSkeleton />
+      ) : (q.data?.notifications.length ?? 0) === 0 ? (
+        <EmptyState icon="notifications-outline" title="You're all caught up" body="Messages, offers, and order updates land here." />
       ) : (
         <FlashList
           data={q.data?.notifications ?? []}

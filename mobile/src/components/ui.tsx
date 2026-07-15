@@ -113,11 +113,66 @@ export function Field(
   )
 }
 
-export function EmptyState({ title, body }: { title: string; body?: string }) {
+export function EmptyState({
+  title,
+  body,
+  icon,
+  action,
+  onAction,
+}: {
+  title: string
+  body?: string
+  icon?: keyof typeof Ionicons.glyphMap
+  action?: string
+  onAction?: () => void
+}) {
   return (
     <View className="flex-1 items-center justify-center px-10 py-16">
-      <Text className="text-center text-lg font-semibold text-ink dark:text-ink-dark">{title}</Text>
-      {body ? <Text className="mt-2 text-center text-sm text-muted dark:text-muted-dark">{body}</Text> : null}
+      {icon ? (
+        <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-primary-light">
+          <Ionicons name={icon} size={30} color={COLORS.primary} />
+        </View>
+      ) : null}
+      <Text className="text-center text-[17px] font-bold text-ink dark:text-ink-dark">{title}</Text>
+      {body ? <Text className="mt-1.5 text-center text-[13px] leading-[19px] text-muted dark:text-muted-dark">{body}</Text> : null}
+      {action && onAction ? (
+        <Pressable onPress={onAction} className="mt-5 rounded-full border border-border bg-card px-8 py-3 active:opacity-90 dark:border-border-dark dark:bg-card-dark">
+          <Text className="text-[14px] font-semibold text-primary dark:text-primary-light">{action}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  )
+}
+
+/** Row placeholders for list screens (inbox, my listings, notifications). */
+export function ListRowsSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <View className="px-5 pt-2">
+      {Array.from({ length: count }).map((_, i) => (
+        <View key={i} className="mb-4 flex-row items-center">
+          <Skeleton className="h-14 w-14 rounded-2xl" />
+          <View className="ml-3.5 flex-1">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="mt-2 h-3 w-24" />
+            <Skeleton className="mt-2 h-3 w-44" />
+          </View>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+/** 2-column placeholder grid for the listing feeds' initial load. */
+export function CardGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <View className="flex-row flex-wrap px-3.5 pt-2">
+      {Array.from({ length: count }).map((_, i) => (
+        <View key={i} style={{ width: '50%', paddingHorizontal: 6 }} className="mb-4">
+          <Skeleton className="h-40 w-full rounded-img" />
+          <Skeleton className="mt-2.5 h-4 w-16" />
+          <Skeleton className="mt-1.5 h-3 w-28" />
+        </View>
+      ))}
     </View>
   )
 }

@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useCategories, useListingFeed } from '@/queries'
 import { ListingCard } from '@/components/ListingCard'
 import { COLORS } from '@/theme/colors'
-import { EmptyState, ErrorState } from '@/components/ui'
+import { CardGridSkeleton, EmptyState, ErrorState } from '@/components/ui'
 import type { FeedListingDto } from '@qb/shared'
 
 export default function ExploreScreen() {
@@ -62,8 +62,10 @@ export default function ExploreScreen() {
 
       {feed.isError ? (
         <ErrorState message="Couldn't load listings." onRetry={() => void feed.refetch()} />
-      ) : listings.length === 0 && !feed.isLoading ? (
-        <EmptyState title="No listings here yet" body="Try another category, or check back soon." />
+      ) : feed.isLoading ? (
+        <CardGridSkeleton />
+      ) : listings.length === 0 ? (
+        <EmptyState icon="compass-outline" title="No listings here yet" body="Try another category, or check back soon." />
       ) : (
         <FlashList
           data={listings}

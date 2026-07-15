@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useListingFeed, parseSearch } from '@/queries'
 import { ListingCard } from '@/components/ListingCard'
 import { COLORS } from '@/theme/colors'
-import { EmptyState, ErrorState } from '@/components/ui'
+import { CardGridSkeleton, EmptyState, ErrorState } from '@/components/ui'
 import type { FeedListingDto } from '@qb/shared'
 
 export default function SearchScreen() {
@@ -92,8 +92,10 @@ export default function SearchScreen() {
 
       {feed.isError ? (
         <ErrorState message="Couldn't load results." onRetry={() => void feed.refetch()} />
-      ) : listings.length === 0 && !feed.isLoading ? (
-        <EmptyState title="No results" body="Try different keywords or remove some filters." />
+      ) : feed.isLoading ? (
+        <CardGridSkeleton />
+      ) : listings.length === 0 ? (
+        <EmptyState icon="search-outline" title="No results" body="Try different keywords or remove some filters." />
       ) : (
         <FlashList
           data={listings}

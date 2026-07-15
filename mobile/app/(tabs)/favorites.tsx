@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router'
 import { useFavorites } from '@/queries'
 import { useAuth } from '@/auth/AuthContext'
 import { ListingCard } from '@/components/ListingCard'
-import { EmptyState, ErrorState } from '@/components/ui'
+import { CardGridSkeleton, EmptyState, ErrorState } from '@/components/ui'
 import type { FeedListingDto } from '@qb/shared'
 
 export default function FavoritesScreen() {
@@ -28,8 +28,16 @@ export default function FavoritesScreen() {
         </View>
       ) : q.isError ? (
         <ErrorState message="Couldn't load your saved items." onRetry={() => void q.refetch()} />
-      ) : (q.data?.listings.length ?? 0) === 0 && !q.isLoading ? (
-        <EmptyState title="Nothing saved yet" body="Tap the heart on any listing to keep it here." />
+      ) : q.isLoading ? (
+        <CardGridSkeleton />
+      ) : (q.data?.listings.length ?? 0) === 0 ? (
+        <EmptyState
+          icon="heart-outline"
+          title="Nothing saved yet"
+          body="Tap the heart on any listing to keep it here."
+          action="Browse listings"
+          onAction={() => router.push('/(tabs)/explore' as never)}
+        />
       ) : (
         <FlashList
           data={q.data?.listings ?? []}

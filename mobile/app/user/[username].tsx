@@ -72,6 +72,15 @@ export default function UserScreen() {
               </View>
             </View>
           }
+          ListEmptyComponent={
+            <View className="items-center px-10 py-16">
+              <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-primary-light">
+                <Ionicons name="pricetags-outline" size={28} color={COLORS.primary} />
+              </View>
+              <Text className="text-center text-[15px] font-bold text-ink dark:text-ink-dark">No active listings</Text>
+              <Text className="mt-1.5 text-center text-[13px] text-muted dark:text-muted-dark">This seller has nothing listed right now.</Text>
+            </View>
+          }
         />
       )}
     </SafeAreaView>

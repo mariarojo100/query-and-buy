@@ -36,7 +36,7 @@ import { listingImageUrl } from '@/lib/images'
 import { reportContent, blockUser } from '@/lib/moderation'
 import { success, tick } from '@/lib/haptics'
 import { COLORS } from '@/theme/colors'
-import { ErrorState, ScalePressable } from '@/components/ui'
+import { EmptyState, ErrorState, ScalePressable } from '@/components/ui'
 
 function fmtTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
@@ -379,6 +379,8 @@ export default function ConversationScreen() {
         <View className="flex-1">
           {q.isLoading ? (
             <ActivityIndicator className="mt-10" color={COLORS.primary} />
+          ) : messages.length === 0 ? (
+            <EmptyState icon="chatbubble-ellipses-outline" title="Say hello 👋" body="Send a message to start the conversation." />
           ) : (
             <FlashList
               data={messages}

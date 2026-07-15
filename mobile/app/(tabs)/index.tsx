@@ -216,6 +216,13 @@ export default function HomeScreen() {
                 <Skeleton className="mt-1.5 h-3 w-32" />
               </View>
             </View>
+          ) : feed.isError ? (
+            <View className="mt-6 items-center px-6">
+              <Text className="text-center text-[13px] text-muted dark:text-muted-dark">Couldn’t load listings.</Text>
+              <Pressable onPress={() => void feed.refetch()} className="mt-3 rounded-full border border-border bg-card px-6 py-2.5 active:opacity-90 dark:border-border-dark dark:bg-card-dark">
+                <Text className="text-[13px] font-semibold text-primary dark:text-primary-light">Try again</Text>
+              </Pressable>
+            </View>
           ) : firstPage.length === 0 ? (
             <Text className="mt-6 px-6 text-center text-[13px] text-muted dark:text-muted-dark">
               Nothing here yet{emirate ? ` in ${emirateLabel}` : ''} — check back soon.

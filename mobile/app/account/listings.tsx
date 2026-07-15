@@ -14,7 +14,7 @@ import { formatPrice } from '@qb/shared'
 import { api, ApiError } from '@/api/client'
 import { listingImageUrl } from '@/lib/images'
 import { COLORS } from '@/theme/colors'
-import { EmptyState, ErrorState } from '@/components/ui'
+import { EmptyState, ErrorState, ListRowsSkeleton } from '@/components/ui'
 
 type MyListing = {
   id: string
@@ -92,8 +92,16 @@ export default function MyListingsScreen() {
 
       {q.isError ? (
         <ErrorState message="Couldn't load your listings." onRetry={() => void q.refetch()} />
-      ) : rows.length === 0 && !q.isLoading ? (
-        <EmptyState title="Nothing listed yet" body="Snap a few photos and your first listing is live in under a minute." />
+      ) : q.isLoading ? (
+        <ListRowsSkeleton />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon="pricetags-outline"
+          title="Nothing listed yet"
+          body="Snap a few photos and your first listing is live in under a minute."
+          action="Sell an item"
+          onAction={() => router.push('/sell/new')}
+        />
       ) : (
         <FlashList
           data={rows}

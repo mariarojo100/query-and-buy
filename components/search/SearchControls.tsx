@@ -50,9 +50,12 @@ const DATES = [
 export function SearchControls({
   categories,
   hideCategory = false,
+  hideSearch = false,
 }: {
   categories: CategoryLite[]
   hideCategory?: boolean
+  /** Omit the text search field — used where a primary search box sits above. */
+  hideSearch?: boolean
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -95,25 +98,27 @@ export function SearchControls({
 
   return (
     <div className="space-y-3">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          setParam('q', q.trim())
-        }}
-        className="flex gap-2"
-      >
-        <div className="relative flex-1">
-          <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search listings…"
-            className="pl-9"
-            aria-label="Search listings"
-          />
-        </div>
-        <Button type="submit">Search</Button>
-      </form>
+      {!hideSearch && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            setParam('q', q.trim())
+          }}
+          className="flex gap-2"
+        >
+          <div className="relative flex-1">
+            <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search listings…"
+              className="pl-9"
+              aria-label="Search listings"
+            />
+          </div>
+          <Button type="submit">Search</Button>
+        </form>
+      )}
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {!hideCategory && (

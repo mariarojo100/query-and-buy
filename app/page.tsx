@@ -109,9 +109,11 @@ export default async function HomePage({
           /* ---------- SEARCH RESULTS ---------- */
           <section id="listings" className="scroll-mt-20 py-8 sm:py-10">
             <div className="mb-6 flex items-end justify-between gap-4">
-              <div>
-                <p className="eyebrow">Results</p>
-                <h1 className="font-display mt-1.5 text-3xl tracking-tight">Search</h1>
+              <div className="min-w-0">
+                <p className="eyebrow">{count === 1 ? '1 result' : `${count.toLocaleString('en-AE')} results`}</p>
+                <h1 className="font-display mt-1.5 truncate text-3xl tracking-tight sm:text-4xl">
+                  {parsed.q?.trim() ? parsed.q : 'Browse listings'}
+                </h1>
               </div>
               <SaveSearchButton authed={!!user} />
             </div>
@@ -119,7 +121,7 @@ export default async function HomePage({
               <SmartSearchBox />
             </div>
             <div className="space-y-6">
-              <SearchControls categories={categories} />
+              <SearchControls categories={categories} hideSearch />
               <CategoryChips categories={categories} activeSlug={parsed.categorySlug} />
               <div className="pt-2">{feed}</div>
             </div>

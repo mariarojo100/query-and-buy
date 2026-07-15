@@ -33,6 +33,10 @@ export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS]['name']
  * These are the only two public buckets.
  */
 export function bucketPublicUrl(bucket: BucketName, key: string): string {
+  // Dev only: seeded demo rows store absolute image URLs (Unsplash). Pass them
+  // through so the local marketplace renders real photos. Production keys are
+  // always relative (`{userId}/…`), so this never triggers there.
+  if (process.env.NODE_ENV !== 'production' && /^https?:\/\//i.test(key)) return key
   switch (bucket) {
     case 'avatars':
       return `https://avatars.queryandbuy.com/${key}`

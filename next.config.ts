@@ -67,6 +67,12 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
+      // Dev only: the seeded demo data references Unsplash photos so the local
+      // marketplace has real imagery to design against. Production serves from
+      // R2 (relative keys) and never hits this.
+      ...(isDev
+        ? [{ protocol: 'https' as const, hostname: 'images.unsplash.com' }]
+        : []),
       {
         protocol: 'https',
         hostname: 'avatars.queryandbuy.com',

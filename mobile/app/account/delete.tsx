@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { api, ApiError } from '@/api/client'
 import { useAuth } from '@/auth/AuthContext'
+import { COLORS } from '@/theme/colors'
 
 export default function DeleteAccountScreen() {
   const router = useRouter()
@@ -47,7 +48,7 @@ export default function DeleteAccountScreen() {
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
       <View className="flex-row items-center px-4 py-2">
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name="chevron-back" size={26} color="#0e5a43" />
+          <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
         <Text className="ml-2 text-lg font-bold text-ink dark:text-ink-dark">Delete account</Text>
       </View>

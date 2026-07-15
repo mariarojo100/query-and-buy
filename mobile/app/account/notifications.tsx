@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
+import { COLORS } from '@/theme/colors'
 import { EmptyState, ErrorState } from '@/components/ui'
 
 type AppNotification = {
@@ -80,7 +81,7 @@ export default function NotificationsScreen() {
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
       <View className="flex-row items-center px-4 py-2">
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name="chevron-back" size={26} color="#0e5a43" />
+          <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
         <Text className="ml-2 flex-1 text-lg font-bold text-ink dark:text-ink-dark">Notifications</Text>
         {(q.data?.unreadCount ?? 0) > 0 ? (
@@ -110,7 +111,7 @@ export default function NotificationsScreen() {
                 }`}
               >
                 <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-full bg-primary-light">
-                  <Ionicons name={ICONS[item.type] ?? 'notifications-outline'} size={17} color="#0e5a43" />
+                  <Ionicons name={ICONS[item.type] ?? 'notifications-outline'} size={17} color={COLORS.primary} />
                 </View>
                 <View className="ml-3 flex-1">
                   <View className="flex-row items-center">

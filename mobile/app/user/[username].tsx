@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { ListingCard } from '@/components/ListingCard'
+import { COLORS } from '@/theme/colors'
 import { ErrorState, Skeleton } from '@/components/ui'
 import type { FeedListingDto } from '@qb/shared'
 
@@ -31,7 +32,7 @@ export default function UserScreen() {
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
       <View className="flex-row items-center px-4 py-2">
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name="chevron-back" size={26} color="#0e5a43" />
+          <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
       </View>
       {q.isLoading ? (

@@ -133,7 +133,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/search')}
             accessibilityLabel="Search the marketplace"
             className="mt-5 flex-row items-center rounded-2xl border border-border bg-card px-4 py-4 dark:border-border-dark dark:bg-card-dark"
-            style={{ shadowColor: '#0B6B50', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}
+            style={{ shadowColor: COLORS.primary, shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}
           >
             <Ionicons name="search" size={18} color={COLORS.muted} />
             <Text numberOfLines={1} className="ml-3 flex-1 text-[14.5px] text-muted dark:text-muted-dark">

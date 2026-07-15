@@ -13,6 +13,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { formatPrice } from '@qb/shared'
 import { api, ApiError } from '@/api/client'
 import { listingImageUrl } from '@/lib/images'
+import { COLORS } from '@/theme/colors'
 import { EmptyState, ErrorState } from '@/components/ui'
 
 type MyListing = {
@@ -81,11 +82,11 @@ export default function MyListingsScreen() {
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
       <View className="flex-row items-center px-4 py-2">
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name="chevron-back" size={26} color="#0e5a43" />
+          <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
         <Text className="ml-2 flex-1 text-lg font-bold text-ink dark:text-ink-dark">My listings</Text>
         <Pressable onPress={() => router.push('/sell/new')} hitSlop={8}>
-          <Ionicons name="add-circle" size={26} color="#0e5a43" />
+          <Ionicons name="add-circle" size={26} color={COLORS.primary} />
         </Pressable>
       </View>
 
@@ -126,7 +127,7 @@ export default function MyListingsScreen() {
                   </View>
                 </View>
                 <Pressable onPress={() => manage(item)} hitSlop={8} className="p-1">
-                  <Ionicons name="ellipsis-vertical" size={18} color="#8a8578" />
+                  <Ionicons name="ellipsis-vertical" size={18} color={COLORS.muted} />
                 </Pressable>
               </Pressable>
             )

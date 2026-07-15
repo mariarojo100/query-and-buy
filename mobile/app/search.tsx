@@ -10,6 +10,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useListingFeed, parseSearch } from '@/queries'
 import { ListingCard } from '@/components/ListingCard'
+import { COLORS } from '@/theme/colors'
 import { EmptyState, ErrorState } from '@/components/ui'
 import type { FeedListingDto } from '@qb/shared'
 
@@ -59,21 +60,21 @@ export default function SearchScreen() {
       {/* Search header */}
       <View className="flex-row items-center gap-2 px-4 pb-3 pt-2">
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name="chevron-back" size={26} color="#0e5a43" />
+          <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
         <View className="flex-1 flex-row items-center rounded-full border border-border bg-card px-4 dark:border-border-dark dark:bg-card-dark">
-          <Ionicons name="sparkles-outline" size={16} color="#c8a24a" />
+          <Ionicons name="sparkles-outline" size={16} color={COLORS.accent} />
           <TextInput
             value={text}
             onChangeText={setText}
             onSubmitEditing={() => void submit()}
             placeholder={params.label ? `Search ${params.label}…` : 'Try “Toyota under 50k in Dubai”'}
-            placeholderTextColor="#a29d8f"
+            placeholderTextColor={COLORS.muted}
             returnKeyType="search"
             autoFocus={!params.category}
             className="ml-2 flex-1 py-3 text-base text-ink dark:text-ink-dark"
           />
-          {parsing ? <ActivityIndicator size="small" color="#0e5a43" /> : null}
+          {parsing ? <ActivityIndicator size="small" color={COLORS.primary} /> : null}
         </View>
       </View>
 
@@ -108,7 +109,7 @@ export default function SearchScreen() {
             if (feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage()
           }}
           onEndReachedThreshold={0.4}
-          ListFooterComponent={feed.isFetchingNextPage ? <ActivityIndicator className="my-4" color="#0e5a43" /> : null}
+          ListFooterComponent={feed.isFetchingNextPage ? <ActivityIndicator className="my-4" color={COLORS.primary} /> : null}
         />
       )}
     </SafeAreaView>

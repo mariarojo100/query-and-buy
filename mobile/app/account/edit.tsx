@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { EMIRATES } from '@qb/shared'
 import { api, ApiError } from '@/api/client'
 import { useAuth } from '@/auth/AuthContext'
+import { COLORS } from '@/theme/colors'
 import { Field, PrimaryButton } from '@/components/ui'
 
 export default function EditProfileScreen() {
@@ -96,7 +97,7 @@ export default function EditProfileScreen() {
     <SafeAreaView edges={['top']} className="flex-1 bg-background dark:bg-background-dark">
       <View className="flex-row items-center px-4 py-2">
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name="chevron-back" size={26} color="#0e5a43" />
+          <Ionicons name="chevron-back" size={26} color={COLORS.primary} />
         </Pressable>
         <Text className="ml-2 text-lg font-bold text-ink dark:text-ink-dark">Edit profile</Text>
       </View>
@@ -105,7 +106,7 @@ export default function EditProfileScreen() {
           <Pressable onPress={() => void changeAvatar()} className="mb-6 items-center">
             <View className="h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary-light">
               {avatarBusy ? (
-                <ActivityIndicator color="#0e5a43" />
+                <ActivityIndicator color={COLORS.primary} />
               ) : user?.avatarUrl ? (
                 <Image source={{ uri: user.avatarUrl }} style={{ width: '100%', height: '100%' }} />
               ) : (

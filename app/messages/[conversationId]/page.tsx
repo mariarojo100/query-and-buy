@@ -146,6 +146,7 @@ export default async function ConversationPage({
             otherAvatarUrl={otherAvatar}
             otherLastReadAt={view.otherLastReadAt}
             currency={currency}
+            listingPriceFils={listing?.price_fils}
             order={
               order
                 ? {

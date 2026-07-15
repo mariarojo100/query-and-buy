@@ -336,7 +336,7 @@ export default function SellNewScreen() {
                           tick()
                           setPriceAed(String(tier.value))
                         }}
-                        className={`flex-1 items-center rounded-2xl border p-3 ${String(tier.value) === priceAed ? 'border-primary bg-primary-light' : 'border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
+                        className={`flex-1 items-center rounded-2xl border p-3 ${String(tier.value) === priceAed ? 'border-primary bg-primary-light dark:bg-primary/15' : 'border-border bg-card dark:border-border-dark dark:bg-card-dark'}`}
                       >
                         <Text className="text-[9.5px] font-bold uppercase tracking-wide text-muted dark:text-muted-dark">{tier.label}</Text>
                         <Text className="mt-1 text-[13.5px] font-extrabold text-ink dark:text-ink-dark">{formatPrice(tier.value * 100)}</Text>

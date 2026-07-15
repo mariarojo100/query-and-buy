@@ -116,8 +116,9 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
   // Completed / cancelled banners
   if (status === 'completed') {
     return (
-      <View className="mx-4 mb-2 rounded-2xl bg-primary-light dark:bg-primary/15 p-3">
-        <Text className="text-center text-sm font-semibold text-primary">✓ Transaction completed</Text>
+      <View className="mx-4 mb-2 flex-row items-center justify-center rounded-card bg-success/10 px-4 py-3">
+        <Ionicons name="checkmark-circle" size={17} color={COLORS.success} />
+        <Text className="ml-1.5 text-[13.5px] font-bold text-success">Transaction completed</Text>
       </View>
     )
   }
@@ -125,28 +126,19 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
   // Confirmed stage: contacts + seller controls
   if (status === 'confirmed' && current) {
     return (
-      <View className="mx-4 mb-2 rounded-2xl border border-primary/30 bg-primary-light dark:bg-primary/15 p-3">
-        <Text className="text-center text-sm font-semibold text-primary">
-          Deal confirmed{current.accepted_price_fils != null ? ` · ${formatPrice(current.accepted_price_fils)}` : ''}
-        </Text>
-        <View className="mt-2 flex-row justify-center gap-2">
-          <Pressable onPress={() => void reveal()} className="rounded-full bg-primary px-4 py-2">
-            <Text className="text-xs font-semibold text-white">View contact</Text>
-          </Pressable>
+      <View className="mx-4 mb-2 rounded-card border border-primary/25 bg-primary-tint p-3.5 dark:border-primary/30 dark:bg-primary/10">
+        <OfferHeader
+          overline="Deal confirmed"
+          tone="success"
+          amount={current.accepted_price_fils}
+          icon="shield-checkmark"
+        />
+        <View className="mt-3 flex-row gap-2">
+          <OfferAction label="View contact" tone="primary" onPress={() => void reveal()} />
           {isSeller ? (
             <>
-              <Pressable
-                onPress={() => orderAction.mutate({ orderId: current.id, action: 'sold' }, { onError: err })}
-                className="rounded-full bg-accent px-4 py-2"
-              >
-                <Text className="text-xs font-semibold text-white">Mark sold</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => orderAction.mutate({ orderId: current.id, action: 'reactivate' }, { onError: err })}
-                className="rounded-full border border-border px-4 py-2 dark:border-border-dark"
-              >
-                <Text className="text-xs font-semibold text-ink dark:text-ink-dark">Relist</Text>
-              </Pressable>
+              <OfferAction label="Mark sold" tone="accent" onPress={() => orderAction.mutate({ orderId: current.id, action: 'sold' }, { onError: err })} />
+              <OfferAction label="Relist" tone="outline" onPress={() => orderAction.mutate({ orderId: current.id, action: 'reactivate' }, { onError: err })} />
             </>
           ) : null}
         </View>
@@ -158,31 +150,23 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
   if ((status === 'offer_accepted' || status === 'awaiting_confirmation') && current) {
     const meConfirmed = isSeller ? current.seller_confirmed : current.buyer_confirmed
     return (
-      <View className="mx-4 mb-2 rounded-2xl border border-border bg-card p-3 dark:border-border-dark dark:bg-card-dark">
-        <Text className="text-center text-sm font-semibold text-ink dark:text-ink-dark">
-          Offer accepted{current.accepted_price_fils != null ? ` · ${formatPrice(current.accepted_price_fils)}` : ''}
-        </Text>
-        <View className="mt-2 flex-row justify-center gap-2">
-          {meConfirmed ? (
-            <Text className="py-2 text-xs text-muted dark:text-muted-dark">Waiting for the other party to confirm…</Text>
-          ) : (
-            <Pressable
+      <View className="mx-4 mb-2 rounded-card border border-border bg-card p-3.5 dark:border-border-dark dark:bg-card-dark">
+        <OfferHeader overline="Offer accepted" tone="ink" amount={current.accepted_price_fils} icon="hand-left" />
+        {meConfirmed ? (
+          <Text className="mt-2.5 text-center text-[12.5px] text-muted dark:text-muted-dark">Waiting for the other party to confirm…</Text>
+        ) : (
+          <View className="mt-3 flex-row gap-2">
+            <OfferAction
+              label="Confirm deal"
+              tone="primary"
               onPress={() => {
                 success()
                 orderAction.mutate({ orderId: current.id, action: 'confirm' }, { onError: err })
               }}
-              className="rounded-full bg-primary px-5 py-2"
-            >
-              <Text className="text-xs font-semibold text-white">Confirm deal</Text>
-            </Pressable>
-          )}
-          <Pressable
-            onPress={() => orderAction.mutate({ orderId: current.id, action: 'cancel' }, { onError: err })}
-            className="rounded-full border border-border px-4 py-2 dark:border-border-dark"
-          >
-            <Text className="text-xs font-semibold text-danger">Cancel</Text>
-          </Pressable>
-        </View>
+            />
+            <OfferAction label="Cancel" tone="ghostDanger" onPress={() => orderAction.mutate({ orderId: current.id, action: 'cancel' }, { onError: err })} />
+          </View>
+        )}
       </View>
     )
   }
@@ -191,29 +175,21 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
   if (pending && current) {
     const mine = pending.sender_id === meId
     return (
-      <View className="mx-4 mb-2 rounded-2xl border border-border bg-card p-3 dark:border-border-dark dark:bg-card-dark">
-        <Text className="text-center text-sm font-semibold text-ink dark:text-ink-dark">
-          {mine ? 'Your offer' : 'Offer received'} · {formatPrice(pending.amount_fils)}
-        </Text>
+      <View className="mx-4 mb-2 rounded-card border border-border bg-card p-3.5 dark:border-border-dark dark:bg-card-dark">
+        <OfferHeader overline={mine ? 'Your offer' : 'Offer received'} tone="ink" amount={pending.amount_fils} icon="pricetag" />
         {mine ? (
-          <Text className="mt-1 text-center text-xs text-muted dark:text-muted-dark">Waiting for a response…</Text>
+          <Text className="mt-2 text-center text-[12.5px] text-muted dark:text-muted-dark">Waiting for a response…</Text>
         ) : (
-          <View className="mt-2 flex-row justify-center gap-2">
-            <Pressable
+          <View className="mt-3 flex-row gap-2">
+            <OfferAction
+              label="Accept"
+              tone="primary"
               onPress={() => {
                 success()
                 respond.mutate({ offerId: pending.id, action: 'accept' }, { onError: err })
               }}
-              className="rounded-full bg-primary px-5 py-2"
-            >
-              <Text className="text-xs font-semibold text-white">Accept</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => respond.mutate({ offerId: pending.id, action: 'decline' }, { onError: err })}
-              className="rounded-full border border-border px-4 py-2 dark:border-border-dark"
-            >
-              <Text className="text-xs font-semibold text-danger">Decline</Text>
-            </Pressable>
+            />
+            <OfferAction label="Decline" tone="ghostDanger" onPress={() => respond.mutate({ offerId: pending.id, action: 'decline' }, { onError: err })} />
           </View>
         )}
         {!mine ? (
@@ -228,7 +204,11 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
 
   // Default: offer composer
   return (
-    <View className="mx-4 mb-2 rounded-2xl border border-border bg-card p-3 dark:border-border-dark dark:bg-card-dark">
+    <View className="mx-4 mb-2 rounded-card border border-border bg-card p-3.5 dark:border-border-dark dark:bg-card-dark">
+      <View className="flex-row items-center">
+        <Ionicons name="pricetag-outline" size={15} color={COLORS.muted} />
+        <Text className="ml-1.5 text-[12.5px] font-semibold text-ink-soft dark:text-ink-soft-dark">Make an offer</Text>
+      </View>
       <OfferComposer
         amount={amount}
         setAmount={setAmount}
@@ -241,6 +221,50 @@ function OfferPanel({ data, conversationId }: { data: ThreadResponse; conversati
         label="Make offer"
       />
     </View>
+  )
+}
+
+/** Offer-card header: status overline + prominent amount + tone icon. */
+function OfferHeader({
+  overline,
+  amount,
+  tone,
+  icon,
+}: {
+  overline: string
+  amount: number | null | undefined
+  tone: 'success' | 'ink'
+  icon: keyof typeof Ionicons.glyphMap
+}) {
+  const c = tone === 'success' ? COLORS.primary : COLORS.ink
+  return (
+    <View className="flex-row items-center">
+      <View className={`mr-2.5 h-9 w-9 items-center justify-center rounded-full ${tone === 'success' ? 'bg-primary/15' : 'bg-sunken dark:bg-sunken-dark'}`}>
+        <Ionicons name={icon} size={17} color={c} />
+      </View>
+      <View className="flex-1">
+        <Text className="text-[10.5px] font-bold uppercase tracking-wide text-muted dark:text-muted-dark">{overline}</Text>
+        {amount != null ? (
+          <Text className="text-[19px] font-extrabold tracking-tight text-ink dark:text-ink-dark">{formatPrice(amount)}</Text>
+        ) : null}
+      </View>
+    </View>
+  )
+}
+
+/** Offer-card action button. Equal-width in a row; tones map to the DS. */
+function OfferAction({ label, tone, onPress }: { label: string; tone: 'primary' | 'accent' | 'outline' | 'ghostDanger'; onPress: () => void }) {
+  const surface =
+    tone === 'primary'
+      ? 'bg-primary'
+      : tone === 'accent'
+        ? 'bg-accent'
+        : 'border border-border-strong dark:border-border-strong-dark'
+  const labelCls = tone === 'primary' || tone === 'accent' ? 'text-white' : tone === 'ghostDanger' ? 'text-danger' : 'text-ink dark:text-ink-dark'
+  return (
+    <Pressable onPress={onPress} className={`h-11 flex-1 items-center justify-center rounded-xl active:opacity-90 ${surface}`}>
+      <Text className={`text-[13px] font-bold ${labelCls}`}>{label}</Text>
+    </Pressable>
   )
 }
 
@@ -260,20 +284,23 @@ function OfferComposer({
   label: string
 }) {
   return (
-    <View className="mt-2 flex-row items-center gap-2">
-      <Pressable onPress={onSuggest} className="h-10 w-10 items-center justify-center rounded-full bg-primary-light dark:bg-primary/15" accessibilityLabel="Suggest an offer with AI">
-        {suggesting ? <ActivityIndicator size="small" color={COLORS.primary} /> : <Ionicons name="sparkles" size={16} color={COLORS.primary} />}
+    <View className="mt-2.5 flex-row items-center gap-2">
+      <Pressable onPress={onSuggest} className="h-11 w-11 items-center justify-center rounded-xl bg-primary-light dark:bg-primary/15" accessibilityLabel="Suggest an offer with AI">
+        {suggesting ? <ActivityIndicator size="small" color={COLORS.primary} /> : <Ionicons name="sparkles" size={17} color={COLORS.primary} />}
       </Pressable>
-      <TextInput
-        value={amount}
-        onChangeText={setAmount}
-        placeholder="Enter amount (AED)"
-        placeholderTextColor={COLORS.muted}
-        keyboardType="numeric"
-        className="h-10 flex-1 rounded-full border border-border bg-background px-4 text-sm text-ink dark:border-border-dark dark:bg-background-dark dark:text-ink-dark"
-      />
-      <Pressable onPress={onSend} className="h-10 justify-center rounded-full bg-primary px-4">
-        <Text className="text-xs font-semibold text-white">{label}</Text>
+      <View className="h-11 flex-1 flex-row items-center rounded-xl border border-border bg-sunken px-3.5 dark:border-border-dark dark:bg-sunken-dark">
+        <Text className="text-[13px] font-bold text-muted dark:text-muted-dark">AED</Text>
+        <TextInput
+          value={amount}
+          onChangeText={setAmount}
+          placeholder="0"
+          placeholderTextColor={COLORS.muted}
+          keyboardType="numeric"
+          className="ml-1.5 flex-1 text-[15px] font-semibold text-ink dark:text-ink-dark"
+        />
+      </View>
+      <Pressable onPress={onSend} className="h-11 justify-center rounded-xl bg-primary px-4 active:opacity-90">
+        <Text className="text-[13px] font-bold text-white">{label}</Text>
       </Pressable>
     </View>
   )

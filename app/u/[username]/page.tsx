@@ -35,8 +35,8 @@ import type { Profile } from '@/lib/profile/completion'
  * Deferred / future work (intentionally NOT built yet):
  * - Phone verification: now real — `phone_verified` is flipped only by a genuine
  *   OTP confirmation on the self-managed stack (see components/profile/
- *   PhoneVerification, app/account/verifyPhone/actions, and lib/auth/phone).
- *   Requires Twilio env (lib/sms/send) to be configured to deliver codes.
+ *   PhoneVerification, app/account/verifyPhone/actions, and lib/sms/twilio-verify).
+ *   Requires Twilio Verify env to be configured to deliver codes.
  * - Cover image: the hero uses a brand gradient. A `cover_image_url` column can
  *   be added later so sellers personalise the hero (fall back to the gradient).
  * - Pagination: reviews (6) and listings (12) are capped fetches. Add a

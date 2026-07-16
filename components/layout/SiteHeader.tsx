@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { HeartIcon, MessageSquareIcon } from 'lucide-react'
+import { HeartIcon, MessageSquareIcon, SearchIcon } from 'lucide-react'
 import { Logo } from '@/components/brand/Logo'
 import { getViewer } from '@/lib/auth/session'
 import { profileHeader } from '@/lib/db/profiles'
@@ -39,7 +39,25 @@ export async function SiteHeader() {
           <Logo size={34} />
         </Link>
 
-        <div className="flex items-center gap-1 sm:gap-1.5">
+        {/* Persistent search — discovery from any page. Native GET form → /?q=…
+            (no client JS). Mobile relies on the bottom nav + home search. */}
+        <form
+          action="/"
+          method="get"
+          role="search"
+          className="relative mx-4 hidden min-w-0 max-w-md flex-1 md:block"
+        >
+          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            name="q"
+            placeholder="Search Query & Buy"
+            aria-label="Search the marketplace"
+            className="h-10 w-full rounded-full border border-border bg-card/60 pl-10 pr-4 text-sm outline-none transition placeholder:text-muted-foreground focus:border-gold/40 focus:bg-card focus:ring-1 focus:ring-gold/30"
+          />
+        </form>
+
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           <Link
             href="/"
             className="hidden px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground md:block"

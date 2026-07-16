@@ -11,7 +11,9 @@ import { randomBytes, createHash } from 'node:crypto'
 import {
   createVerificationToken,
   consumeVerificationToken,
+  consumeEmailVerifyToken,
   type VerificationTokenType,
+  type EmailTokenOutcome,
 } from '@/lib/db/auth'
 
 const TTL_MS: Record<VerificationTokenType, number> = {
@@ -41,4 +43,12 @@ export async function redeemToken(
   type: VerificationTokenType,
 ): Promise<{ userId: string } | null> {
   return consumeVerificationToken(hashToken(rawToken), type)
+}
+
+/**
+ * Redeem an email-verify token with a distinct outcome (ok/expired/invalid/
+ * already_verified) so the /verify-email UI can show the right state.
+ */
+export async function redeemEmailVerifyToken(rawToken: string): Promise<EmailTokenOutcome> {
+  return consumeEmailVerifyToken(hashToken(rawToken))
 }

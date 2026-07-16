@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
-import { emailUnverified } from '@/lib/authz/require-verified'
+import { emailUnverified, phoneUnverified } from '@/lib/authz/require-verified'
 import { getProvider } from '@/lib/ai/provider'
 import { aedToFils, formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
@@ -13,7 +13,7 @@ import * as orders from '@/lib/db/orders'
 const APP_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 const MAX_FILS = 100_000_000_00 // AED 100,000,000 sanity cap
 
-type Result = { ok?: boolean; error?: string; needVerify?: boolean }
+type Result = { ok?: boolean; error?: string; needVerify?: boolean; needPhoneVerify?: boolean }
 
 function imageUrl(coverKey: string | null): string | null {
   return coverKey ? publicUrl(LISTING_IMAGES_BUCKET, coverKey) : null
@@ -116,6 +116,9 @@ export async function respondToOffer(offerId: string, action: 'accept' | 'declin
 export async function confirmOrder(orderId: string): Promise<Result> {
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in.' }
+  // Confirming unlocks both parties' contact details — require a verified phone.
+  const phoneGate = await phoneUnverified(viewer)
+  if (phoneGate) return phoneGate
 
   const res = await orders.confirmOrderFor(viewer, orderId)
   if (!res.ok) return { error: res.error }

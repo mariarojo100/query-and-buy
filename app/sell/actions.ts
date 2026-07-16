@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
-import { emailUnverified } from '@/lib/authz/require-verified'
+import { emailUnverified, phoneUnverified } from '@/lib/authz/require-verified'
 import { createListingFor } from '@/lib/db/listings'
 import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
@@ -28,11 +28,20 @@ export type CreateListingInput = {
 
 export async function createListing(
   input: CreateListingInput,
-): Promise<{ id?: string; error?: string; blocked?: boolean; needVerify?: boolean; categories?: string[] }> {
+): Promise<{
+  id?: string
+  error?: string
+  blocked?: boolean
+  needVerify?: boolean
+  needPhoneVerify?: boolean
+  categories?: string[]
+}> {
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in to sell.' }
   const gate = emailUnverified(viewer)
   if (gate) return gate
+  const phoneGate = await phoneUnverified(viewer)
+  if (phoneGate) return phoneGate
 
   const title = input.title?.trim() ?? ''
   const description = input.description?.trim() ?? ''

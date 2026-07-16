@@ -148,6 +148,9 @@ export default async function HomePage({
               <CategoryRail categories={categories} />
             </section>
 
+            {/* ---------- TRUST ---------- */}
+            <TrustBar />
+
             {/* ---------- PERSONALIZED (signed-in) ---------- */}
             {continueItems.length > 0 && (
               <section className="py-6 sm:py-8">
@@ -215,9 +218,6 @@ export default async function HomePage({
               favoritedIds={featured.length ? featuredFav : favoritedIds}
               authed={!!user}
             />
-
-            {/* ---------- TRUST ---------- */}
-            <TrustBar />
 
             {/* ---------- LISTINGS (early) ---------- */}
             <section id="listings" className="scroll-mt-20 py-4 sm:py-6">

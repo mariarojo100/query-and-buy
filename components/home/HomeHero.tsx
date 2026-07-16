@@ -67,20 +67,20 @@ export function HomeHero({
   trending: string[]
   previews: FeedListing[]
 }) {
-  const [a, b, c] = previews
+  const [a, b] = previews
 
   return (
     <section className="animate-rise grid items-center gap-10 pb-8 pt-6 sm:pt-8 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-12 lg:pt-12">
       {/* Left — the pitch + search */}
       <div>
-        <p className="eyebrow text-gold">AI Marketplace · United Arab Emirates</p>
+        <p className="eyebrow text-gold">UAE&rsquo;s AI-Powered Marketplace</p>
         <h1 className="font-display mt-4 text-[2.6rem] leading-[0.98] tracking-tight sm:text-[3.75rem]">
           Find it. Buy it.
           <br />
           <span className="text-gold">Love it.</span>
         </h1>
         <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
-          The smarter way to buy and sell used items across the UAE.
+          Buy and sell quality pre-owned items across the UAE — safely and easily.
         </p>
 
         <div className="mt-6 max-w-xl">
@@ -88,7 +88,7 @@ export function HomeHero({
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="eyebrow mr-1">Popular</span>
+          <span className="eyebrow mr-1">Popular searches</span>
           {POPULAR.map((q) => (
             <Link
               key={q}
@@ -109,49 +109,38 @@ export function HomeHero({
 
       {/* Right — AI-search collage of real listings (desktop only) */}
       {a && (
-        <div className="relative hidden h-[400px] lg:block" aria-hidden="true">
-          {/* caption + arrow */}
-          <div className="absolute left-0 top-14 z-40 w-40">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-medium text-gold">
-              <SparklesIcon className="size-3.5" />
-              AI Search
-            </span>
-            <p className="font-display mt-3 text-xl leading-snug tracking-tight">
-              Find exactly what you want in seconds.
-            </p>
-            <svg
-              className="mt-2 h-10 w-28 text-gold/50"
-              viewBox="0 0 120 44"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <path d="M2 6 C 40 4, 92 12, 112 38" strokeDasharray="1 6" />
-              <path d="M104 30 L114 39 L102 42" />
-            </svg>
-          </div>
+        <div className="relative hidden h-[420px] lg:block" aria-hidden="true">
+          {/* soft bronze glow behind the collage */}
+          <div className="absolute inset-6 -z-10 rounded-[2rem] bg-gradient-to-br from-gold/10 via-accent/40 to-transparent blur-2xl" />
 
-          {/* collage — front card upright, two peeking behind */}
-          {c && (
-            <PreviewCard
-              listing={c}
-              className="absolute right-0 top-0 w-44 rotate-[4deg] opacity-95"
-              style={{ zIndex: 10 }}
-            />
-          )}
+          {/* front product card */}
+          <PreviewCard
+            listing={a}
+            className="absolute bottom-4 left-2 w-[15.5rem]"
+            style={{ zIndex: 20 }}
+          />
+
+          {/* second product card, peeking behind to the right */}
           {b && (
             <PreviewCard
               listing={b}
-              className="absolute right-24 top-24 w-48 -rotate-[5deg]"
-              style={{ zIndex: 20 }}
+              className="absolute right-0 top-16 w-[13.5rem]"
+              style={{ zIndex: 10 }}
             />
           )}
-          <PreviewCard
-            listing={a}
-            className="absolute bottom-0 right-16 w-56"
-            style={{ zIndex: 30 }}
-          />
+
+          {/* floating AI-search cue, overlapping the top-right */}
+          <div className="absolute right-2 top-0 z-30 w-52 rounded-2xl border border-border bg-card p-3.5 shadow-float">
+            <div className="flex items-center gap-2">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-gold/12 text-gold ring-1 ring-inset ring-gold/20">
+                <SparklesIcon className="size-4" />
+              </span>
+              <span className="text-sm font-semibold text-foreground">AI Search</span>
+            </div>
+            <p className="mt-2 text-[13px] leading-snug text-muted-foreground">
+              Find exactly what you want in seconds.
+            </p>
+          </div>
         </div>
       )}
     </section>

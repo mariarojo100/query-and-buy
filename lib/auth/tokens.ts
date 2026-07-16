@@ -1,17 +1,18 @@
 /**
- * lib/auth/tokens — email-verify / password-reset tokens
- * (MIGRATION FOUNDATION, not yet in runtime use).
+ * lib/auth/tokens — email-verify / password-reset tokens.
  * ===========================================================================
- * Replaces Supabase Auth's confirmation/recovery links. A cryptographically
- * random token is returned to the caller (to embed in an email link); only its
- * SHA-256 hash is persisted, so a database leak does not expose usable tokens.
- * Redemption is atomic and single-use (see lib/db/auth#consumeVerificationToken).
+ * The confirmation/recovery link machinery. A cryptographically random token
+ * is returned to the caller (to embed in an email link); only its SHA-256 hash
+ * is persisted, so a database leak does not expose usable tokens. Redemption is
+ * atomic and single-use (see lib/db/auth#consumeVerificationToken).
  */
 import { randomBytes, createHash } from 'node:crypto'
 import {
   createVerificationToken,
   consumeVerificationToken,
+  consumeEmailVerifyToken,
   type VerificationTokenType,
+  type EmailTokenOutcome,
 } from '@/lib/db/auth'
 
 const TTL_MS: Record<VerificationTokenType, number> = {
@@ -41,4 +42,12 @@ export async function redeemToken(
   type: VerificationTokenType,
 ): Promise<{ userId: string } | null> {
   return consumeVerificationToken(hashToken(rawToken), type)
+}
+
+/**
+ * Redeem an email-verify token with a distinct outcome (ok/expired/invalid/
+ * already_verified) so the /verify-email UI can show the right state.
+ */
+export async function redeemEmailVerifyToken(rawToken: string): Promise<EmailTokenOutcome> {
+  return consumeEmailVerifyToken(hashToken(rawToken))
 }

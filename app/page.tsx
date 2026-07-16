@@ -137,32 +137,55 @@ export default async function HomePage({
           </section>
         ) : (
           <>
-            {/* ---------- COMPACT HERO ---------- */}
-            <section className="animate-rise pb-6 pt-7 text-center sm:pb-8 sm:pt-10">
-              <p className="eyebrow">AI Marketplace · United Arab Emirates</p>
-              <h1 className="font-display mx-auto mt-3.5 max-w-3xl text-[2.1rem] leading-[1.05] tracking-tight sm:text-[3.5rem]">
-                Snap. Sell. Done.
-              </h1>
-              <p className="mx-auto mt-3.5 max-w-lg text-[0.975rem] leading-relaxed text-muted-foreground sm:text-lg">
-                Create a listing from your photos in seconds — buy &amp; sell beautifully across the
-                Emirates.
-              </p>
-              <div className="mx-auto mt-6 max-w-2xl">
-                <SmartSearchBox trending={trending.map((t) => t.query)} />
-              </div>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                <span className="eyebrow mr-1">Popular</span>
-                {POPULAR.map((q) => (
-                  <Link
-                    key={q}
-                    href={`/?q=${encodeURIComponent(q)}`}
-                    className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground shadow-soft transition hover:border-gold/40 hover:bg-accent/40 hover:text-foreground"
-                  >
-                    {q}
-                  </Link>
-                ))}
-              </div>
-            </section>
+            {/* ---------- HERO ----------
+                Returning users get a slim search band so their own marketplace
+                (continue negotiating, recommended…) leads. First-time / logged-out
+                visitors get the full pitch. */}
+            {user ? (
+              <section className="animate-rise pb-5 pt-7 sm:pt-8">
+                <div className="mx-auto max-w-2xl">
+                  <SmartSearchBox trending={trending.map((t) => t.query)} />
+                  <div className="mt-3.5 flex flex-wrap items-center gap-2">
+                    <span className="eyebrow mr-1">Popular</span>
+                    {POPULAR.map((q) => (
+                      <Link
+                        key={q}
+                        href={`/?q=${encodeURIComponent(q)}`}
+                        className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground shadow-soft transition hover:border-gold/40 hover:bg-accent/40 hover:text-foreground"
+                      >
+                        {q}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            ) : (
+              <section className="animate-rise pb-6 pt-7 text-center sm:pb-8 sm:pt-10">
+                <p className="eyebrow">AI Marketplace · United Arab Emirates</p>
+                <h1 className="font-display mx-auto mt-3.5 max-w-3xl text-[2.1rem] leading-[1.05] tracking-tight sm:text-[3.5rem]">
+                  Snap. Sell. Done.
+                </h1>
+                <p className="mx-auto mt-3.5 max-w-lg text-[0.975rem] leading-relaxed text-muted-foreground sm:text-lg">
+                  Create a listing from your photos in seconds — buy &amp; sell beautifully across the
+                  Emirates.
+                </p>
+                <div className="mx-auto mt-6 max-w-2xl">
+                  <SmartSearchBox trending={trending.map((t) => t.query)} />
+                </div>
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  <span className="eyebrow mr-1">Popular</span>
+                  {POPULAR.map((q) => (
+                    <Link
+                      key={q}
+                      href={`/?q=${encodeURIComponent(q)}`}
+                      className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground shadow-soft transition hover:border-gold/40 hover:bg-accent/40 hover:text-foreground"
+                    >
+                      {q}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* ---------- TRENDING TODAY (real search frequency) ---------- */}
             {trending.length > 0 && (

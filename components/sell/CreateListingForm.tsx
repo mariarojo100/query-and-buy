@@ -234,19 +234,27 @@ export function CreateListingForm({
           Up to {MAX_IMAGES} photos, 5 MB each. The first photo is the cover.
         </p>
 
-        {/* Generate with AI */}
-        <div className="space-y-3 rounded-xl border border-border bg-accent/40 p-4">
+        {/* Generate with AI — the flow's differentiator, given the weight it deserves. */}
+        <div className="space-y-3 rounded-2xl border border-gold/30 bg-gold/[0.06] p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              Add photos, then let AI draft your title, description, category, and condition.
-            </p>
+            <div className="flex items-start gap-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gold/15 text-gold">
+                <SparklesIcon className="size-5" />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-foreground">Let AI write your listing</p>
+                <p className="mt-0.5 max-w-md text-xs leading-relaxed text-muted-foreground">
+                  {pics.length === 0
+                    ? 'Add a photo and AI drafts the title, description, category, condition, and a fair UAE price.'
+                    : 'Draft the title, description, category, condition, and a fair price from your photos.'}
+                </p>
+              </div>
+            </div>
             <Button
               type="button"
-              variant="secondary"
-              size="sm"
               onClick={onGenerate}
               disabled={aiLoading || pics.length === 0}
-              className="shrink-0"
+              className="shrink-0 rounded-full"
             >
               {aiLoading ? (
                 <Loader2Icon className="size-4 animate-spin" />

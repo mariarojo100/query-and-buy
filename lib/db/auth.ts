@@ -1,11 +1,10 @@
 /**
- * lib/db/auth — auth-table repositories (MIGRATION FOUNDATION, not yet in runtime use)
+ * lib/db/auth — auth-table repositories (the live auth data layer)
  * ===========================================================================
- * The database side of the Supabase-Auth replacement. Everything here operates
- * on the target-stack auth tables (db/baseline/0002_auth_tables.sql) plus the
- * users/profiles/user_roles it bootstraps. NOTHING here runs in the live app —
- * Supabase Auth is still the only active auth. Wiring happens at cutover
- * (Phase 4/P9); the orchestration that will call these lives in lib/auth/*.
+ * The database side of auth, now that Supabase Auth has been removed. Everything
+ * here operates on the auth tables (db/baseline/0002_auth_tables.sql) plus the
+ * users/profiles/user_roles it bootstraps. The orchestration that calls these
+ * lives in lib/auth/*.
  *
  * These functions replace three pieces of Supabase-managed behavior:
  *   - handle_new_user()      → createUserAccount() (a real transaction that
@@ -127,10 +126,15 @@ export async function linkOAuthAccount(userId: string, provider: string, provide
 
 // --- verification-state writers (replace the auth.users sync triggers) ------
 
-/** Replaces sync_email_verified(): mirror confirmed email into users + profiles. */
+/**
+ * Replaces sync_email_verified(): mirror confirmed email into users + profiles.
+ * The booleans remain the source of truth for trust/authz; emailVerifiedAt is
+ * an additional audit timestamp (0004_verification_timestamps.sql).
+ */
 export async function markEmailVerified(userId: string): Promise<void> {
+  const now = new Date()
   await db.$transaction([
-    db.user.update({ where: { id: userId }, data: { hasEmailVerified: true } }),
+    db.user.update({ where: { id: userId }, data: { hasEmailVerified: true, emailVerifiedAt: now } }),
     db.profile.update({ where: { id: userId }, data: { emailVerified: true } }),
   ])
 }
@@ -138,12 +142,65 @@ export async function markEmailVerified(userId: string): Promise<void> {
 /**
  * Replaces sync_phone_verified() (+ makes guard_phone_verified unnecessary):
  * set the phone number and verified flags across users + profiles atomically.
+ * phoneVerifiedAt is an audit timestamp; the booleans stay the source of truth.
  */
 export async function markPhoneVerified(userId: string, phoneE164: string): Promise<void> {
+  const now = new Date()
   await db.$transaction([
-    db.user.update({ where: { id: userId }, data: { phoneE164, hasMobileVerified: true } }),
+    db.user.update({
+      where: { id: userId },
+      data: { phoneE164, hasMobileVerified: true, phoneVerifiedAt: now },
+    }),
     db.profile.update({ where: { id: userId }, data: { phoneVerified: true } }),
   ])
+}
+
+/** Verification state for guards + the account settings section. */
+export async function getVerificationState(userId: string): Promise<{
+  email: string | null
+  phoneE164: string | null
+  emailVerified: boolean
+  phoneVerified: boolean
+} | null> {
+  const u = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true, phoneE164: true, hasEmailVerified: true, hasMobileVerified: true },
+  })
+  if (!u) return null
+  return {
+    email: u.email,
+    phoneE164: u.phoneE164,
+    emailVerified: u.hasEmailVerified,
+    phoneVerified: u.hasMobileVerified,
+  }
+}
+
+/** True iff the user's phone is verified (source of truth = users.hasMobileVerified). */
+export async function isPhoneVerified(userId: string): Promise<boolean> {
+  const u = await db.user.findUnique({ where: { id: userId }, select: { hasMobileVerified: true } })
+  return u?.hasMobileVerified ?? false
+}
+
+/** Owner of an E.164 number, if any (for duplicate-phone checks). */
+export async function findUserIdByPhone(phoneE164: string): Promise<string | null> {
+  const u = await db.user.findUnique({ where: { phoneE164 }, select: { id: true } })
+  return u?.id ?? null
+}
+
+/**
+ * Change an as-yet-unverified account's email. Keeps hasEmailVerified false,
+ * clears any stale verified-at, and returns false if the new email is taken by
+ * a different account. Old email-verify tokens should be invalidated by the
+ * caller (they encode no email, but stale links should not linger).
+ */
+export async function changeUnverifiedEmail(userId: string, newEmail: string): Promise<boolean> {
+  const existing = await db.user.findUnique({ where: { email: newEmail }, select: { id: true } })
+  if (existing && existing.id !== userId) return false
+  await db.user.update({
+    where: { id: userId },
+    data: { email: newEmail, hasEmailVerified: false, emailVerifiedAt: null },
+  })
+  return true
 }
 
 // --- verification / reset tokens (only the hash is stored) ------------------
@@ -180,6 +237,57 @@ export async function consumeVerificationToken(
     })
     if (claimed.count !== 1) return null
     return { userId: row.userId }
+  })
+}
+
+/** Invalidate all still-unused tokens of a type for a user (mark them used). */
+export async function invalidateVerificationTokens(
+  userId: string,
+  type: VerificationTokenType,
+): Promise<void> {
+  await db.authVerificationToken.updateMany({
+    where: { userId, type, usedAt: null },
+    data: { usedAt: new Date() },
+  })
+}
+
+export type EmailTokenOutcome =
+  | { status: 'ok'; userId: string }
+  | { status: 'already_verified' }
+  | { status: 'expired' }
+  | { status: 'invalid' }
+
+/**
+ * Consume an email-verify token and report a distinct outcome so the UI can
+ * show the right state. Single-use + race-safe (updateMany guard). "expired"
+ * and "already_verified" are separated from the generic "invalid" only when we
+ * can safely tell them apart (the raw hash still exists in the row); an unknown
+ * hash is always "invalid" so we never leak which tokens ever existed.
+ */
+export async function consumeEmailVerifyToken(tokenHash: string): Promise<EmailTokenOutcome> {
+  return db.$transaction(async (tx) => {
+    const row = await tx.authVerificationToken.findUnique({
+      where: { tokenHash },
+      select: { userId: true, type: true, expiresAt: true, usedAt: true },
+    })
+    if (!row || row.type !== 'email_verify') return { status: 'invalid' }
+
+    if (row.usedAt) {
+      // Already redeemed once — if the account is verified, say so; else it's spent.
+      const u = await tx.user.findUnique({
+        where: { id: row.userId },
+        select: { hasEmailVerified: true },
+      })
+      return u?.hasEmailVerified ? { status: 'already_verified' } : { status: 'invalid' }
+    }
+    if (row.expiresAt.getTime() < Date.now()) return { status: 'expired' }
+
+    const claimed = await tx.authVerificationToken.updateMany({
+      where: { tokenHash, usedAt: null },
+      data: { usedAt: new Date() },
+    })
+    if (claimed.count !== 1) return { status: 'invalid' }
+    return { status: 'ok', userId: row.userId }
   })
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { maskContactInfo } from '@/lib/safety/contact'
 import { notFound } from 'next/navigation'
 import { ChevronLeftIcon, PencilIcon, ShieldCheckIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
@@ -34,7 +35,7 @@ export async function generateMetadata({
   const { id } = await params
   const listing = await getListingById(id)
   if (!listing) return { title: 'Listing not found · Query & Buy' }
-  const desc = listing.description.slice(0, 155)
+  const desc = maskContactInfo(listing.description).slice(0, 155)
   const img = listing.images[0]
     ? publicUrl(LISTING_IMAGES_BUCKET, listing.images[0].storage_key)
     : undefined
@@ -228,7 +229,9 @@ export default async function ListingDetailPage({
           <section className="border-t border-border pt-8 lg:col-span-7 lg:col-start-1 lg:row-start-2">
             <p className="eyebrow">Description</p>
             <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
-              {listing.description}
+              {/* Legacy listings may contain contact details entered before
+                  enforcement — masked at display until the owner edits. */}
+              {maskContactInfo(listing.description)}
             </p>
           </section>
         </div>

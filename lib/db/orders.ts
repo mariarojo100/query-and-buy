@@ -109,6 +109,22 @@ const fail = (error: string): Fail => ({ ok: false, error })
 // --- reads ------------------------------------------------------------------
 
 /** The order (if any) + its offer history for a conversation. Participant-scoped. */
+/**
+ * True once BOTH parties have confirmed the order for this conversation (i.e.
+ * contact details are unlocked). Cheap single-column read — used by messaging
+ * to make contact-info filtering state-aware. Scoped to a participant.
+ */
+export async function isContactRevealedForConversation(
+  viewer: Viewer,
+  conversationId: string,
+): Promise<boolean> {
+  const order = await db.order.findFirst({
+    where: { conversationId, OR: [{ buyerId: viewer.id }, { sellerId: viewer.id }] },
+    select: { contactRevealed: true },
+  })
+  return order?.contactRevealed === true
+}
+
 export async function conversationOrderFor(viewer: Viewer, conversationId: string): Promise<ConversationOrder> {
   const order = await db.order.findFirst({
     where: { conversationId, OR: [{ buyerId: viewer.id }, { sellerId: viewer.id }] },

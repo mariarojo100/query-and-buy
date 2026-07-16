@@ -14,6 +14,7 @@ import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
+import { detectContactInfo, CONTACT_BLOCK_MESSAGE } from '@/lib/safety/contact'
 
 type Result = { ok?: boolean; error?: string; blocked?: boolean; categories?: string[] }
 
@@ -84,6 +85,11 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
   // Re-screen on edit so a safe listing can't be edited into prohibited content.
   const safety = analyzeListingSafety(title, description)
   if (!safety.safe) return { blocked: true, error: PROHIBITED_MESSAGE, categories: safety.categories }
+
+  // Re-screen contact info too (can't edit clean text into contact details).
+  if (detectContactInfo(`${title}\n${description}`).blocked) {
+    return { blocked: true, error: CONTACT_BLOCK_MESSAGE }
+  }
 
   const res = await updateListingFor(viewer, {
     id: input.id,

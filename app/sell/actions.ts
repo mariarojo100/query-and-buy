@@ -8,6 +8,7 @@ import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
+import { detectContactInfo, CONTACT_BLOCK_MESSAGE } from '@/lib/safety/contact'
 import { logModeration } from '@/lib/safety/moderation-log'
 import { track } from '@/lib/analytics'
 
@@ -72,6 +73,18 @@ export async function createListing(
       reason: `Prohibited content: ${safety.categories.join(', ')}`,
     })
     return { blocked: true, error: PROHIBITED_MESSAGE, categories: safety.categories }
+  }
+
+  // --- contact-info screen (no phone/email/links/handles before confirmation) ---
+  const contact = detectContactInfo(`${title}\n${description}`)
+  if (contact.blocked) {
+    await logModeration({
+      source: 'listing',
+      decision: 'blocked',
+      confidence: 100,
+      reason: `Contact info: ${contact.reasons.join(', ')}`, // categories only, never raw
+    })
+    return { blocked: true, error: CONTACT_BLOCK_MESSAGE }
   }
 
   const res = await createListingFor(viewer, {

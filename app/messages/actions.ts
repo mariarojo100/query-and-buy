@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
 import { emailUnverified } from '@/lib/authz/require-verified'
 import { createConversationFor, markConversationReadFor, sendMessageFor } from '@/lib/db/messaging'
+import { isContactRevealedForConversation } from '@/lib/db/orders'
 import { detectProhibitedContact, CONTACT_BLOCK_MESSAGE } from '@/lib/safety/contact'
 import { dispatch } from '@/lib/notifications/dispatch'
 
@@ -46,8 +47,13 @@ export async function sendMessage(
   if (!text) return { error: 'Message is empty.' }
   if (text.length > 2000) return { error: 'Message is too long (max 2000 characters).' }
 
-  // Contact protection: prohibited content is NEVER written to the database.
-  if (detectProhibitedContact(text)) return { error: CONTACT_BLOCK_MESSAGE, blocked: true }
+  // Contact protection is STATE-AWARE: before the order is confirmed, contact
+  // details are blocked. Once BOTH parties confirm (contact unlocked), they may
+  // share freely — the intended post-confirmation contact-exchange flow.
+  const contactUnlocked = await isContactRevealedForConversation(viewer, conversationId)
+  if (!contactUnlocked && detectProhibitedContact(text)) {
+    return { error: CONTACT_BLOCK_MESSAGE, blocked: true }
+  }
 
   const res = await sendMessageFor(viewer, conversationId, text)
   if (!res.ok) {

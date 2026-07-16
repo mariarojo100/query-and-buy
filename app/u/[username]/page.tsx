@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { maskContactInfo } from '@/lib/safety/contact'
 import { notFound } from 'next/navigation'
 import { CalendarDaysIcon, MapPinIcon, MessagesSquareIcon, PackageIcon, PencilIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
@@ -65,7 +66,9 @@ export async function generateMetadata({
   if (!profile) return { title: 'Profile not found · Query & Buy' }
   const name = sellerName(profile.display_name)
   const handle = publicHandle(profile.username)
-  const description = profile.bio ?? `${name} on Query & Buy — buy & sell across the UAE.`
+  const description = profile.bio
+    ? maskContactInfo(profile.bio)
+    : `${name} on Query & Buy — buy & sell across the UAE.`
   return {
     title: `${name}${handle ? ` (${handle})` : ''} · Query & Buy`,
     description,
@@ -261,7 +264,9 @@ export default async function PublicProfilePage({
             </h2>
             {profile.bio ? (
               <p className="whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
-                {profile.bio}
+                {/* Legacy records may contain contact details entered before
+                    enforcement — masked at display until the owner edits. */}
+                {maskContactInfo(profile.bio)}
               </p>
             ) : (
               <div className="space-y-2">

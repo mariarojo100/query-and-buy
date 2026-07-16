@@ -109,13 +109,13 @@ export function ImageGallery({ keys, title }: { keys: string[]; title: string })
           aria-modal="true"
           aria-label={`${title} — photo ${active + 1} of ${count}`}
           onClick={() => setZoom(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/90 p-4 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-150 sm:p-8"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-150 sm:p-8"
         >
           <button
             type="button"
             onClick={() => setZoom(false)}
             aria-label="Close"
-            className="absolute right-4 top-4 z-10 flex size-11 items-center justify-center rounded-full bg-background/90 text-foreground shadow-float transition hover:bg-background"
+            className="absolute right-4 top-4 z-10 flex size-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
           >
             <XIcon className="size-5" />
           </button>
@@ -129,7 +129,7 @@ export function ImageGallery({ keys, title }: { keys: string[]; title: string })
                   go(-1)
                 }}
                 aria-label="Previous photo"
-                className="absolute left-3 top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-float transition hover:bg-background sm:left-6"
+                className="absolute left-3 top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 sm:left-6"
               >
                 <ChevronLeftIcon className="size-5" />
               </button>
@@ -140,7 +140,7 @@ export function ImageGallery({ keys, title }: { keys: string[]; title: string })
                   go(1)
                 }}
                 aria-label="Next photo"
-                className="absolute right-3 top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-float transition hover:bg-background sm:right-6"
+                className="absolute right-3 top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 sm:right-6"
               >
                 <ChevronRightIcon className="size-5" />
               </button>
@@ -162,7 +162,7 @@ export function ImageGallery({ keys, title }: { keys: string[]; title: string })
           </div>
 
           {count > 1 && (
-            <span className="tnum absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-background/90 px-3 py-1.5 text-sm font-medium text-foreground shadow-sm">
+            <span className="tnum absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
               {active + 1} / {count}
             </span>
           )}

@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { TrendingUpIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
@@ -8,8 +7,10 @@ import { SaveSearchButton } from '@/components/search/SaveSearchButton'
 import { SmartSearchBox } from '@/components/search/SmartSearchBox'
 import { CategoryChips } from '@/components/listing/CategoryChips'
 import { ListingResults } from '@/components/listing/ListingResults'
-import { TrustStats } from '@/components/home/TrustStats'
-import { CategoryShowcase } from '@/components/home/CategoryShowcase'
+import { HomeHero } from '@/components/home/HomeHero'
+import { CategoryRail } from '@/components/home/CategoryRail'
+import { TrendingRail } from '@/components/home/TrendingRail'
+import { TrustBar } from '@/components/home/TrustBar'
 import { ContinueNegotiation } from '@/components/home/ContinueNegotiation'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { WhyAI } from '@/components/home/WhyAI'
@@ -17,7 +18,6 @@ import { Button } from '@/components/ui/button'
 import {
   getActiveCategories,
   getCategoryBySlug,
-  getCategoryCounts,
   getFeaturedListings,
   getFilteredListings,
 } from '@/lib/listings/queries'
@@ -32,7 +32,6 @@ import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
 import { getTrendingSearches } from '@/lib/search/intelligence'
 
 const NO_MATCH = ['00000000-0000-0000-0000-000000000000']
-const POPULAR = ['iPhone', 'Toyota', 'PlayStation 5', 'Apartment in Dubai', 'Rolex']
 
 export default async function HomePage({
   searchParams,
@@ -74,7 +73,6 @@ export default async function HomePage({
 
   const user = await getViewer()
   const favoritedIds = await getFavoritedIds(listings.map((l) => l.id))
-  const counts = hasFilters ? undefined : await getCategoryCounts(categories)
   const trending = hasFilters ? [] : await getTrendingSearches(8)
   const featured = hasFilters ? [] : await getFeaturedListings(8)
   const featuredFav = featured.length
@@ -137,76 +135,18 @@ export default async function HomePage({
           </section>
         ) : (
           <>
-            {/* ---------- HERO ----------
-                Returning users get a slim search band so their own marketplace
-                (continue negotiating, recommended…) leads. First-time / logged-out
-                visitors get the full pitch. */}
-            {user ? (
-              <section className="animate-rise pb-5 pt-7 sm:pt-8">
-                <div className="mx-auto max-w-2xl">
-                  <SmartSearchBox trending={trending.map((t) => t.query)} />
-                  <div className="mt-3.5 flex flex-wrap items-center gap-2">
-                    <span className="eyebrow mr-1">Popular</span>
-                    {POPULAR.map((q) => (
-                      <Link
-                        key={q}
-                        href={`/?q=${encodeURIComponent(q)}`}
-                        className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground shadow-soft transition hover:border-gold/40 hover:bg-accent/40 hover:text-foreground"
-                      >
-                        {q}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            ) : (
-              <section className="animate-rise pb-6 pt-7 text-center sm:pb-8 sm:pt-10">
-                <p className="eyebrow">AI Marketplace · United Arab Emirates</p>
-                <h1 className="font-display mx-auto mt-3.5 max-w-3xl text-[2.1rem] leading-[1.05] tracking-tight sm:text-[3.5rem]">
-                  Snap. Sell. Done.
-                </h1>
-                <p className="mx-auto mt-3.5 max-w-lg text-[0.975rem] leading-relaxed text-muted-foreground sm:text-lg">
-                  Create a listing from your photos in seconds — buy &amp; sell beautifully across the
-                  Emirates.
-                </p>
-                <div className="mx-auto mt-6 max-w-2xl">
-                  <SmartSearchBox trending={trending.map((t) => t.query)} />
-                </div>
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                  <span className="eyebrow mr-1">Popular</span>
-                  {POPULAR.map((q) => (
-                    <Link
-                      key={q}
-                      href={`/?q=${encodeURIComponent(q)}`}
-                      className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground shadow-soft transition hover:border-gold/40 hover:bg-accent/40 hover:text-foreground"
-                    >
-                      {q}
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
+            <HomeHero
+              trending={trending.map((t) => t.query)}
+              previews={(featured.length ? featured : listings).slice(0, 3)}
+            />
 
-            {/* ---------- TRENDING TODAY (real search frequency) ---------- */}
-            {trending.length > 0 && (
-              <section className="py-6 sm:py-8">
-                <div className="mb-4 flex items-center gap-2">
-                  <TrendingUpIcon className="size-4 text-gold" />
-                  <h2 className="font-display text-xl tracking-tight sm:text-2xl">Trending today</h2>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {trending.map((t) => (
-                    <Link
-                      key={t.query}
-                      href={`/?q=${encodeURIComponent(t.query)}`}
-                      className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground shadow-soft transition hover:border-gold/40 hover:bg-accent/40 hover:text-foreground"
-                    >
-                      {t.query}
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
+            {/* ---------- CATEGORIES ---------- */}
+            <section className="py-6 sm:py-8">
+              <h2 className="font-display mb-5 text-2xl tracking-tight sm:text-3xl">
+                Browse by category
+              </h2>
+              <CategoryRail categories={categories} />
+            </section>
 
             {/* ---------- PERSONALIZED (signed-in) ---------- */}
             {continueItems.length > 0 && (
@@ -269,34 +209,15 @@ export default async function HomePage({
               </section>
             )}
 
-            {/* ---------- CATEGORIES ---------- */}
-            <section className="py-8 sm:py-10">
-              <div className="mb-5">
-                <p className="eyebrow">Discover</p>
-                <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
-                  Browse by category
-                </h2>
-              </div>
-              <CategoryShowcase categories={categories} counts={counts} />
-            </section>
+            {/* ---------- TRENDING (real products) ---------- */}
+            <TrendingRail
+              listings={(featured.length ? featured : listings).slice(0, 10)}
+              favoritedIds={featured.length ? featuredFav : favoritedIds}
+              authed={!!user}
+            />
 
-            {/* ---------- FEATURED (admin-curated) ---------- */}
-            {featured.length > 0 && (
-              <section className="py-6 sm:py-8">
-                <div className="mb-5">
-                  <p className="eyebrow text-gold">★ Handpicked</p>
-                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
-                    Featured listings
-                  </h2>
-                </div>
-                <ListingResults
-                  listings={featured}
-                  count={featured.length}
-                  favoritedIds={featuredFav}
-                  authed={!!user}
-                />
-              </section>
-            )}
+            {/* ---------- TRUST ---------- */}
+            <TrustBar />
 
             {/* ---------- LISTINGS (early) ---------- */}
             <section id="listings" className="scroll-mt-20 py-4 sm:py-6">
@@ -315,11 +236,6 @@ export default async function HomePage({
                 <CategoryChips categories={categories} activeSlug={parsed.categorySlug} />
                 <div className="pt-1">{feed}</div>
               </div>
-            </section>
-
-            {/* ---------- TRUST STATS ---------- */}
-            <section className="py-10 sm:py-14">
-              <TrustStats listings={count} />
             </section>
 
             {/* ---------- HOW IT WORKS ---------- */}

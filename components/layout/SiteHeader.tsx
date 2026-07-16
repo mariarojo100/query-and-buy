@@ -8,17 +8,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
-import { HeaderSearch } from '@/components/layout/HeaderSearch'
+import { SmartSearchBox } from '@/components/search/SmartSearchBox'
 import { LocationMenu } from '@/components/layout/LocationMenu'
 import { CategoryNav } from '@/components/layout/CategoryNav'
 import { getUnreadConversationCount } from '@/lib/messaging/queries'
 import { getNotifications, getUnreadNotificationCount } from '@/lib/notifications/queries'
 import { getActiveCategories } from '@/lib/listings/queries'
+import { getTrendingSearches } from '@/lib/search/intelligence'
 
 /** Marketplace top bar: brand · location · search, then the category strip below. */
 export async function SiteHeader() {
   const user = await getViewer()
-  const categories = await getActiveCategories()
+  const [categories, trending] = await Promise.all([
+    getActiveCategories(),
+    getTrendingSearches(6),
+  ])
 
   let avatarUrl: string | null = null
   let displayName = ''
@@ -46,8 +50,10 @@ export async function SiteHeader() {
 
         <LocationMenu className="hidden shrink-0 lg:block" />
 
-        {/* Persistent search — discovery from any page. */}
-        <HeaderSearch className="mx-1 hidden min-w-0 max-w-xl flex-1 md:block" />
+        {/* Persistent conversational search — discovery from any page. */}
+        <div className="mx-1 hidden min-w-0 max-w-xl flex-1 md:block">
+          <SmartSearchBox trending={trending.map((t) => t.query)} />
+        </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
           <Link
@@ -109,6 +115,7 @@ export async function SiteHeader() {
               >
                 Sell
               </Link>
+              <span className="mx-1 hidden h-5 w-px bg-border/80 sm:block" />
               <Button asChild size="sm" variant="ghost" className="hidden sm:inline-flex">
                 <Link href="/login">Log in</Link>
               </Button>

@@ -1,31 +1,31 @@
-import { ClockIcon, HeadphonesIcon, ShieldCheckIcon, UsersIcon } from 'lucide-react'
+import { HeadphonesIcon, MessageCircleIcon, ShieldCheckIcon, TagIcon } from 'lucide-react'
 
 const ITEMS = [
-  { icon: UsersIcon, title: 'Trusted by thousands', body: 'UAE community' },
-  { icon: ShieldCheckIcon, title: 'Safe & secure', body: 'Your safety is our priority' },
-  { icon: ClockIcon, title: 'Easy to use', body: 'List in less than 2 minutes' },
+  {
+    icon: ShieldCheckIcon,
+    title: 'Safe & secure',
+    body: 'Verified users and secure conversations',
+  },
+  {
+    icon: MessageCircleIcon,
+    title: 'Direct chat',
+    body: 'Chat directly and finalize on your terms',
+  },
+  { icon: TagIcon, title: 'No hidden fees', body: 'What you see is what you pay' },
   { icon: HeadphonesIcon, title: '24/7 support', body: 'We’re here to help' },
 ] as const
 
-/** A quiet reassurance strip — why buying and selling here is safe and simple. */
+/** The reassurance band — why buying and selling here is safe and simple. */
 export function TrustBar() {
   return (
-    <section className="border-t border-border/60 py-6 sm:py-7">
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 sm:gap-4">
-        {ITEMS.map((it, i) => (
-          <div
-            key={it.title}
-            className={
-              'flex items-center gap-3 sm:justify-center ' +
-              (i > 0 ? 'sm:border-l sm:border-border/60' : '')
-            }
-          >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground ring-1 ring-inset ring-border">
-              <it.icon className="size-[18px]" strokeWidth={1.75} />
-            </span>
+    <section className="my-4 rounded-2xl border border-border/70 bg-secondary/50 px-6 py-6 sm:my-6 sm:px-8">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {ITEMS.map((it) => (
+          <div key={it.title} className="flex items-center gap-3.5">
+            <it.icon className="size-6 shrink-0 text-gold" strokeWidth={1.75} />
             <div className="min-w-0">
-              <p className="text-[13px] font-semibold text-foreground">{it.title}</p>
-              <p className="truncate text-xs text-muted-foreground">{it.body}</p>
+              <p className="text-sm font-semibold text-foreground">{it.title}</p>
+              <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">{it.body}</p>
             </div>
           </div>
         ))}

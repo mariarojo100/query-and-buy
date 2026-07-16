@@ -6,11 +6,10 @@ import {
   ClockIcon,
   LayersIcon,
   Loader2Icon,
+  MessageCircleIcon,
   PackageIcon,
   SearchIcon,
-  SparklesIcon,
   TrendingUpIcon,
-  XIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -180,7 +179,7 @@ export function SmartSearchBox({ trending = [] }: { trending?: string[] }) {
         }}
         className="flex items-center gap-2 rounded-full border border-border bg-card p-1.5 pl-5 shadow-soft transition focus-within:border-gold/40 focus-within:ring-1 focus-within:ring-gold/30"
       >
-        <SparklesIcon className="size-4 shrink-0 text-gold" />
+        <MessageCircleIcon className="size-[18px] shrink-0 text-gold" />
         <input
           value={text}
           onChange={(e) => {

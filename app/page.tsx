@@ -9,7 +9,6 @@ import { CategoryChips } from '@/components/listing/CategoryChips'
 import { ListingResults } from '@/components/listing/ListingResults'
 import { HomeHero } from '@/components/home/HomeHero'
 import { CategoryRail } from '@/components/home/CategoryRail'
-import { TrendingRail } from '@/components/home/TrendingRail'
 import { TrustBar } from '@/components/home/TrustBar'
 import { ContinueNegotiation } from '@/components/home/ContinueNegotiation'
 import { HowItWorks } from '@/components/home/HowItWorks'
@@ -137,7 +136,9 @@ export default async function HomePage({
           <>
             <HomeHero
               trending={trending.map((t) => t.query)}
-              previews={(featured.length ? featured : listings).slice(0, 3)}
+              listings={(featured.length ? featured : listings).slice(0, 8)}
+              favoritedIds={featured.length ? featuredFav : favoritedIds}
+              authed={!!user}
             />
 
             {/* ---------- CATEGORIES ---------- */}
@@ -211,13 +212,6 @@ export default async function HomePage({
                 />
               </section>
             )}
-
-            {/* ---------- TRENDING (real products) ---------- */}
-            <TrendingRail
-              listings={(featured.length ? featured : listings).slice(0, 10)}
-              favoritedIds={featured.length ? featuredFav : favoritedIds}
-              authed={!!user}
-            />
 
             {/* ---------- LISTINGS (early) ---------- */}
             <section id="listings" className="scroll-mt-20 py-4 sm:py-6">

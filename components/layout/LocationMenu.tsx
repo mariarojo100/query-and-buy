@@ -7,8 +7,14 @@ import { CheckIcon, ChevronDownIcon, MapPinIcon } from 'lucide-react'
 import { EMIRATES } from '@/lib/profile/emirates'
 import { cn } from '@/lib/utils'
 
-/** The location scope pill — narrows the marketplace to a single emirate via the existing filter. */
-export function LocationMenu({ className = '' }: { className?: string }) {
+/** The location scope control — narrows the marketplace to a single emirate via the existing filter. */
+export function LocationMenu({
+  className = '',
+  variant = 'pill',
+}: {
+  className?: string
+  variant?: 'pill' | 'inline'
+}) {
   const params = useSearchParams()
   const active = params.get('emirate')
   const activeLabel = EMIRATES.find((e) => e.value === active)?.label
@@ -33,7 +39,12 @@ export function LocationMenu({ className = '' }: { className?: string }) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-11 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 text-sm font-medium text-foreground transition hover:border-gold/40"
+        className={cn(
+          'flex items-center gap-1.5 text-sm font-medium text-foreground transition',
+          variant === 'pill'
+            ? 'h-11 rounded-full border border-border bg-card px-3.5 hover:border-gold/40'
+            : 'text-muted-foreground hover:text-foreground',
+        )}
       >
         <MapPinIcon className="size-4 text-gold" />
         <span className="max-w-[7rem] truncate">{activeLabel ?? 'UAE'}</span>

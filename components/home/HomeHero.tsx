@@ -1,79 +1,27 @@
 import Link from 'next/link'
-import { SparklesIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ArrowRightIcon, SparklesIcon } from 'lucide-react'
 import { SmartSearchBox } from '@/components/search/SmartSearchBox'
-import { SafeListingImage } from '@/components/listing/SafeListingImage'
-import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
-import { formatPrice, formatRelativeTime } from '@/lib/format'
-import { emirateLabel } from '@/lib/profile/emirates'
+import { PopularNearYou } from '@/components/home/PopularNearYou'
 import type { FeedListing } from '@/lib/listings/queries'
 
 const POPULAR = ['iPhone', 'Toyota', 'PlayStation 5', 'Apartment in Dubai', 'Rolex']
 
-/** A small product card used as a floating preview inside the hero collage. */
-function PreviewCard({
-  listing,
-  className,
-  style,
-}: {
-  listing: FeedListing
-  className?: string
-  style?: React.CSSProperties
-}) {
-  const location = emirateLabel(listing.emirate)
-  const posted = formatRelativeTime(listing.published_at)
-  return (
-    <Link
-      href={`/listing/${listing.id}`}
-      style={style}
-      className={cn(
-        'block overflow-hidden rounded-2xl border border-border bg-card shadow-float transition duration-300 hover:-translate-y-1',
-        className,
-      )}
-    >
-      <div className="relative aspect-[4/3] bg-muted">
-        {listing.cover_key ? (
-          <SafeListingImage
-            src={publicUrl(LISTING_IMAGES_BUCKET, listing.cover_key)}
-            alt={listing.title_en}
-            sizes="240px"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center bg-gradient-to-br from-accent via-muted to-secondary/70">
-            <span className="font-display text-2xl text-primary/40">Q&amp;B</span>
-          </div>
-        )}
-      </div>
-      <div className="p-3">
-        <p className="font-display line-clamp-1 text-[13px] leading-snug text-foreground/80">
-          {listing.title_en}
-        </p>
-        <p className="tnum mt-1 text-sm font-semibold tracking-tight">
-          {formatPrice(listing.price_fils, listing.currency)}
-        </p>
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          {[location, posted].filter(Boolean).join(' · ')}
-        </p>
-      </div>
-    </Link>
-  )
-}
-
 export function HomeHero({
   trending,
-  previews,
+  listings,
+  favoritedIds,
+  authed = false,
 }: {
   trending: string[]
-  previews: FeedListing[]
+  listings: FeedListing[]
+  favoritedIds?: Set<string>
+  authed?: boolean
 }) {
-  const [a, b] = previews
-
   return (
-    <section className="animate-rise grid items-center gap-10 pb-8 pt-6 sm:pt-8 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-12 lg:pt-12">
-      {/* Left — the pitch + search */}
-      <div>
-        <p className="eyebrow text-gold">UAE&rsquo;s AI-Powered Marketplace</p>
+    <section className="animate-rise grid items-center gap-10 pb-8 pt-6 sm:pt-8 lg:grid-cols-[1.02fr_1fr] lg:gap-12 lg:pb-12 lg:pt-12">
+      {/* Left — the pitch, search, and AI listing cue */}
+      <div className="min-w-0">
+        <p className="eyebrow text-gold">UAE&rsquo;s Marketplace for Pre-Owned Items</p>
         <h1 className="font-display mt-4 text-[2.6rem] leading-[0.98] tracking-tight sm:text-[3.75rem]">
           Find it. Buy it.
           <br />
@@ -87,7 +35,33 @@ export function HomeHero({
           <SmartSearchBox trending={trending} />
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        {/* AI listing promo */}
+        <Link
+          href="/sell"
+          className="group mt-4 flex max-w-xl items-center gap-4 rounded-2xl border border-violet-500/15 bg-violet-500/[0.06] p-4 transition hover:border-violet-500/30 hover:bg-violet-500/[0.09]"
+        >
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/12 text-violet-600 ring-1 ring-inset ring-violet-500/20 dark:text-violet-400">
+            <SparklesIcon className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-foreground">AI Listing in 2 Minutes</p>
+              <span className="rounded-full bg-violet-500/12 px-2 py-0.5 text-[11px] font-semibold text-violet-600 dark:text-violet-400">
+                New
+              </span>
+            </div>
+            <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">
+              Upload photos, get item details, title and price suggestion — ready to list in just 2
+              minutes.
+            </p>
+          </div>
+          <span className="hidden shrink-0 items-center gap-1 rounded-full border border-border bg-card px-3.5 py-2 text-sm font-medium text-foreground shadow-soft transition group-hover:border-gold/40 group-hover:text-gold sm:inline-flex">
+            Try AI Listing
+            <ArrowRightIcon className="size-4" />
+          </span>
+        </Link>
+
+        <div className="mt-5 flex flex-wrap items-center gap-2">
           <span className="eyebrow mr-1">Popular searches</span>
           {POPULAR.map((q) => (
             <Link
@@ -100,49 +74,16 @@ export function HomeHero({
           ))}
           <Link
             href="/?sort=newest"
-            className="inline-flex items-center rounded-full px-2.5 py-1.5 text-sm font-medium text-foreground transition hover:text-gold"
+            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-sm font-medium text-foreground transition hover:text-gold"
           >
-            More →
+            More
+            <ArrowRightIcon className="size-4" />
           </Link>
         </div>
       </div>
 
-      {/* Right — AI-search collage of real listings (desktop only) */}
-      {a && (
-        <div className="relative hidden h-[420px] lg:block" aria-hidden="true">
-          {/* soft bronze glow behind the collage */}
-          <div className="absolute inset-6 -z-10 rounded-[2rem] bg-gradient-to-br from-gold/10 via-accent/40 to-transparent blur-2xl" />
-
-          {/* front product card */}
-          <PreviewCard
-            listing={a}
-            className="absolute bottom-4 left-2 w-[15.5rem]"
-            style={{ zIndex: 20 }}
-          />
-
-          {/* second product card, peeking behind to the right */}
-          {b && (
-            <PreviewCard
-              listing={b}
-              className="absolute right-0 top-16 w-[13.5rem]"
-              style={{ zIndex: 10 }}
-            />
-          )}
-
-          {/* floating AI-search cue, overlapping the top-right */}
-          <div className="absolute right-2 top-0 z-30 w-52 rounded-2xl border border-border bg-card p-3.5 shadow-float">
-            <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-gold/12 text-gold ring-1 ring-inset ring-gold/20">
-                <SparklesIcon className="size-4" />
-              </span>
-              <span className="text-sm font-semibold text-foreground">AI Search</span>
-            </div>
-            <p className="mt-2 text-[13px] leading-snug text-muted-foreground">
-              Find exactly what you want in seconds.
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Right — real listings, "Popular near you" */}
+      <PopularNearYou listings={listings} favoritedIds={favoritedIds} authed={authed} />
     </section>
   )
 }

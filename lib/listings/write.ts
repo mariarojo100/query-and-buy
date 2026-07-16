@@ -12,6 +12,7 @@ import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
 import { logModeration } from '@/lib/safety/moderation-log'
 import { track } from '@/lib/analytics'
+import { requirePhoneVerified } from '@/lib/authz/verification-guard'
 import type { Viewer } from '@/lib/authz/viewer'
 
 export type ListingWriteInput = {
@@ -32,6 +33,8 @@ export type ListingWriteResult = {
   error?: string
   blocked?: boolean
   categories?: string[]
+  /** Set when the write was refused because the seller's phone isn't verified. */
+  needsPhoneVerification?: boolean
 }
 
 type Validated = {
@@ -65,6 +68,10 @@ export async function createListingAs(
   viewer: Viewer,
   input: ListingWriteInput,
 ): Promise<ListingWriteResult> {
+  // Phone verification is required to publish. Checked first (shared web+mobile).
+  const gate = await requirePhoneVerified(viewer)
+  if (!gate.ok) return { error: gate.error, needsPhoneVerification: true }
+
   const v = validate(input, 'create')
   if ('error' in v) return { error: v.error }
 

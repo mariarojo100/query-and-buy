@@ -13,6 +13,7 @@ import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { dispatch, dispatchAll, type DispatchInput } from '@/lib/notifications/dispatch'
 import { track } from '@/lib/analytics'
 import * as orders from '@/lib/db/orders'
+import { requirePhoneVerified } from '@/lib/authz/verification-guard'
 import type { Viewer } from '@/lib/authz/viewer'
 
 const APP_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
@@ -23,6 +24,8 @@ export type OrderServiceResult = {
   error?: string
   conversationId?: string | null
   listingId?: string
+  /** Set when the action was refused because the viewer's phone isn't verified. */
+  needsPhoneVerification?: boolean
 }
 
 function imageUrl(coverKey: string | null): string | null {
@@ -115,6 +118,11 @@ export async function respondToOfferAs(
 
 /** Buyer/seller confirms. When BOTH confirm: reveal contacts + listing → reserved. */
 export async function confirmOrderAs(viewer: Viewer, orderId: string): Promise<OrderServiceResult> {
+  // Confirming an order unlocks both parties' contact details — require a
+  // verified phone first (shared web+mobile gate).
+  const gate = await requirePhoneVerified(viewer)
+  if (!gate.ok) return { ok: false, error: gate.error, needsPhoneVerification: true }
+
   const res = await orders.confirmOrderFor(viewer, orderId)
   if (!res.ok) return { ok: false, error: res.error }
   if (res.both) track('order_confirmed', { orderId: res.orderId })

@@ -15,12 +15,25 @@ export type CreateListingInput = ListingWriteInput
  */
 export async function createListing(
   input: CreateListingInput,
-): Promise<{ id?: string; error?: string; blocked?: boolean; categories?: string[] }> {
+): Promise<{
+  id?: string
+  error?: string
+  blocked?: boolean
+  categories?: string[]
+  needsPhoneVerification?: boolean
+}> {
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in to sell.' }
 
   const res = await createListingAs(viewer, input)
-  if (res.error) return { error: res.error, blocked: res.blocked, categories: res.categories }
+  if (res.error) {
+    return {
+      error: res.error,
+      blocked: res.blocked,
+      categories: res.categories,
+      needsPhoneVerification: res.needsPhoneVerification,
+    }
+  }
 
   revalidatePath('/')
   return { id: res.id }

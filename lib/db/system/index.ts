@@ -1,11 +1,9 @@
 /**
  * lib/db/system — privileged, non-Viewer-scoped repositories
- * (MIGRATION FOUNDATION, not yet in runtime use).
  * ===========================================================================
- * These are the target-stack equivalent of today's SUPABASE_SERVICE_ROLE_KEY
- * client (utils/supabase/admin.ts) — the deliberate, audited places that read
- * or write across users, bypassing the per-Viewer scoping that lib/authz
- * policies enforce everywhere else.
+ * These replace what used to be the SUPABASE_SERVICE_ROLE_KEY client — the
+ * deliberate, audited places that read or write across users, bypassing the
+ * per-Viewer scoping that lib/authz policies enforce everywhere else.
  *
  * There is no `service_role` in self-managed Postgres and no RLS to bypass;
  * "system" is purely an application concept. What keeps it honest is the import

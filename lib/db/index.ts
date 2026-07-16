@@ -1,11 +1,11 @@
 /**
- * lib/db — Prisma client singleton (MIGRATION FOUNDATION, not yet in runtime use)
+ * lib/db — Prisma client singleton (the live data-access entry point)
  * ===========================================================================
- * This is the future data-access entry point for the self-managed-Postgres
- * target (MIGRATION_BLUEPRINT.md, TARGET_ARCHITECTURE.md §5). It is NOT wired
- * into any page, server action, route handler, or component yet — the live app
- * still runs entirely on Supabase via utils/supabase/*. Importing this module
- * has no effect until something calls a query on `db`.
+ * The data-access entry point for the self-managed-Postgres stack
+ * (MIGRATION_BLUEPRINT.md, TARGET_ARCHITECTURE.md §5). Supabase has been fully
+ * removed; all reads/writes go through this Prisma client. The client is
+ * constructed lazily, so importing this module has no effect until something
+ * calls a query on `db`.
  *
  * Boundary rule (enforced by scripts/check-db-boundaries.mjs, see lib/db/README.md):
  *   `@/lib/db` (this file) may only be imported from inside `lib/db/**`.

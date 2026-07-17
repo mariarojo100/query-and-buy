@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { getViewer } from '@/lib/auth/session'
-import { profileById } from '@/lib/db/profiles'
+import { profileById, repeatBuyersFor } from '@/lib/db/profiles'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { ProfileHero } from '@/components/account/ProfileHero'
 import { AccountTabs } from '@/components/account/AccountTabs'
@@ -26,22 +26,27 @@ export default async function AccountLayout({ children }: { children: React.Reac
     )
   }
 
-  const rep = await getSellerReputation(profile.id, { withResponse: true })
+  const [rep, repeatBuyers] = await Promise.all([
+    getSellerReputation(profile.id, { withResponse: true }),
+    repeatBuyersFor(profile.id),
+  ])
 
   return (
     <>
       <SiteHeader />
-      <div className="mx-auto w-full max-w-5xl px-5 py-6 sm:px-8 sm:py-8">
+      <div className="mx-auto w-full max-w-7xl px-5 py-6 sm:px-8 sm:py-8">
         <ProfileHero
           profile={profile}
           rep={rep}
           verified={profile.email_verified && profile.phone_verified}
+          repeatBuyers={repeatBuyers}
           avatarSlot={
             <AvatarUploader
               userId={profile.id}
               displayName={profile.display_name}
               initialUrl={profile.avatar_url}
-              avatarClassName="ring-4 ring-card"
+              avatarClassName="ring-4 ring-card shadow-float"
+              overlay
             />
           }
         />

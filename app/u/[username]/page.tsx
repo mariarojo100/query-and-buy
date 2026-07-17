@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
 import { VerifiedAvatarBadge } from '@/components/profile/VerifiedAvatarBadge'
+import { ProfileBanner } from '@/components/profile/ProfileBanner'
 import { MessageSellerButton } from '@/components/profile/MessageSellerButton'
 import { ReportButton } from '@/components/report/ReportButton'
 import { TrustScore } from '@/components/trust/TrustScore'
@@ -129,23 +130,9 @@ export default async function PublicProfilePage({
     <>
       <SiteHeader />
       <main className="mx-auto w-full max-w-5xl px-5 pb-16 sm:px-8">
-        {/* Cover — ink with a warm bronze shift, not a flat block */}
-        <div className="relative mt-2 h-40 overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-gold shadow-soft sm:h-56">
-          <div
-            className="absolute inset-0 opacity-[0.12]"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.9) 1px, transparent 0)',
-              backgroundSize: '22px 22px',
-            }}
-            aria-hidden
-          />
-          <div className="absolute -right-16 -top-24 size-72 rounded-full bg-white/10 blur-2xl" aria-hidden />
-          <div className="absolute -bottom-28 left-8 size-80 rounded-full bg-gold/25 blur-2xl" aria-hidden />
-          <div
-            className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/15 to-transparent"
-            aria-hidden
-          />
+        {/* Branded ink cover with the Q&B monogram watermark */}
+        <div className="relative mt-2 h-40 overflow-hidden rounded-3xl shadow-soft sm:h-56">
+          <ProfileBanner />
         </div>
 
         {/* Identity — the avatar (and only the avatar) overlaps the cover; the

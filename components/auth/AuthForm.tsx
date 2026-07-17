@@ -3,16 +3,13 @@
 import { useActionState, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
-import { toast } from 'sonner'
 import {
-  ChevronRightIcon,
   EyeIcon,
   EyeOffIcon,
   HeadphonesIcon,
   LockIcon,
   MailIcon,
   MapPinIcon,
-  PhoneIcon,
   RotateCcwIcon,
   ShieldCheckIcon,
   TagIcon,
@@ -34,7 +31,6 @@ const COPY: Record<
     altHref: string
     altLabel: string
     showForgot: boolean
-    showPhone: boolean
   }
 > = {
   login: {
@@ -45,7 +41,6 @@ const COPY: Record<
     altHref: '/signup',
     altLabel: 'Create account',
     showForgot: true,
-    showPhone: true,
   },
   signup: {
     heading: 'Create your account',
@@ -55,7 +50,6 @@ const COPY: Record<
     altHref: '/login',
     altLabel: 'Log in',
     showForgot: false,
-    showPhone: false,
   },
 }
 
@@ -251,21 +245,6 @@ export function AuthForm({
 
               <SubmitButton label={copy.submit} />
             </form>
-
-            {copy.showPhone && (
-              <>
-                <Divider />
-                <button
-                  type="button"
-                  onClick={() => toast('Phone number login is coming soon.')}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-colors hover:bg-accent/60"
-                >
-                  <PhoneIcon className="size-4 text-gold" />
-                  Log in with phone number
-                  <ChevronRightIcon className="size-4 text-muted-foreground" />
-                </button>
-              </>
-            )}
           </div>
         </div>
 

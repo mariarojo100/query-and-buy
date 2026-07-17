@@ -13,7 +13,9 @@ export default async function AccountLayout({ children }: { children: React.Reac
   const user = await getViewer()
   if (!user) redirect('/login?redirectTo=/account')
 
-  const profile = (await profileById(user.id)) as Profile | null
+  const profile = (await profileById(user.id)) as
+    | (Profile & { email_verified: boolean; phone_verified: boolean })
+    | null
 
   if (!profile) {
     return (
@@ -33,6 +35,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
         <ProfileHero
           profile={profile}
           rep={rep}
+          verified={profile.email_verified && profile.phone_verified}
           avatarSlot={
             <AvatarUploader
               userId={profile.id}

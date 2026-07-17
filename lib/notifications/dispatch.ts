@@ -6,12 +6,14 @@ type PrefCategory = 'offer' | 'chat' | 'order' | 'review' | 'marketing'
 
 /** Which preference category each email belongs to. */
 const EMAIL_CATEGORY: Record<EmailKind, PrefCategory> = {
+  new_inquiry: 'chat',
   offer_received: 'offer',
   counter_received: 'offer',
   offer_accepted: 'offer',
   buyer_confirmed: 'order',
   seller_confirmed: 'order',
   order_confirmed: 'order',
+  order_cancelled: 'order',
   contact_unlocked: 'order',
   reservation_cancelled: 'order',
   item_sold: 'order',
@@ -23,6 +25,7 @@ const EMAIL_CATEGORY: Record<EmailKind, PrefCategory> = {
 /** Critical emails that always send regardless of preferences (account safety). */
 const ALWAYS_SEND: ReadonlySet<EmailKind> = new Set([
   'order_confirmed',
+  'order_cancelled',
   'contact_unlocked',
   'reservation_cancelled',
 ])
@@ -45,12 +48,14 @@ async function emailAllowed(recipientId: string, kind: EmailKind): Promise<boole
 
 export type NotificationType =
   | 'new_message'
+  | 'new_inquiry'
   | 'offer_received'
   | 'counter_received'
   | 'offer_accepted'
   | 'buyer_confirmed'
   | 'seller_confirmed'
   | 'order_confirmed'
+  | 'order_cancelled'
   | 'contact_unlocked'
   | 'reservation_cancelled'
   | 'item_sold'

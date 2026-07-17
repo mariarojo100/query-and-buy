@@ -190,6 +190,27 @@ export async function cancelOrder(orderId: string): Promise<Result> {
   if (!viewer) return { error: 'You must be signed in.' }
   const res = await orders.cancelOrderFor(viewer, orderId)
   if (!res.ok) return { error: res.error }
+
+  // Notify BOTH parties an order was revoked — a state change neither should miss.
+  const ctx = await orders.orderNotifyData(res.orderId)
+  if (ctx) {
+    const data = {
+      listingTitle: ctx.listingTitle,
+      listingImageUrl: imageUrl(ctx.coverKey),
+      ctaUrl: ctaUrl(ctx.conversationId),
+    }
+    await dispatchAll(
+      [ctx.buyerId, ctx.sellerId].map((rid) => ({
+        recipientId: rid,
+        type: 'order_cancelled',
+        title: 'Order cancelled',
+        body: ctx.listingTitle,
+        link: convLink(ctx.conversationId),
+        email: { kind: 'order_cancelled', data },
+      })),
+    )
+  }
+
   touchAndRevalidate(res.conversationId)
   return { ok: true }
 }

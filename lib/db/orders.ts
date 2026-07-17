@@ -331,7 +331,7 @@ export async function confirmOrderFor(viewer: Viewer, orderId: string): Promise<
   }
 }
 
-export type CancelResult = { ok: true; conversationId: string | null } | Fail
+export type CancelResult = { ok: true; orderId: string; conversationId: string | null } | Fail
 
 /** Either party cancels. Frees the listing if it had been reserved by this order. */
 export async function cancelOrderFor(viewer: Viewer, orderId: string): Promise<CancelResult> {
@@ -348,7 +348,7 @@ export async function cancelOrderFor(viewer: Viewer, orderId: string): Promise<C
     ops.push(db.listing.updateMany({ where: { id: order.listingId, status: 'reserved' }, data: { status: 'active' } }))
   }
   await db.$transaction(ops)
-  return { ok: true, conversationId: order.conversationId }
+  return { ok: true, orderId: order.id, conversationId: order.conversationId }
 }
 
 export type SellSummary = { orderId: string; buyerId: string; sellerId: string; acceptedPriceFils: number | null; conversationId: string | null; listingId: string }

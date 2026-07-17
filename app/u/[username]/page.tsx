@@ -9,6 +9,7 @@ import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
+import { VerifiedAvatarBadge } from '@/components/profile/VerifiedAvatarBadge'
 import { MessageSellerButton } from '@/components/profile/MessageSellerButton'
 import { ReportButton } from '@/components/report/ReportButton'
 import { TrustScore } from '@/components/trust/TrustScore'
@@ -151,12 +152,19 @@ export default async function PublicProfilePage({
             name column stays in normal flow so a tall name/handle/meta block can
             never ride up into the cover band. */}
         <div className="px-1 sm:flex sm:items-start sm:gap-6">
-          <Avatar className="-mt-14 size-28 shrink-0 shadow-float ring-4 ring-background sm:-mt-16 sm:size-32">
-            <AvatarImage src={profile.avatar_url ?? undefined} alt={`${name}'s profile photo`} />
-            <AvatarFallback className="bg-accent text-2xl text-accent-foreground">
-              {initials(name)}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative -mt-14 size-28 shrink-0 sm:-mt-16 sm:size-32">
+            <Avatar className="size-full shadow-float ring-4 ring-background">
+              <AvatarImage src={profile.avatar_url ?? undefined} alt={`${name}'s profile photo`} />
+              <AvatarFallback className="bg-accent text-2xl text-accent-foreground">
+                {initials(name)}
+              </AvatarFallback>
+            </Avatar>
+            <VerifiedAvatarBadge
+              verified={profile.email_verified && profile.phone_verified}
+              size="lg"
+              className="bottom-1 right-1 ring-background"
+            />
+          </div>
 
           <div className="mt-4 min-w-0 flex-1 sm:mt-3">
             <h1 className="font-display text-3xl leading-tight tracking-tight break-words sm:text-4xl">

@@ -7,6 +7,9 @@ import { createConversationFor, markConversationReadFor, sendMessageFor } from '
 import { isContactRevealedForConversation } from '@/lib/db/orders'
 import { detectProhibitedContact, CONTACT_BLOCK_MESSAGE } from '@/lib/safety/contact'
 import { dispatch } from '@/lib/notifications/dispatch'
+import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
+
+const APP_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
 /**
  * Open (or create) the conversation between the current user (buyer) and a
@@ -61,14 +64,36 @@ export async function sendMessage(
     return { error: 'You are not part of this conversation.' }
   }
 
-  // Notify the other participant (in-app only — no email per message).
-  await dispatch({
-    recipientId: res.recipientId,
-    type: 'new_message',
-    title: 'New message',
-    body: text.slice(0, 80),
-    link: `/messages/${conversationId}`,
-  })
+  // Notify the other participant. To avoid inbox spam we email ONLY on the very
+  // first message (the "someone reached out for the first time" event); every
+  // later message is an in-app notification only.
+  const link = `/messages/${conversationId}`
+  if (res.firstContact) {
+    await dispatch({
+      recipientId: res.recipientId,
+      type: 'new_inquiry',
+      title: 'New inquiry',
+      body: `${res.senderName} · ${res.listingTitle}`,
+      link,
+      email: {
+        kind: 'new_inquiry',
+        data: {
+          listingTitle: res.listingTitle,
+          listingImageUrl: res.coverKey ? publicUrl(LISTING_IMAGES_BUCKET, res.coverKey) : null,
+          buyerName: res.senderName,
+          ctaUrl: `${APP_URL}${link}`,
+        },
+      },
+    })
+  } else {
+    await dispatch({
+      recipientId: res.recipientId,
+      type: 'new_message',
+      title: 'New message',
+      body: text.slice(0, 80),
+      link,
+    })
+  }
 
   revalidatePath(`/messages/${conversationId}`)
   revalidatePath('/messages')

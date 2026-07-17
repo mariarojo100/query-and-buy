@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { VerifiedBadge } from '@/components/profile/VerifiedBadge'
+import { VerifiedAvatarBadge } from '@/components/profile/VerifiedAvatarBadge'
 import { SellerBadges } from '@/components/trust/SellerBadges'
 import { ShareProfileButton } from '@/components/account/ShareProfileButton'
 import { Stars } from '@/components/reviews/Stars'
@@ -32,10 +33,13 @@ export function ProfileHero({
   profile,
   rep,
   avatarSlot,
+  verified = false,
 }: {
   profile: Profile
   rep: SellerReputation
   avatarSlot: React.ReactNode
+  /** Fully verified = email AND phone confirmed. Drives the avatar badge. */
+  verified?: boolean
 }) {
   const rt = formatResponseTime(rep.response.avgMinutes)
   return (
@@ -49,7 +53,10 @@ export function ProfileHero({
       <div className="px-5 pb-6 sm:px-8">
         <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end">
-            {avatarSlot}
+            <div className="relative">
+              {avatarSlot}
+              <VerifiedAvatarBadge verified={verified} size="md" className="bottom-0.5 right-0.5" />
+            </div>
             <div className="pb-1">
               <div className="flex items-center gap-2">
                 <h1 className="font-display text-2xl leading-tight tracking-tight sm:text-3xl">

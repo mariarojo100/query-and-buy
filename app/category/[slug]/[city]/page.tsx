@@ -5,8 +5,9 @@ import { ChevronLeftIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SearchControls } from '@/components/search/SearchControls'
-import { CategoryChips } from '@/components/listing/CategoryChips'
 import { ListingResults } from '@/components/listing/ListingResults'
+import { CityLinks } from '@/components/category/CityLinks'
+import { CategorySeoContent } from '@/components/category/CategorySeoContent'
 import {
   getActiveCategories,
   getCategoryBySlug,
@@ -14,57 +15,61 @@ import {
 } from '@/lib/listings/queries'
 import { getFavoritedIds } from '@/lib/favorites/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
-import { CityLinks } from '@/components/category/CityLinks'
-import { CategorySeoContent } from '@/components/category/CategorySeoContent'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd } from '@/lib/seo'
 import { categoryFaqs, categoryIntro, categoryMetaDescription } from '@/lib/seo/categoryContent'
 import { absoluteUrl } from '@/lib/site'
+import { citySlugToEmirate, emirateBySlug } from '@/lib/profile/emirates'
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string; city: string }>
 }): Promise<Metadata> {
-  const { slug } = await params
+  const { slug, city } = await params
+  const cityRec = emirateBySlug(city)
   const cat = await getCategoryBySlug(slug)
-  if (!cat) return { title: 'Category not found · Query & Buy' }
+  if (!cat || !cityRec) return { title: 'Not found · Query & Buy' }
+
   const name = cat.category.name_en
-  const description = categoryMetaDescription(slug, name)
+  const title = `${name} for Sale in ${cityRec.label}, UAE · Query & Buy`
+  const description = categoryMetaDescription(slug, name, cityRec.label)
+  const path = `/category/${slug}/${city}`
   return {
-    title: `${name} for Sale in the UAE · Query & Buy`,
+    title,
     description,
-    alternates: { canonical: `/category/${slug}` },
+    alternates: { canonical: path },
     openGraph: {
       type: 'website',
-      title: `${name} for Sale in the UAE · Query & Buy`,
+      title,
       description,
-      url: absoluteUrl(`/category/${slug}`),
+      url: absoluteUrl(path),
       locale: 'en_AE',
     },
   }
 }
 
-export default async function CategoryPage({
+export default async function CategoryCityPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string; city: string }>
   searchParams: Promise<RawSearchParams>
 }) {
-  const { slug } = await params
+  const { slug, city } = await params
+  const cityRec = emirateBySlug(city)
   const cat = await getCategoryBySlug(slug)
-  if (!cat) notFound()
+  if (!cat || !cityRec) notFound()
 
+  const emirate = citySlugToEmirate(city) ?? undefined
   const name = cat.category.name_en
-  const { lead } = categoryIntro(slug, name)
   const parsed = parseSearch(await searchParams)
   const categories = await getActiveCategories()
 
   const { listings, count } = await getFilteredListings({
     q: parsed.q,
     categoryIds: cat.ids, // this category + its children
-    emirate: parsed.emirate,
+    emirate, // fixed by the route (city), not user-overridable here
     condition: parsed.condition,
     minFils: parsed.minFils,
     maxFils: parsed.maxFils,
@@ -77,6 +82,9 @@ export default async function CategoryPage({
   const user = await getViewer()
   const favoritedIds = await getFavoritedIds(listings.map((l) => l.id))
 
+  const { lead } = categoryIntro(slug, name, cityRec.label)
+  const path = `/category/${slug}/${city}`
+
   return (
     <>
       <SiteHeader />
@@ -85,34 +93,36 @@ export default async function CategoryPage({
           breadcrumbJsonLd([
             { name: 'Home', path: '/' },
             { name, path: `/category/${slug}` },
+            { name: cityRec.label, path },
           ]),
           itemListJsonLd(
             listings.map((l) => ({ name: l.title_en, path: `/listing/${l.id}` })),
-            { name },
+            { name: `${name} in ${cityRec.label}` },
           ),
-          faqJsonLd(categoryFaqs(slug, name)),
+          faqJsonLd(categoryFaqs(slug, name, cityRec.label)),
         ]}
       />
       <main className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6 sm:py-8">
         <Link
-          href="/"
+          href={`/category/${slug}`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ChevronLeftIcon className="size-4" /> All listings
+          <ChevronLeftIcon className="size-4" /> All {name}
         </Link>
 
         <div>
-          <p className="eyebrow">Category</p>
+          <p className="eyebrow">
+            {name} · {cityRec.label}
+          </p>
           <h1 className="font-display mt-2 text-3xl tracking-tight sm:text-4xl">
-            {name} for Sale in the UAE
+            {name} for Sale in {cityRec.label}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{lead}</p>
         </div>
 
-        <CityLinks categorySlug={slug} categoryName={name} />
+        <CityLinks categorySlug={slug} categoryName={name} activeCity={city} />
 
-        <CategoryChips categories={categories} activeSlug={slug} />
-        {/* Category is fixed by the route, so hide it from the filters. */}
+        {/* Category and city are fixed by the route, so hide category from filters. */}
         <SearchControls categories={categories} hideCategory />
         <ListingResults
           listings={listings}
@@ -121,7 +131,7 @@ export default async function CategoryPage({
           authed={!!user}
         />
 
-        <CategorySeoContent slug={slug} name={name} />
+        <CategorySeoContent slug={slug} name={name} city={cityRec.label} />
       </main>
     </>
   )

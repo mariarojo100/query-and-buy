@@ -77,3 +77,38 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]): Recor
     })),
   }
 }
+
+/**
+ * ItemList schema for a grid of listings on a category / category-in-city page.
+ * Gives search engines an explicit, ordered map of the products on the page.
+ */
+export function itemListJsonLd(
+  items: { name: string; path: string }[],
+  opts: { name?: string } = {},
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    ...(opts.name ? { name: opts.name } : {}),
+    numberOfItems: items.length,
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      url: absoluteUrl(it.path),
+    })),
+  }
+}
+
+/** FAQPage schema from {question, answer} pairs (eligible for FAQ rich results). */
+export function faqJsonLd(faqs: { question: string; answer: string }[]): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+    })),
+  }
+}

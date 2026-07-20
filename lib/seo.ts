@@ -101,6 +101,28 @@ export function itemListJsonLd(
   }
 }
 
+/** Article (BlogPosting) schema for a guide / blog post. */
+export function articleJsonLd(input: {
+  title: string
+  description: string
+  path: string
+  published: string
+  updated: string
+}): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: input.title,
+    description: input.description,
+    datePublished: input.published,
+    dateModified: input.updated,
+    url: absoluteUrl(input.path),
+    mainEntityOfPage: { '@type': 'WebPage', '@id': absoluteUrl(input.path) },
+    author: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+    publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+  }
+}
+
 /** FAQPage schema from {question, answer} pairs (eligible for FAQ rich results). */
 export function faqJsonLd(faqs: { question: string; answer: string }[]): Record<string, unknown> {
   return {

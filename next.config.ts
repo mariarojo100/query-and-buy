@@ -18,11 +18,15 @@ const CSP = [
   // script-src blocks — leaving the app server-rendered but never hydrated
   // (nothing interactive) during local development. 'unsafe-eval' is added in
   // dev only; the production CSP stays strict (no eval in production builds).
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  // Google tag manager host is allowed so the GA4 / Google Ads gtag library
+  // can load (without it the tags render but never fire).
+  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://avatars.queryandbuy.com https://images.queryandbuy.com https://lh3.googleusercontent.com",
+  "img-src 'self' data: blob: https://avatars.queryandbuy.com https://images.queryandbuy.com https://lh3.googleusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.r2.cloudflarestorage.com https://avatars.queryandbuy.com https://images.queryandbuy.com${STORAGE_API_ORIGIN ? ` ${STORAGE_API_ORIGIN}` : ''}`,
+  // google-analytics / googletagmanager endpoints are needed for GA4 + Ads to
+  // send collection beacons (the actual analytics data).
+  `connect-src 'self' https://*.r2.cloudflarestorage.com https://avatars.queryandbuy.com https://images.queryandbuy.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com${STORAGE_API_ORIGIN ? ` ${STORAGE_API_ORIGIN}` : ''}`,
   "frame-src 'none'",
   "frame-ancestors 'none'",
   "object-src 'none'",
@@ -60,6 +64,22 @@ const nextConfig: NextConfig = {
       {
         source: '/:path*',
         headers: SECURITY_HEADERS,
+      },
+    ]
+  },
+
+  // Canonical host: 308-redirect www.queryandbuy.com → queryandbuy.com so the
+  // apex (which every <link rel="canonical"> already points to) is the single
+  // indexed host. No-op if the edge/CDN already normalises the Host header;
+  // cannot loop because the destination host never matches this rule.
+  async redirects() {
+    if (isDev) return []
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.queryandbuy.com' }],
+        destination: 'https://queryandbuy.com/:path*',
+        permanent: true,
       },
     ]
   },

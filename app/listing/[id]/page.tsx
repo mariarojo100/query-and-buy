@@ -117,6 +117,9 @@ export default async function ListingDetailPage({
           }),
           breadcrumbJsonLd([
             { name: 'Home', path: '/' },
+            ...(listing.category_slug && listing.category_name
+              ? [{ name: listing.category_name, path: `/category/${listing.category_slug}` }]
+              : []),
             { name: listing.title_en, path: `/listing/${listing.id}` },
           ]),
         ]}

@@ -54,6 +54,7 @@ export type ListingDetail = {
   emirate: string | null
   area: string | null
   category_name: string | null
+  category_slug: string | null
   published_at: string | null
   created_at: string
   seller_id: string
@@ -551,7 +552,7 @@ export async function listingByIdVisible(viewer: Viewer | null, id: string): Pro
       publishedAt: true,
       createdAt: true,
       sellerId: true,
-      category: { select: { nameEn: true } },
+      category: { select: { nameEn: true, slug: true } },
       images: { select: { storageKey: true, position: true }, orderBy: { position: 'asc' } },
       seller: {
         select: {
@@ -589,6 +590,7 @@ export async function listingByIdVisible(viewer: Viewer | null, id: string): Pro
     emirate: row.emirate,
     area: row.area,
     category_name: row.category?.nameEn ?? null,
+    category_slug: row.category?.slug ?? null,
     published_at: row.publishedAt ? row.publishedAt.toISOString() : null,
     created_at: row.createdAt.toISOString(),
     seller_id: row.sellerId,

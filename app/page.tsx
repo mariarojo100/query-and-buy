@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
@@ -31,6 +32,40 @@ import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
 import { getTrendingSearches } from '@/lib/search/intelligence'
 
 const NO_MATCH = ['00000000-0000-0000-0000-000000000000']
+
+/** True when the homepage is being used as a search/filter results view. */
+function hasActiveFilters(parsed: ReturnType<typeof parseSearch>): boolean {
+  return Boolean(
+    parsed.q ||
+      parsed.categorySlug ||
+      parsed.emirate ||
+      parsed.condition ||
+      parsed.minFils ||
+      parsed.maxFils ||
+      parsed.negotiable ||
+      parsed.featured ||
+      parsed.sinceDays ||
+      parsed.sort !== 'newest',
+  )
+}
+
+/**
+ * Filtered/search states of the homepage (e.g. /?q=iPhone, /?sort=price_asc)
+ * are near-duplicate, low-value URLs — keep them out of the index (but still
+ * let Google follow the links) and canonicalize back to the clean homepage.
+ * The unfiltered homepage keeps the site's default index:true.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<RawSearchParams>
+}): Promise<Metadata> {
+  const parsed = parseSearch(await searchParams)
+  if (hasActiveFilters(parsed)) {
+    return { robots: { index: false, follow: true }, alternates: { canonical: '/' } }
+  }
+  return {}
+}
 
 export default async function HomePage({
   searchParams,

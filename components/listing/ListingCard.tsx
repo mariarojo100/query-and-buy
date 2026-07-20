@@ -34,7 +34,7 @@ export function ListingCard({
         {listing.cover_key ? (
           <SafeListingImage
             src={publicUrl(LISTING_IMAGES_BUCKET, listing.cover_key)}
-            alt={listing.title_en}
+            alt={[listing.title_en, condition, location].filter(Boolean).join(' – ')}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}

@@ -233,6 +233,242 @@ export const GUIDES: Guide[] = [
       </>
     ),
   },
+  {
+    slug: 'how-much-is-my-car-worth-in-the-uae',
+    title: 'How Much Is My Car Worth in the UAE? A Pricing Guide',
+    description:
+      'How to value your used car in the UAE — what affects the price, how to research the market, and how to set an asking price that actually sells.',
+    eyebrow: 'Pricing guide',
+    published: '2026-07-20',
+    updated: '2026-07-20',
+    Body: () => (
+      <>
+        <p>
+          Pricing your car is the difference between a quick sale and a listing that sits for weeks.
+          Price too high and no one messages; too low and you leave money on the table. Here is how
+          to land on a fair, sellable number.
+        </p>
+
+        <h2>What actually affects your car&apos;s value</h2>
+        <ul>
+          <li>
+            <strong>Make, model and year.</strong> The starting point — some brands hold value far
+            better than others in the UAE market.
+          </li>
+          <li>
+            <strong>Mileage.</strong> Lower mileage commands a premium; very high mileage narrows
+            your buyer pool.
+          </li>
+          <li>
+            <strong>Service history and condition.</strong> A full agency service history, clean
+            interior and no accident record all add real value.
+          </li>
+          <li>
+            <strong>Specs and options.</strong> GCC specs, sunroof, upgraded trim and desirable
+            colours can nudge the price up.
+          </li>
+        </ul>
+
+        <h2>Research the real market</h2>
+        <p>
+          The most reliable valuation is what similar cars are actually listed for right now. Browse{' '}
+          <Link href="/category/vehicles">current used-car listings</Link> filtered to your make,
+          model, year and mileage, and note the range. Ignore the one or two outliers at the top and
+          bottom — aim for the middle of the cluster.
+        </p>
+
+        <h2>Set your asking price</h2>
+        <p>
+          List slightly above your true target to leave room for the negotiation buyers expect, but
+          stay within the realistic market band so you still appear in their searches. An honest,
+          well-photographed listing at a fair price gets more serious enquiries than a cheap one with
+          no detail.
+        </p>
+
+        <p>
+          When you are ready, check the market on{' '}
+          <Link href="/category/vehicles/dubai">used cars in Dubai</Link> and{' '}
+          <Link href="/category/vehicles/abu-dhabi">Abu Dhabi</Link>, then{' '}
+          <Link href="/sell">list your car</Link> — snap a few photos and let AI draft the details
+          and a suggested price.
+        </p>
+      </>
+    ),
+  },
+  {
+    slug: 'how-much-is-my-iphone-worth-in-the-uae',
+    title: 'How Much Is My iPhone Worth in the UAE?',
+    description:
+      'Work out the resale value of your used iPhone in the UAE — the factors that matter most, how to check the market, and how to sell it fast.',
+    eyebrow: 'Pricing guide',
+    published: '2026-07-20',
+    updated: '2026-07-20',
+    Body: () => (
+      <>
+        <p>
+          iPhones hold their value better than most phones, but resale prices drop steadily with each
+          new release. Here is how to figure out what yours is worth today and sell it before it
+          depreciates further.
+        </p>
+
+        <h2>What determines the resale value</h2>
+        <ul>
+          <li>
+            <strong>Model and storage.</strong> Newer models and higher storage tiers are worth
+            more — and the gap widens for Pro and Pro Max versions.
+          </li>
+          <li>
+            <strong>Battery health.</strong> A battery above ~85% reassures buyers; a worn battery
+            knocks the price down noticeably.
+          </li>
+          <li>
+            <strong>Condition.</strong> Screen scratches, dents and a cracked back all reduce value.
+            A clean phone with a case-and-screen-protector history sells for more.
+          </li>
+          <li>
+            <strong>Box and accessories.</strong> The original box, cable and receipt add buyer
+            confidence and a small premium.
+          </li>
+        </ul>
+
+        <h2>Check what the market is paying</h2>
+        <p>
+          Search <Link href="/category/mobiles">current iPhone listings</Link> for your exact model,
+          storage and condition to see the live range. Prices move fast around new-model launches, so
+          recent listings matter more than old ones.
+        </p>
+
+        <h2>Sell it before it drops further</h2>
+        <p>
+          Because phones depreciate quickly, the best time to sell is usually now rather than later —
+          especially just before a new model is announced. Back up and erase your data, sign out of
+          iCloud, and take clear photos of the actual device.
+        </p>
+
+        <p>
+          Ready to sell? Compare prices for{' '}
+          <Link href="/category/mobiles/dubai">used phones in Dubai</Link> or{' '}
+          <Link href="/category/mobiles/abu-dhabi">Abu Dhabi</Link>, then{' '}
+          <Link href="/sell">create your listing</Link>.
+        </p>
+      </>
+    ),
+  },
+  {
+    slug: 'buying-used-furniture-in-the-uae-checklist',
+    title: 'Buying Used Furniture in the UAE: A Complete Checklist',
+    description:
+      'Everything to check before buying second-hand furniture in the UAE — measurements, condition, delivery and how to avoid common mistakes.',
+    eyebrow: 'Buying guide',
+    published: '2026-07-20',
+    updated: '2026-07-20',
+    Body: () => (
+      <>
+        <p>
+          With so many people moving in and out of the UAE, quality second-hand furniture sells at a
+          fraction of retail — if you know what to check. Run through this checklist before you buy.
+        </p>
+
+        <h2>Measure before you commit</h2>
+        <p>
+          The single most common mistake is buying furniture that does not fit. Measure your space —
+          and doorways, lifts and stairwells for the delivery path — then confirm the item&apos;s exact
+          dimensions with the seller before agreeing to anything.
+        </p>
+
+        <h2>Check the condition properly</h2>
+        <ul>
+          <li>
+            <strong>Structure.</strong> Test that chairs, tables and bed frames are sturdy with no
+            wobble or cracks.
+          </li>
+          <li>
+            <strong>Upholstery.</strong> Look (and, in person, check) for stains, tears, odours and
+            signs of pests — ask for close-up photos before you travel to view.
+          </li>
+          <li>
+            <strong>Appliances.</strong> For anything electrical, ask to see it powered on and
+            working.
+          </li>
+        </ul>
+
+        <h2>Sort out delivery</h2>
+        <p>
+          Larger items need a plan. Agree with the seller who arranges transport and who pays, and
+          confirm timing before you finalise. Many sellers can recommend a mover for bulky pieces.
+        </p>
+
+        <h2>Meet and pay safely</h2>
+        <p>
+          Message the seller through the app to ask questions and keep your details private, view the
+          item in person where possible, and pay once you are satisfied it matches the listing.
+        </p>
+
+        <p>
+          Start browsing{' '}
+          <Link href="/category/home-garden">home &amp; garden listings</Link>, or narrow to{' '}
+          <Link href="/category/home-garden/dubai">furniture in Dubai</Link> and{' '}
+          <Link href="/category/home-garden/sharjah">Sharjah</Link>.
+        </p>
+      </>
+    ),
+  },
+  {
+    slug: 'how-to-rent-an-apartment-in-dubai-without-an-agent',
+    title: 'How to Rent an Apartment in Dubai Without an Agent',
+    description:
+      'Rent directly from owners in Dubai and skip the agency fee — how to search, what to check on Ejari and the tenancy contract, and how to stay safe.',
+    eyebrow: 'Property guide',
+    published: '2026-07-20',
+    updated: '2026-07-20',
+    Body: () => (
+      <>
+        <p>
+          Renting directly from an owner in Dubai can save you the agency commission — but it also
+          means doing the due diligence yourself. Here is how to do it properly and safely.
+        </p>
+
+        <h2>Search smart</h2>
+        <p>
+          Decide on your budget, preferred communities and must-haves (parking, chiller, number of
+          cheques) first, then browse{' '}
+          <Link href="/category/property">property listings</Link> and message listers directly
+          through the app to arrange viewings. Keeping the conversation in-app protects your contact
+          details until you are ready to share them.
+        </p>
+
+        <h2>View in person and ask the right questions</h2>
+        <ul>
+          <li>
+            Confirm exactly what the rent includes — chiller/AC, maintenance, and how many cheques
+            are accepted.
+          </li>
+          <li>Check the unit&apos;s actual condition, water pressure, AC and any building amenities.</li>
+          <li>Ask who you are dealing with — the owner or an authorised representative.</li>
+        </ul>
+
+        <h2>Check the paperwork</h2>
+        <p>
+          A legitimate tenancy in Dubai is registered through <strong>Ejari</strong>. Confirm the
+          landlord&apos;s ownership and that the contract will be Ejari-registered, review the tenancy
+          terms carefully, and understand the RERA rules on rent and renewals before you sign.
+        </p>
+
+        <h2>Stay safe with payments</h2>
+        <p>
+          Never transfer a deposit before you have viewed the unit and verified who you are dealing
+          with. Be wary of below-market listings that demand money up front — a classic rental scam
+          sign.
+        </p>
+
+        <p>
+          Ready to look? Browse{' '}
+          <Link href="/category/property/dubai">property in Dubai</Link> or the full{' '}
+          <Link href="/category/property">property category</Link>.
+        </p>
+      </>
+    ),
+  },
 ]
 
 export function getGuide(slug: string): Guide | null {

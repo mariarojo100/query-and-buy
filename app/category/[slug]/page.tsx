@@ -16,6 +16,7 @@ import { getFavoritedIds } from '@/lib/favorites/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
 import { CityLinks } from '@/components/category/CityLinks'
 import { CategorySeoContent } from '@/components/category/CategorySeoContent'
+import { RelatedGuides } from '@/components/category/RelatedGuides'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd } from '@/lib/seo'
 import { categoryFaqs, categoryIntro, categoryMetaDescription } from '@/lib/seo/categoryContent'
@@ -123,6 +124,8 @@ export default async function CategoryPage({
         />
 
         <CategorySeoContent slug={slug} name={name} />
+
+        <RelatedGuides categorySlug={slug} />
       </main>
     </>
   )

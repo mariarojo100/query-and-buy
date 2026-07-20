@@ -8,6 +8,7 @@ import { SearchControls } from '@/components/search/SearchControls'
 import { ListingResults } from '@/components/listing/ListingResults'
 import { CityLinks } from '@/components/category/CityLinks'
 import { CategorySeoContent } from '@/components/category/CategorySeoContent'
+import { RelatedGuides } from '@/components/category/RelatedGuides'
 import {
   getActiveCategories,
   getCategoryBySlug,
@@ -133,6 +134,8 @@ export default async function CategoryCityPage({
         />
 
         <CategorySeoContent slug={slug} name={name} city={cityRec.label} />
+
+        <RelatedGuides categorySlug={slug} />
       </main>
     </>
   )

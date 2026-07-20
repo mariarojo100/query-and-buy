@@ -474,3 +474,33 @@ export const GUIDES: Guide[] = [
 export function getGuide(slug: string): Guide | null {
   return GUIDES.find((g) => g.slug === slug) ?? null
 }
+
+/** Which category slugs each guide is relevant to (for cross-linking). */
+const GUIDE_CATEGORIES: Record<string, string[]> = {
+  'how-to-sell-your-car-privately-in-the-uae': ['vehicles'],
+  'how-much-is-my-car-worth-in-the-uae': ['vehicles'],
+  'how-to-check-a-used-iphone-before-buying-in-the-uae': ['mobiles', 'electronics'],
+  'how-much-is-my-iphone-worth-in-the-uae': ['mobiles', 'electronics'],
+  'buying-used-furniture-in-the-uae-checklist': ['home-garden'],
+  'how-to-rent-an-apartment-in-dubai-without-an-agent': ['property'],
+  // General safety guide — relevant across the marketplace.
+  'is-it-safe-to-buy-second-hand-online-in-dubai': [
+    'vehicles',
+    'property',
+    'electronics',
+    'mobiles',
+    'home-garden',
+    'fashion',
+    'services',
+    'hobbies',
+    'business',
+  ],
+}
+
+/** Guides relevant to a category, most-specific first, capped at `limit`. */
+export function guidesForCategory(categorySlug: string, limit = 3): Guide[] {
+  return GUIDES.filter((g) => (GUIDE_CATEGORIES[g.slug] ?? []).includes(categorySlug)).slice(
+    0,
+    limit,
+  )
+}

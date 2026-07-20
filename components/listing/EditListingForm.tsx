@@ -1,4 +1,5 @@
 'use client'
+import { listingPath } from '@/lib/listings/slug'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -150,7 +151,7 @@ export function EditListingForm({
       if (res.error) throw new Error(res.error)
 
       toast.success('Listing updated.')
-      router.push(`/listing/${listing.id}`)
+      router.push(listingPath(listing.title_en, listing.id))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong.')
       setSubmitting(false)
@@ -329,7 +330,7 @@ export function EditListingForm({
           type="button"
           variant="outline"
           size="lg"
-          onClick={() => router.push(`/listing/${listing.id}`)}
+          onClick={() => router.push(listingPath(listing.title_en, listing.id))}
         >
           Cancel
         </Button>

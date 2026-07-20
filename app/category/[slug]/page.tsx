@@ -20,6 +20,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd } from '@/lib/seo'
 import { categoryFaqs, categoryIntro, categoryMetaDescription } from '@/lib/seo/categoryContent'
 import { absoluteUrl } from '@/lib/site'
+import { listingPath } from '@/lib/listings/slug'
 
 export async function generateMetadata({
   params,
@@ -87,7 +88,7 @@ export default async function CategoryPage({
             { name, path: `/category/${slug}` },
           ]),
           itemListJsonLd(
-            listings.map((l) => ({ name: l.title_en, path: `/listing/${l.id}` })),
+            listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.id) })),
             { name },
           ),
           faqJsonLd(categoryFaqs(slug, name)),

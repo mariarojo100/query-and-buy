@@ -1,4 +1,5 @@
 import { SITE_NAME, SITE_URL, SITE_DESCRIPTION, absoluteUrl } from '@/lib/site'
+import { listingSlug } from '@/lib/listings/slug'
 
 /** Organization schema (brand identity). */
 export function organizationJsonLd(): Record<string, unknown> {
@@ -58,7 +59,7 @@ export function productJsonLd(input: {
       availability: input.available
         ? 'https://schema.org/InStock'
         : 'https://schema.org/SoldOut',
-      url: absoluteUrl(`/listing/${input.id}`),
+      url: absoluteUrl(`/listing/${listingSlug(input.title, input.id)}`),
       ...(input.condition ? { itemCondition: CONDITION_MAP[input.condition] } : {}),
     },
   }

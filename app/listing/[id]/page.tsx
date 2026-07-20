@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { maskContactInfo } from '@/lib/safety/contact'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { ChevronLeftIcon, PencilIcon, ShieldCheckIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
@@ -26,28 +26,31 @@ import { getListingById, getSellerListings, getSimilarListings } from '@/lib/lis
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, productJsonLd } from '@/lib/seo'
 import { absoluteUrl } from '@/lib/site'
+import { extractListingId, listingSlug } from '@/lib/listings/slug'
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
-  const { id } = await params
-  const listing = await getListingById(id)
+  const { id: param } = await params
+  const listingId = extractListingId(param)
+  const listing = listingId ? await getListingById(listingId) : null
   if (!listing) return { title: 'Listing not found · Query & Buy' }
   const desc = maskContactInfo(listing.description).slice(0, 155)
   const img = listing.images[0]
     ? publicUrl(LISTING_IMAGES_BUCKET, listing.images[0].storage_key)
     : undefined
+  const slug = listingSlug(listing.title_en, listing.id)
   return {
     title: `${listing.title_en} · Query & Buy`,
     description: desc,
-    alternates: { canonical: `/listing/${id}` },
+    alternates: { canonical: `/listing/${slug}` },
     openGraph: {
       type: 'website',
       title: listing.title_en,
       description: desc,
-      url: absoluteUrl(`/listing/${id}`),
+      url: absoluteUrl(`/listing/${slug}`),
       images: img ? [img] : undefined,
     },
     twitter: {
@@ -74,9 +77,16 @@ export default async function ListingDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
-  const listing = await getListingById(id)
+  const { id: param } = await params
+  const listingId = extractListingId(param)
+  if (!listingId) notFound()
+  const listing = await getListingById(listingId)
   if (!listing) notFound()
+
+  // Canonicalise the URL: redirect bare-UUID or stale-slug requests to the
+  // keyword slug so there's a single indexable URL per listing.
+  const canonicalSlug = listingSlug(listing.title_en, listing.id)
+  if (param !== canonicalSlug) permanentRedirect(`/listing/${canonicalSlug}`)
 
   const user = await getViewer()
   const isOwner = user?.id === listing.seller_id
@@ -120,7 +130,7 @@ export default async function ListingDetailPage({
             ...(listing.category_slug && listing.category_name
               ? [{ name: listing.category_name, path: `/category/${listing.category_slug}` }]
               : []),
-            { name: listing.title_en, path: `/listing/${listing.id}` },
+            { name: listing.title_en, path: `/listing/${canonicalSlug}` },
           ]),
         ]}
       />
@@ -140,7 +150,7 @@ export default async function ListingDetailPage({
               <span className="text-muted-foreground">This is your listing.</span>
             </p>
             <Button asChild size="sm" variant="outline" className="rounded-full">
-              <Link href={`/listing/${id}/edit`}>
+              <Link href={`/listing/${listing.id}/edit`}>
                 <PencilIcon className="size-4" />
                 Edit
               </Link>

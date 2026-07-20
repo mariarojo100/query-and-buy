@@ -7,6 +7,7 @@ import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { BLUR_DATA_URL } from '@/lib/blur'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
+import { listingPath } from '@/lib/listings/slug'
 import type { FeedListing } from '@/lib/listings/queries'
 
 export function ListingCard({
@@ -26,7 +27,7 @@ export function ListingCard({
 
   return (
     <Link
-      href={`/listing/${listing.id}`}
+      href={listingPath(listing.title_en, listing.id)}
       className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
     >
       {/* Media — the photo does the work; a single condition signal, nothing else. */}

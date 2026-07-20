@@ -1,4 +1,5 @@
 'use client'
+import { listingPath } from '@/lib/listings/slug'
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -173,7 +174,7 @@ export function CreateListingForm({
       if (res.error || !res.id) throw new Error(res.error ?? 'Could not create listing.')
 
       toast.success('Listing published!')
-      router.push(`/listing/${res.id}`)
+      router.push(listingPath(title, res.id))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong.')
       setSubmitting(false)

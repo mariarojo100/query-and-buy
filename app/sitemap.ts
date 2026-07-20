@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { absoluteUrl } from '@/lib/site'
 import { sitemapData } from '@/lib/db/sitemap'
 import { CITY_SLUGS } from '@/lib/profile/emirates'
+import { listingSlug } from '@/lib/listings/slug'
 
 // Revalidate the sitemap hourly so new listings/categories get indexed.
 export const revalidate = 3600
@@ -27,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     for (const l of listings)
-      entries.push({ url: absoluteUrl(`/listing/${l.id}`), lastModified: l.lastModified, changeFrequency: 'weekly', priority: 0.8 })
+      entries.push({ url: absoluteUrl(`/listing/${listingSlug(l.title, l.id)}`), lastModified: l.lastModified, changeFrequency: 'weekly', priority: 0.8 })
 
     for (const p of profiles)
       entries.push({ url: absoluteUrl(`/u/${p.username}`), lastModified: p.lastModified, changeFrequency: 'weekly', priority: 0.5 })

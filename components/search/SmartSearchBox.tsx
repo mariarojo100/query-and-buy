@@ -1,4 +1,5 @@
 'use client'
+import { listingPath } from '@/lib/listings/slug'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -121,7 +122,7 @@ export function SmartSearchBox({ trending = [] }: { trending?: string[] }) {
         s.type === 'category'
           ? { kind: 'category', label: s.label, href: `/category/${s.slug}` }
           : s.type === 'listing'
-            ? { kind: 'listing', label: s.label, href: `/listing/${s.id}` }
+            ? { kind: 'listing', label: s.label, href: listingPath(s.label, s.id) }
             : { kind: 'query', label: s.label, run: s.label },
       )
     }

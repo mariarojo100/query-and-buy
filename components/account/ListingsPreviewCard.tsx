@@ -5,6 +5,7 @@ import { SafeListingImage } from '@/components/listing/SafeListingImage'
 import { formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import type { FeedListing } from '@/lib/listings/queries'
+import { listingPath } from '@/lib/listings/slug'
 
 export function ListingsPreviewCard({
   listings,
@@ -43,7 +44,7 @@ export function ListingsPreviewCard({
           {listings.slice(0, 3).map((l) => (
             <Link
               key={l.id}
-              href={`/listing/${l.id}`}
+              href={listingPath(l.title_en, l.id)}
               className="group flex items-center gap-3 rounded-xl p-1.5 transition-colors hover:bg-accent/60"
             >
               <span className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted">

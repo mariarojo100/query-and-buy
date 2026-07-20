@@ -18,6 +18,7 @@ import {
 import { EMIRATES } from '@/lib/profile/emirates'
 import { CONDITIONS } from '@/lib/listings/conditions'
 import type { CategoryLite } from '@/lib/listings/queries'
+import { describeAttributeParam, type AttrField } from '@/lib/listings/attributeSchemas'
 
 const ALL = '__all__'
 const FILTER_KEYS = [
@@ -53,10 +54,13 @@ const money = (v: string) => Number(v).toLocaleString('en-AE')
 
 export function SearchControls({
   categories,
+  attributeFields = [],
   hideCategory = false,
   hideSearch = false,
 }: {
   categories: CategoryLite[]
+  /** Category-specific facet fields to expose as filters (empty when no category). */
+  attributeFields?: AttrField[]
   hideCategory?: boolean
   /** Omit the text search field — used where a primary search box sits above. */
   hideSearch?: boolean
@@ -68,7 +72,18 @@ export function SearchControls({
   const [q, setQ] = useState(params.get('q') ?? '')
   const [min, setMin] = useState(params.get('min') ?? '')
   const [max, setMax] = useState(params.get('max') ?? '')
+  const [attrNums, setAttrNums] = useState<Record<string, string>>({})
   const [open, setOpen] = useState(false)
+
+  const attrSelects = attributeFields.filter((f) => f.type === 'select')
+  const attrNumbers = attributeFields.filter((f) => f.type === 'number')
+  const attrNumVal = (name: string) => attrNums[name] ?? params.get(name) ?? ''
+  const applyAttrNum = (name: string) => {
+    if (attrNums[name] === undefined) return
+    const v = attrNums[name].trim()
+    if (v === (params.get(name) ?? '')) return
+    setParam(name, v)
+  }
 
   function push(mutate: (p: URLSearchParams) => void) {
     const p = new URLSearchParams(params.toString())
@@ -101,8 +116,9 @@ export function SearchControls({
   const categoryName = (slug: string) =>
     categories.find((c) => c.slug === slug)?.name_en ?? slug
 
-  const hasFilters = FILTER_KEYS.some((k) => params.has(k))
-  const refineCount = REFINE_KEYS.filter((k) => params.has(k)).length
+  const attrParams = Array.from(new Set(Array.from(params.keys()).filter((k) => k.startsWith('a_'))))
+  const hasFilters = FILTER_KEYS.some((k) => params.has(k)) || attrParams.length > 0
+  const refineCount = REFINE_KEYS.filter((k) => params.has(k)).length + attrParams.length
 
   // Active refinements as removable chips — the user sees exactly what's narrowing results.
   const minV = params.get('min')
@@ -140,11 +156,26 @@ export function SearchControls({
   if (sinceV) chips.push({ label: DATES.find((d) => d.value === sinceV)?.label ?? sinceV, clear: () => setParam('since', '') })
   if (params.get('negotiable') === '1') chips.push({ label: 'Negotiable', clear: () => setParam('negotiable', '') })
   if (params.get('featured') === '1') chips.push({ label: 'Featured', clear: () => setParam('featured', '') })
+  for (const key of attrParams) {
+    const d = describeAttributeParam(key, params.get(key) ?? '')
+    chips.push({
+      label: d?.label ?? key,
+      clear: () => {
+        setAttrNums((s) => {
+          const next = { ...s }
+          delete next[key]
+          return next
+        })
+        setParam(key, '')
+      },
+    })
+  }
 
   const clearAll = () => {
     setQ('')
     setMin('')
     setMax('')
+    setAttrNums({})
     setOpen(false)
     router.push(pathname)
   }
@@ -390,6 +421,84 @@ export function SearchControls({
               )
             })}
           </div>
+
+          {/* Category-specific facets — only present once a category is in scope. */}
+          {(attrSelects.length > 0 || attrNumbers.length > 0) && (
+            <div className="space-y-3 border-t border-border pt-3">
+              <p className="text-xs font-medium text-muted-foreground">Details</p>
+              {attrSelects.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {attrSelects.map((f) => (
+                    <Select
+                      key={f.key}
+                      value={params.get(`a_${f.key}`) ?? ALL}
+                      onValueChange={(v) => setParam(`a_${f.key}`, v === ALL ? '' : v)}
+                    >
+                      <SelectTrigger className={triggerCls} aria-label={f.label}>
+                        <SelectValue placeholder={f.label} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL}>Any {f.label.toLowerCase()}</SelectItem>
+                        {f.options?.map((o) => (
+                          <SelectItem key={o} value={o}>
+                            {o}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ))}
+                </div>
+              )}
+              {attrNumbers.map((f) => {
+                const minName = `a_${f.key}_min`
+                const maxName = `a_${f.key}_max`
+                const numCls =
+                  '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                return (
+                  <div key={f.key} className="flex items-center gap-2">
+                    <span className="w-28 shrink-0 text-xs text-muted-foreground">
+                      {f.label}
+                      {f.unit ? ` (${f.unit})` : ''}
+                    </span>
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="Min"
+                      aria-label={`Minimum ${f.label}`}
+                      value={attrNumVal(minName)}
+                      onChange={(e) => setAttrNums((s) => ({ ...s, [minName]: e.target.value }))}
+                      onBlur={() => applyAttrNum(minName)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          applyAttrNum(minName)
+                        }
+                      }}
+                      className={numCls}
+                    />
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="Max"
+                      aria-label={`Maximum ${f.label}`}
+                      value={attrNumVal(maxName)}
+                      onChange={(e) => setAttrNums((s) => ({ ...s, [maxName]: e.target.value }))}
+                      onBlur={() => applyAttrNum(maxName)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          applyAttrNum(maxName)
+                        }
+                      }}
+                      className={numCls}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

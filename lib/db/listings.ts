@@ -17,6 +17,7 @@ import { Prisma } from '@/lib/generated/prisma/client'
 import type { ListingCondition, Emirate } from '@/lib/generated/prisma/enums'
 import { listingVisibleWhere } from '@/lib/authz/policies'
 import type { Viewer } from '@/lib/authz/viewer'
+import type { AttrFilter } from '@/lib/listings/attributeSchemas'
 
 export type SellerMini = {
   id: string
@@ -124,6 +125,8 @@ export type ListingFilters = {
   sinceDays?: number
   sort?: SortKey
   limit?: number
+  /** Category-specific facet filters (already validated against the schema). */
+  attributes?: AttrFilter[]
 }
 
 export type CategoryLite = {
@@ -294,6 +297,17 @@ export async function filteredListings(filters: ListingFilters = {}): Promise<{ 
   if (filters.sinceDays && filters.sinceDays > 0) {
     const since = new Date(Date.now() - filters.sinceDays * 86_400_000)
     conds.push(Prisma.sql`l.published_at >= ${since}`)
+  }
+  for (const a of filters.attributes ?? []) {
+    // key is a schema-whitelisted field key ([a-z_]); value is a bound param.
+    if (a.op === 'eq') {
+      conds.push(Prisma.sql`l.attributes ->> ${a.key} = ${a.value}`)
+    } else {
+      // CASE guards the numeric cast so a non-numeric facet value can't error the query.
+      const n = Number(a.value)
+      const guarded = Prisma.sql`(case when (l.attributes ->> ${a.key}) ~ '^[0-9.]+$' then (l.attributes ->> ${a.key})::numeric end)`
+      conds.push(a.op === 'min' ? Prisma.sql`${guarded} >= ${n}` : Prisma.sql`${guarded} <= ${n}`)
+    }
   }
   const where = Prisma.join(conds, ' and ')
 

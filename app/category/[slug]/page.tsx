@@ -14,6 +14,10 @@ import {
 } from '@/lib/listings/queries'
 import { getFavoritedIds } from '@/lib/favorites/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
+import {
+  resolveAttributeFieldsForSlug,
+  parseAttributeFilters,
+} from '@/lib/listings/attributeSchemas'
 import { CityLinks } from '@/components/category/CityLinks'
 import { CategorySeoContent } from '@/components/category/CategorySeoContent'
 import { RelatedGuides } from '@/components/category/RelatedGuides'
@@ -60,8 +64,13 @@ export default async function CategoryPage({
 
   const name = cat.category.name_en
   const { lead } = categoryIntro(slug, name)
-  const parsed = parseSearch(await searchParams)
+  const sp = await searchParams
+  const parsed = parseSearch(sp)
   const categories = await getActiveCategories()
+
+  // Facet filters for this category (from the route slug).
+  const attributeFields = resolveAttributeFieldsForSlug(slug, categories)
+  const attributeFilters = parseAttributeFilters(attributeFields, sp)
 
   const { listings, count } = await getFilteredListings({
     q: parsed.q,
@@ -74,6 +83,7 @@ export default async function CategoryPage({
     featured: parsed.featured,
     sinceDays: parsed.sinceDays,
     sort: parsed.sort,
+    attributes: attributeFilters,
   })
 
   const user = await getViewer()
@@ -115,7 +125,7 @@ export default async function CategoryPage({
 
         <CategoryChips categories={categories} activeSlug={slug} />
         {/* Category is fixed by the route, so hide it from the filters. */}
-        <SearchControls categories={categories} hideCategory />
+        <SearchControls categories={categories} attributeFields={attributeFields} hideCategory />
         <ListingResults
           listings={listings}
           count={count}

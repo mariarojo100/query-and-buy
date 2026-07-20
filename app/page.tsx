@@ -29,6 +29,10 @@ import {
   getSavedSearchMatches,
 } from '@/lib/personalization/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
+import {
+  resolveAttributeFieldsForSlug,
+  parseAttributeFilters,
+} from '@/lib/listings/attributeSchemas'
 import { getTrendingSearches } from '@/lib/search/intelligence'
 
 const NO_MATCH = ['00000000-0000-0000-0000-000000000000']
@@ -92,6 +96,10 @@ export default async function HomePage({
     categoryIds = cat?.ids ?? NO_MATCH
   }
 
+  // Category-specific facet filters (only meaningful once a category is chosen).
+  const attributeFields = resolveAttributeFieldsForSlug(parsed.categorySlug, categories)
+  const attributeFilters = parseAttributeFilters(attributeFields, sp)
+
   const { listings, count } = await getFilteredListings({
     q: parsed.q,
     categoryIds,
@@ -103,6 +111,7 @@ export default async function HomePage({
     featured: parsed.featured,
     sinceDays: parsed.sinceDays,
     sort: parsed.sort,
+    attributes: attributeFilters,
   })
 
   const user = await getViewer()
@@ -153,7 +162,12 @@ export default async function HomePage({
               <SmartSearchBox />
             </div>
             <div className="space-y-6">
-              <SearchControls categories={categories} hideSearch hideCategory />
+              <SearchControls
+                categories={categories}
+                attributeFields={attributeFields}
+                hideSearch
+                hideCategory
+              />
               <CategoryChips categories={categories} activeSlug={parsed.categorySlug} />
               <div className="pt-2">
                 <ListingResults

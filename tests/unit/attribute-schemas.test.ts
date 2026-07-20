@@ -1,10 +1,14 @@
 /** Unit tests for lib/listings/attributeSchemas — category facets. No DB. */
 import {
   resolveAttributeFields,
+  resolveAttributeFieldsForSlug,
   sanitizeAttributes,
   matchAiAttributes,
   formatAttributesForDisplay,
   attributeVocabulary,
+  parseAttributeFilters,
+  describeAttributeParam,
+  filterableFields,
 } from '@/lib/listings/attributeSchemas'
 import { ok, eq, summary, exitCode } from '@/tests/unit/_harness'
 
@@ -64,6 +68,46 @@ ok('display order is catalogue order', specs.findIndex((s) => s.label === 'Milea
 
 // --- vocabulary -------------------------------------------------------------
 ok('vocabulary is non-empty and unique', attributeVocabulary().length > 10 && new Set(attributeVocabulary()).size === attributeVocabulary().length)
+
+// --- resolveAttributeFieldsForSlug (via category list) ----------------------
+const cats = [
+  { id: 'v', slug: 'vehicles', parent_id: null },
+  { id: 'c', slug: 'cars', parent_id: 'v' },
+  { id: 'm', slug: 'mobiles', parent_id: null },
+]
+ok('slug resolver: cars via parent list has mileage', resolveAttributeFieldsForSlug('cars', cats).some((f) => f.key === 'mileage_km'))
+ok('slug resolver: mobiles has storage', resolveAttributeFieldsForSlug('mobiles', cats).some((f) => f.key === 'storage'))
+eq('slug resolver: null slug → none', resolveAttributeFieldsForSlug(null, cats).length, 0)
+
+// --- filterableFields -------------------------------------------------------
+const split = filterableFields(carFields)
+ok('transmission is a select filter', split.selects.some((f) => f.key === 'transmission'))
+ok('mileage is a number filter', split.numbers.some((f) => f.key === 'mileage_km'))
+ok('no number field appears in selects', !split.selects.some((f) => f.type !== 'select'))
+
+// --- parseAttributeFilters --------------------------------------------------
+const filters = parseAttributeFilters(carFields, {
+  a_transmission: 'Automatic', // select eq
+  a_fuel_type: 'plasma', // invalid option → dropped
+  a_mileage_km_max: '80,000', // number max (comma stripped)
+  a_year_min: '2018', // number min
+  a_bedrooms: '3', // not a car field → dropped (whitelist)
+  a_seats_max: '-4', // negative → dropped
+})
+const find = (key: string, op: string) => filters.find((f) => f.key === key && f.op === op)
+eq('transmission eq parsed', find('transmission', 'eq')?.value, 'Automatic')
+eq('mileage max parsed (comma stripped)', find('mileage_km', 'max')?.value, '80000')
+eq('year min parsed', find('year', 'min')?.value, '2018')
+ok('invalid select option dropped', !find('fuel_type', 'eq'))
+ok('foreign attr key dropped', !filters.some((f) => f.key === 'bedrooms'))
+ok('negative number dropped', !find('seats', 'max'))
+
+// --- describeAttributeParam -------------------------------------------------
+eq('describe select', describeAttributeParam('a_transmission', 'Automatic')?.label, 'Transmission: Automatic')
+eq('describe max with unit', describeAttributeParam('a_mileage_km_max', '80000')?.label, 'Mileage ≤ 80000 km')
+eq('describe min', describeAttributeParam('a_year_min', '2018')?.label, 'Year ≥ 2018')
+eq('describe unknown key → null', describeAttributeParam('a_nope', 'x'), null)
+eq('describe non-attr param → null', describeAttributeParam('emirate', 'dubai'), null)
 
 summary('attribute-schemas')
 process.exit(exitCode())

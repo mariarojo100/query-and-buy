@@ -245,3 +245,92 @@ export function formatAttributesForDisplay(
 export function attributeVocabulary(): string[] {
   return [...new Set(FIELD_ORDER.map((k) => FIELDS[k].label))]
 }
+
+// ---- Filtering -------------------------------------------------------------
+
+/** Minimal category shape needed to resolve a slug's fields (from getActiveCategories). */
+type CategoryNode = { id: string; slug: string; parent_id: string | null }
+
+/** Resolve a category slug's fields using a category list to find its parent. */
+export function resolveAttributeFieldsForSlug(
+  slug: string | null | undefined,
+  categories: CategoryNode[],
+): AttrField[] {
+  if (!slug) return []
+  const cat = categories.find((c) => c.slug === slug)
+  const parent = cat?.parent_id ? categories.find((c) => c.id === cat.parent_id) : null
+  return resolveAttributeFields(cat?.slug ?? slug, parent?.slug ?? null)
+}
+
+/** Fields that can be filtered on: select (equals) and number (min/max). */
+export function filterableFields(fields: AttrField[]): {
+  selects: AttrField[]
+  numbers: AttrField[]
+} {
+  return {
+    selects: fields.filter((f) => f.type === 'select'),
+    numbers: fields.filter((f) => f.type === 'number'),
+  }
+}
+
+export type AttrFilter = { key: string; op: 'eq' | 'min' | 'max'; value: string }
+
+function firstParam(v: string | string[] | undefined): string {
+  const s = Array.isArray(v) ? v[0] : v
+  return s ? String(s).trim() : ''
+}
+
+/**
+ * Parse `a_<key>` (select equals) and `a_<key>_min` / `a_<key>_max` (number
+ * range) URL params into validated filter conditions, whitelisted to the given
+ * category fields.
+ */
+export function parseAttributeFilters(
+  fields: AttrField[],
+  raw: Record<string, string | string[] | undefined>,
+): AttrFilter[] {
+  const out: AttrFilter[] = []
+  for (const f of fields) {
+    if (f.type === 'select') {
+      const v = firstParam(raw[`a_${f.key}`])
+      if (!v) continue
+      const opt = f.options?.find((o) => o.toLowerCase() === v.toLowerCase())
+      if (opt) out.push({ key: f.key, op: 'eq', value: opt })
+    } else if (f.type === 'number') {
+      for (const op of ['min', 'max'] as const) {
+        const v = firstParam(raw[`a_${f.key}_${op}`])
+        if (!v) continue
+        const m = v.replace(/,/g, '').match(/-?\d+(\.\d+)?/)
+        if (!m) continue
+        const n = Number(m[0])
+        if (Number.isFinite(n) && n >= 0) {
+          out.push({ key: f.key, op, value: String(n % 1 === 0 ? Math.round(n) : n) })
+        }
+      }
+    }
+  }
+  return out
+}
+
+/** Human-readable chip label for an `a_*` URL param (uses the global catalogue). */
+export function describeAttributeParam(
+  paramKey: string,
+  value: string,
+): { fieldKey: string; label: string } | null {
+  if (!paramKey.startsWith('a_') || !value) return null
+  let rest = paramKey.slice(2)
+  let op: 'eq' | 'min' | 'max' = 'eq'
+  if (rest.endsWith('_min')) {
+    op = 'min'
+    rest = rest.slice(0, -4)
+  } else if (rest.endsWith('_max')) {
+    op = 'max'
+    rest = rest.slice(0, -4)
+  }
+  const f = (FIELDS as Record<string, AttrFieldDef>)[rest]
+  if (!f) return null
+  const val = f.unit ? `${value} ${f.unit}` : value
+  const label =
+    op === 'eq' ? `${f.label}: ${val}` : op === 'min' ? `${f.label} ≥ ${val}` : `${f.label} ≤ ${val}`
+  return { fieldKey: rest, label }
+}

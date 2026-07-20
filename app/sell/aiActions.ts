@@ -9,6 +9,7 @@ import {
   type Confident,
 } from '@/lib/ai/provider'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
+import { resolveAttributeFields, matchAiAttributes } from '@/lib/listings/attributeSchemas'
 import { logModeration } from '@/lib/safety/moderation-log'
 import { logger } from '@/lib/logger'
 import { enforceRateLimit } from '@/lib/security/rateLimit'
@@ -26,6 +27,8 @@ export type AiDraft = {
   description: string
   categoryId: string | null
   condition: string | null
+  /** Category-specific facets matched to the detected category's schema (prefill). */
+  attributes: Record<string, string>
   /** Everything the model identified, with confidence — shown for transparency. */
   detected: { label: string; value: string; confidence: number }[]
   /** Human labels of form fields left empty due to low confidence. */
@@ -112,6 +115,24 @@ export async function generateListingDraft(images: AiImageInput[]): Promise<AiDr
     }
   }
 
+  // --- category-specific attributes: match AI facets to the category schema ---
+  const catObj = slug ? categories.find((c) => c.slug === slug) : null
+  const parentSlug = catObj?.parent_id
+    ? (categories.find((c) => c.id === catObj.parent_id)?.slug ?? null)
+    : null
+  const attrFields = resolveAttributeFields(slug, parentSlug)
+  const aiFacets: { name: string; value: string }[] = []
+  for (const a of raw.key_attributes ?? []) {
+    if (a?.name && a.value && (a.confidence ?? 0) >= CONFIDENCE_THRESHOLD) {
+      aiFacets.push({ name: a.name, value: String(a.value) })
+    }
+  }
+  const brandV = confident(raw.brand)
+  if (brandV) aiFacets.push({ name: 'brand', value: brandV })
+  const colorV = confident(raw.color)
+  if (colorV) aiFacets.push({ name: 'color', value: colorV })
+  const attributes = matchAiAttributes(attrFields, aiFacets)
+
   const lowConfidence: string[] = []
   if (!title) lowConfidence.push('title')
   if (!description) lowConfidence.push('description')
@@ -168,6 +189,7 @@ export async function generateListingDraft(images: AiImageInput[]): Promise<AiDr
         description: '',
         categoryId: null,
         condition: null,
+        attributes: {},
         detected,
         lowConfidence: ['title', 'description', 'category', 'condition'],
         pricing: null,
@@ -184,6 +206,7 @@ export async function generateListingDraft(images: AiImageInput[]): Promise<AiDr
       description,
       categoryId,
       condition,
+      attributes,
       detected,
       lowConfidence,
       pricing,

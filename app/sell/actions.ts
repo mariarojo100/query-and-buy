@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
 import { emailUnverified, phoneUnverified } from '@/lib/authz/require-verified'
-import { createListingFor } from '@/lib/db/listings'
+import { createListingFor, categorySlugChain } from '@/lib/db/listings'
+import { resolveAttributeFields, sanitizeAttributes } from '@/lib/listings/attributeSchemas'
 import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
@@ -24,6 +25,7 @@ export type CreateListingInput = {
   emirate: string
   area?: string
   isNegotiable?: boolean
+  attributes?: Record<string, string>
   images: ListingImageInput[]
 }
 
@@ -87,6 +89,13 @@ export async function createListing(
     return { blocked: true, error: CONTACT_BLOCK_MESSAGE }
   }
 
+  // Category-specific facets: whitelist + coerce against the category's schema.
+  const chain = await categorySlugChain(input.category_id)
+  const attributes = sanitizeAttributes(
+    resolveAttributeFields(chain?.slug, chain?.parentSlug),
+    input.attributes,
+  )
+
   const res = await createListingFor(viewer, {
     title,
     description,
@@ -96,6 +105,7 @@ export async function createListing(
     emirate: input.emirate,
     area,
     isNegotiable: input.isNegotiable ?? true,
+    attributes,
     images: input.images,
   })
   if (res.error) return { error: res.error }

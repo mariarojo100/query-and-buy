@@ -7,8 +7,10 @@ import {
   softDeleteListingFor,
   setListingPausedFor,
   updateListingFor,
+  categorySlugChain,
   type ListingImageInput,
 } from '@/lib/db/listings'
+import { resolveAttributeFields, sanitizeAttributes } from '@/lib/listings/attributeSchemas'
 import { getStorageDriver } from '@/lib/object-storage'
 import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
@@ -61,6 +63,7 @@ export type UpdateListingInput = {
   emirate: string
   area?: string
   isNegotiable?: boolean
+  attributes?: Record<string, string>
   images: ListingImageInput[]
 }
 
@@ -91,6 +94,12 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
     return { blocked: true, error: CONTACT_BLOCK_MESSAGE }
   }
 
+  const chain = await categorySlugChain(input.category_id)
+  const attributes = sanitizeAttributes(
+    resolveAttributeFields(chain?.slug, chain?.parentSlug),
+    input.attributes,
+  )
+
   const res = await updateListingFor(viewer, {
     id: input.id,
     title,
@@ -101,6 +110,7 @@ export async function updateListing(input: UpdateListingInput): Promise<Result> 
     emirate: input.emirate,
     area,
     isNegotiable: input.isNegotiable ?? true,
+    attributes,
     images: input.images,
   })
   if ('error' in res) return { error: res.error }

@@ -53,6 +53,7 @@ export type ListingDetail = {
   status: string
   emirate: string | null
   area: string | null
+  attributes: Record<string, string>
   category_name: string | null
   category_slug: string | null
   published_at: string | null
@@ -97,6 +98,7 @@ export type EditListing = {
   category_id: string
   emirate: string | null
   area: string | null
+  attributes: Record<string, string>
   status: string
   images: { storage_key: string; position: number }[]
 }
@@ -515,6 +517,7 @@ export async function listingForEdit(viewer: Viewer, id: string): Promise<EditLi
       categoryId: true,
       emirate: true,
       area: true,
+      attributes: true,
       status: true,
       images: { select: { storageKey: true, position: true }, orderBy: { position: 'asc' } },
     },
@@ -530,6 +533,7 @@ export async function listingForEdit(viewer: Viewer, id: string): Promise<EditLi
     category_id: row.categoryId,
     emirate: row.emirate,
     area: row.area,
+    attributes: toAttrMap(row.attributes),
     status: row.status,
     images: row.images.map((i) => ({ storage_key: i.storageKey, position: i.position })),
   }
@@ -549,6 +553,7 @@ export async function listingByIdVisible(viewer: Viewer | null, id: string): Pro
       status: true,
       emirate: true,
       area: true,
+      attributes: true,
       publishedAt: true,
       createdAt: true,
       sellerId: true,
@@ -589,6 +594,7 @@ export async function listingByIdVisible(viewer: Viewer | null, id: string): Pro
     status: row.status,
     emirate: row.emirate,
     area: row.area,
+    attributes: toAttrMap(row.attributes),
     category_name: row.category?.nameEn ?? null,
     category_slug: row.category?.slug ?? null,
     published_at: row.publishedAt ? row.publishedAt.toISOString() : null,
@@ -632,12 +638,36 @@ export type WriteListingInput = {
   emirate: string
   area: string | null
   isNegotiable: boolean
+  /** Category-specific facets, already sanitised. Stored on Listing.attributes. */
+  attributes?: Record<string, string>
   images: ListingImageInput[]
 }
 
 export async function categoryIsActive(id: string): Promise<boolean> {
   const c = await db.category.findFirst({ where: { id, isActive: true }, select: { id: true } })
   return !!c
+}
+
+/** Resolve a category's slug and its parent's slug — used to pick its attribute schema. */
+export async function categorySlugChain(
+  id: string,
+): Promise<{ slug: string; parentSlug: string | null } | null> {
+  const c = await db.category.findFirst({
+    where: { id },
+    select: { slug: true, parent: { select: { slug: true } } },
+  })
+  if (!c) return null
+  return { slug: c.slug, parentSlug: c.parent?.slug ?? null }
+}
+
+/** Coerce a jsonb attributes value into a flat string map for DTOs. */
+function toAttrMap(v: unknown): Record<string, string> {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
+  const out: Record<string, string> = {}
+  for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+    if (val != null) out[k] = String(val)
+  }
+  return out
 }
 
 function imageCreateRows(listingId: string, images: ListingImageInput[]) {
@@ -666,6 +696,7 @@ export async function createListingFor(viewer: Viewer, input: WriteListingInput)
       emirate: input.emirate as Emirate,
       area: input.area,
       isNegotiable: input.isNegotiable,
+      attributes: input.attributes ?? {},
       status: 'active',
       publishedAt: now,
       expiresAt: expires,
@@ -694,6 +725,7 @@ export async function updateListingFor(
         emirate: input.emirate as Emirate,
         area: input.area,
         isNegotiable: input.isNegotiable,
+        attributes: input.attributes ?? {},
       },
     })
     if (upd.count === 0) return { notFound: true as const }

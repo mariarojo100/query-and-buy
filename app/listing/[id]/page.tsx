@@ -21,6 +21,7 @@ import { formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
+import { formatAttributesForDisplay } from '@/lib/listings/attributeSchemas'
 import { ListingCard } from '@/components/listing/ListingCard'
 import { getListingById, getSellerListings, getSimilarListings } from '@/lib/listings/queries'
 import { JsonLd } from '@/components/seo/JsonLd'
@@ -98,6 +99,7 @@ export default async function ListingDetailPage({
   const similarFav = await getFavoritedIds(similar.map((l) => l.id))
   const sellerRep = await getSellerReputation(listing.seller_id, { withResponse: true })
 
+  const specs = formatAttributesForDisplay(listing.attributes)
   const location = [listing.area, emirateLabel(listing.emirate)].filter(Boolean).join(', ')
   const posted = listing.published_at ?? listing.created_at
   const seller = listing.seller
@@ -238,8 +240,26 @@ export default async function ListingDetailPage({
             </div>
           </div>
 
-          {/* Description — after the details on mobile; bottom-left (row 2) on lg. */}
-          <section className="border-t border-border pt-8 lg:col-span-7 lg:col-start-1 lg:row-start-2">
+          {/* Specifications — category-specific facets, when present. */}
+          {specs.length > 0 && (
+            <section className="border-t border-border pt-8 lg:col-span-7 lg:col-start-1 lg:row-start-2">
+              <p className="eyebrow">Details</p>
+              <dl className="mt-4 grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2">
+                {specs.map((s) => (
+                  <div
+                    key={s.key}
+                    className="flex items-baseline justify-between gap-4 border-b border-border/60 pb-3"
+                  >
+                    <dt className="text-sm text-muted-foreground">{s.label}</dt>
+                    <dd className="text-sm font-medium text-foreground">{s.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+
+          {/* Description — after the details on mobile; bottom-left on lg. */}
+          <section className="border-t border-border pt-8 lg:col-span-7 lg:col-start-1 lg:row-start-3">
             <p className="eyebrow">Description</p>
             <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
               {/* Legacy listings may contain contact details entered before

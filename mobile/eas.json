@@ -9,18 +9,14 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://queryandbuy.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "851278508060-iqm91ca5ko5ps037hkh24ahafos124qo.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "",
-        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": ""
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "851278508060-iqm91ca5ko5ps037hkh24ahafos124qo.apps.googleusercontent.com"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://queryandbuy.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "851278508060-iqm91ca5ko5ps037hkh24ahafos124qo.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "",
-        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": ""
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "851278508060-iqm91ca5ko5ps037hkh24ahafos124qo.apps.googleusercontent.com"
       },
       "ios": { "simulator": false },
       "android": { "buildType": "apk" }
@@ -29,9 +25,7 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://queryandbuy.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "851278508060-iqm91ca5ko5ps037hkh24ahafos124qo.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "",
-        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": ""
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "851278508060-iqm91ca5ko5ps037hkh24ahafos124qo.apps.googleusercontent.com"
       }
     }
   },

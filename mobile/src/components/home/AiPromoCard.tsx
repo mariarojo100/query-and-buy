@@ -41,6 +41,7 @@ export function AiPromoCard({ onStart }: { onStart: () => void }) {
         <ScalePressable
           onPress={onStart}
           accessibilityLabel="Try AI listing"
+          accessibilityRole="button"
           className="mt-3.5 self-start rounded-full bg-primary px-4 py-2.5"
         >
           <Text className="text-[13px] font-semibold text-white">Try AI Listing</Text>

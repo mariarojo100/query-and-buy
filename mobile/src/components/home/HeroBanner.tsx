@@ -36,6 +36,7 @@ export function HeroBanner({ onList }: { onList: () => void }) {
             <ScalePressable
               onPress={onList}
               accessibilityLabel="List your item"
+              accessibilityRole="button"
               className="mt-4 flex-row items-center self-start rounded-full bg-primary py-2.5 pl-4 pr-2.5"
             >
               <Text className="text-[13px] font-semibold text-white">List your item</Text>

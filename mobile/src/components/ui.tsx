@@ -39,6 +39,7 @@ export function ScalePressable({
   onLongPress,
   disabled,
   accessibilityLabel,
+  accessibilityRole,
   hitSlop,
 }: {
   children: React.ReactNode
@@ -48,6 +49,9 @@ export function ScalePressable({
   onLongPress?: () => void
   disabled?: boolean
   accessibilityLabel?: string
+  /** Omit for pressables that CONTAIN their own buttons (e.g. cards with a
+   *  heart) — forcing role="button" nests <button> in <button> on web. */
+  accessibilityRole?: 'button' | 'link' | 'none'
   hitSlop?: number
 }) {
   const scale = useSharedValue(1)
@@ -55,7 +59,7 @@ export function ScalePressable({
   return (
     <Animated.View style={aStyle}>
       <Pressable
-        accessibilityRole="button"
+        accessibilityRole={accessibilityRole}
         onPress={onPress}
         onLongPress={onLongPress}
         disabled={disabled}
@@ -122,6 +126,7 @@ export function Button({
       onPress={onPress}
       disabled={off}
       accessibilityLabel={title}
+      accessibilityRole="button"
       style={{ height: BTN_HEIGHT[size], opacity: off ? 0.55 : 1 }}
       className={`flex-row items-center justify-center rounded-2xl px-6 ${fullWidth ? 'w-full' : ''} ${BTN_SURFACE[variant]}`}
     >

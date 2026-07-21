@@ -49,11 +49,19 @@ export async function resetDb(): Promise<void> {
 
 /** Create a real user (+ profile + role) and return its id and a Viewer. */
 export async function makeUser(
-  opts: { email?: string; roles?: Parameters<typeof deriveViewer>[0]['roles'] } = {},
+  opts: {
+    email?: string
+    roles?: Parameters<typeof deriveViewer>[0]['roles']
+    phoneVerified?: boolean
+  } = {},
 ): Promise<{ id: string; viewer: Viewer }> {
   const id = randomUUID()
   const email = opts.email ?? `${id.slice(0, 8)}@test.ae`
-  await db.user.create({ data: { id, email, hasEmailVerified: true } })
+  // hasMobileVerified is opt-in (default false) — the phone gates on publish and
+  // order confirmation require it; email-only flows leave it off.
+  await db.user.create({
+    data: { id, email, hasEmailVerified: true, hasMobileVerified: opts.phoneVerified ?? false },
+  })
   await db.profile.create({ data: { id, displayName: email.split('@')[0], username: `u_${id.slice(0, 12).replace(/-/g, '')}` } })
   // Seed the real user_roles rows so DB-backed role checks match the Viewer.
   // 'user' is always present (as handle_new_user does); extras are added on top.

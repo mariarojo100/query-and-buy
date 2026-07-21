@@ -37,9 +37,9 @@ import type { Profile } from '@/lib/profile/completion'
  *
  * Deferred / future work (intentionally NOT built yet):
  * - Phone verification: now real — `phone_verified` is flipped only by a genuine
- *   Supabase Auth OTP confirmation (see components/profile/PhoneVerification and
- *   the 20260702120000_phone_verification migration). Still requires an SMS
- *   provider to be configured in the Supabase dashboard to send codes.
+ *   OTP confirmation on the self-managed stack (see components/profile/
+ *   PhoneVerification, app/account/verifyPhone/actions, and lib/sms/twilio-verify).
+ *   Requires Twilio Verify env to be configured to deliver codes.
  * - Cover image: the hero uses a brand gradient. A `cover_image_url` column can
  *   be added later so sellers personalise the hero (fall back to the gradient).
  * - Pagination: reviews (6) and listings (12) are capped fetches. Add a

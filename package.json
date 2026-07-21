@@ -21,10 +21,14 @@
     "check:boundaries": "node scripts/check-db-boundaries.mjs",
     "test:unit": "node --import tsx tests/unit/run.ts",
     "test:authz": "node --import tsx tests/authz/run.ts",
-    "test:api": "node --import tsx tests/api/run.ts",
     "test:verification": "node --import tsx tests/verification/run.ts",
+    "test:api": "node --import tsx tests/api/run.ts",
     "audit:contact": "node --env-file=.env.local --import tsx scripts/audit-contact-info.ts",
-    "diff:schema": "node --env-file=.env.local --import tsx scripts/diff-schema.ts"
+    "diff:schema": "node --env-file=.env.local --import tsx scripts/diff-schema.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
+    "db:reset": "prisma migrate reset"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1080.0",

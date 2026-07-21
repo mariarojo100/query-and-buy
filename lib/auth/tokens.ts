@@ -1,11 +1,10 @@
 /**
- * lib/auth/tokens — email-verify / password-reset tokens
- * (MIGRATION FOUNDATION, not yet in runtime use).
+ * lib/auth/tokens — email-verify / password-reset tokens.
  * ===========================================================================
- * Replaces Supabase Auth's confirmation/recovery links. A cryptographically
- * random token is returned to the caller (to embed in an email link); only its
- * SHA-256 hash is persisted, so a database leak does not expose usable tokens.
- * Redemption is atomic and single-use (see lib/db/auth#consumeVerificationToken).
+ * The confirmation/recovery link machinery. A cryptographically random token
+ * is returned to the caller (to embed in an email link); only its SHA-256 hash
+ * is persisted, so a database leak does not expose usable tokens. Redemption is
+ * atomic and single-use (see lib/db/auth#consumeVerificationToken).
  */
 import { randomBytes, createHash } from 'node:crypto'
 import {

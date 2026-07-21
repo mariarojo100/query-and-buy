@@ -7,7 +7,9 @@
     "start": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node ./scripts/nest-tailwind-shim.js",
+    "eas-build-post-install": "node ./scripts/nest-tailwind-shim.js"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

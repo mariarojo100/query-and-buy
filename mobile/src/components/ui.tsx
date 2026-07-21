@@ -109,6 +109,7 @@ export function Button({
   loading,
   disabled,
   icon,
+  trailingIcon,
   fullWidth = true,
 }: {
   title: string
@@ -118,6 +119,8 @@ export function Button({
   loading?: boolean
   disabled?: boolean
   icon?: keyof typeof Ionicons.glyphMap
+  /** Trailing glyph (e.g. arrow-forward) — rendered in gold on solid buttons. */
+  trailingIcon?: keyof typeof Ionicons.glyphMap
   fullWidth?: boolean
 }) {
   const off = disabled || loading
@@ -137,6 +140,14 @@ export function Button({
         <>
           {icon ? <Ionicons name={icon} size={18} color={labelColor} style={{ marginRight: 8 }} /> : null}
           <Text className={`text-[15px] font-semibold ${BTN_LABEL[variant]}`}>{title}</Text>
+          {trailingIcon ? (
+            <Ionicons
+              name={trailingIcon}
+              size={17}
+              color={variant === 'primary' || variant === 'danger' ? COLORS.accent : labelColor}
+              style={{ marginLeft: 8 }}
+            />
+          ) : null}
         </>
       )}
     </ScalePressable>

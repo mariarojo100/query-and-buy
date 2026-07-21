@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
+import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useForm, Controller } from 'react-hook-form'
@@ -11,7 +12,11 @@ import { SignupSchema, type SignupInput } from '@qb/shared'
 import { useAuth } from '@/auth/AuthContext'
 import { ApiError } from '@/api/client'
 import { COLORS } from '@/theme/colors'
-import { BrandMark, Field, PrimaryButton } from '@/components/ui'
+import { Button, BrandMark, Field } from '@/components/ui'
+
+// Warm minimalist-interior stock photo (Unsplash, free licence). For production,
+// download this into assets/ and require() it so the hero works offline.
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=900&q=80'
 
 export default function SignupScreen() {
   const router = useRouter()
@@ -42,8 +47,16 @@ export default function SignupScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      {/* ── Hero ─────────────────────────────────────────────────── */}
-      <LinearGradient colors={['#EFEBE3', '#E4DFD4']} className="absolute left-0 right-0 top-0" style={{ height: 320 }} />
+      {/* ── Hero (lifestyle photo + soft scrim) ─────────────────── */}
+      <View className="absolute left-0 right-0 top-0" style={{ height: 340 }}>
+        <Image source={{ uri: HERO_IMAGE }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={300} />
+        <LinearGradient
+          colors={['rgba(246,245,240,0.82)', 'rgba(246,245,240,0.34)', 'rgba(246,245,240,0.66)']}
+          locations={[0, 0.55, 1]}
+          className="absolute left-0 right-0 top-0"
+          style={{ height: 340 }}
+        />
+      </View>
       <SafeAreaView edges={['top']}>
         <View className="px-5 pt-1">
           <Pressable onPress={() => router.back()} hitSlop={10} className="h-10 w-10 items-center justify-center rounded-full bg-card" accessibilityLabel="Close">
@@ -52,10 +65,18 @@ export default function SignupScreen() {
         </View>
         <View className="items-center px-6 pb-7 pt-3">
           <BrandMark size={64} />
-          <Text className="mt-3.5 text-[27px] font-extrabold tracking-tight text-ink">
+          <Text
+            className="mt-3.5 text-[27px] font-extrabold tracking-tight text-ink"
+            style={{ textShadowColor: 'rgba(246,245,240,0.95)', textShadowRadius: 12, textShadowOffset: { width: 0, height: 1 } }}
+          >
             Query <Text className="text-accent">&</Text> Buy
           </Text>
-          <Text className="mt-1.5 text-[14px] text-ink-soft">Premium finds. Great prices. Near you.</Text>
+          <Text
+            className="mt-1.5 text-[14px] font-medium text-ink-soft"
+            style={{ textShadowColor: 'rgba(246,245,240,0.95)', textShadowRadius: 10 }}
+          >
+            Premium finds. Great prices. Near you.
+          </Text>
         </View>
       </SafeAreaView>
 
@@ -108,7 +129,7 @@ export default function SignupScreen() {
             ) : null}
 
             <View className="mt-1">
-              <PrimaryButton title="Create account" onPress={() => void submit()} loading={busy} />
+              <Button title="Create account" trailingIcon="arrow-forward" onPress={() => void submit()} loading={busy} />
             </View>
 
             <Text className="mt-3 text-center text-[11px] leading-[16px] text-muted">

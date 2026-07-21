@@ -4,11 +4,11 @@
  * tailwind.config.js exactly. Keep the two in sync.
  */
 export const COLORS = {
-  // Brand
-  primary: '#0B6B50',
-  primaryDark: '#074A39',
-  primaryLight: '#E4EEE8',
-  primaryTint: '#F0F6F2',
+  // Brand — "primary" is now the ink action colour; gold lives in accent*.
+  primary: '#17190F',
+  primaryDark: '#0C0D08',
+  primaryLight: '#ECE9DF',
+  primaryTint: '#F4F2EB',
   accent: '#C4A24E',
   accentDeep: '#94742C',
   accentLight: '#F4ECD6',

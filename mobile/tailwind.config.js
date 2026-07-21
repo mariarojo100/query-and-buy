@@ -25,7 +25,10 @@ module.exports = {
     extend: {
       colors: {
         // ── Brand ────────────────────────────────────────────────
-        primary: { DEFAULT: '#0B6B50', dark: '#074A39', light: '#E4EEE8', tint: '#F0F6F2' },
+        // "primary" is the ink action colour (near-black buttons/emphasis);
+        // "accent" is the warm gold highlight (FAB, active, verified, ribbons).
+        // The former emerald is fully retired for the ink+gold "day" identity.
+        primary: { DEFAULT: '#17190F', dark: '#0C0D08', light: '#ECE9DF', tint: '#F4F2EB' },
         accent: { DEFAULT: '#C4A24E', deep: '#94742C', light: '#F4ECD6' },
 
         // ── Status ───────────────────────────────────────────────

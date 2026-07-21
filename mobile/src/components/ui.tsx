@@ -1,9 +1,10 @@
 /**
  * src/components/ui — the Query & Buy design-system primitives (NativeWind v4).
  *
- * Language: warm editorial canvas, emerald brand, brass accent, layered
+ * Language: warm editorial canvas, ink action colour, warm gold accent, layered
  * surfaces (background → sunken → surface → elevated), a deliberate type
  * ladder, and a controlled radius system (fields 14 · cards 22 · pills).
+ * Day-mode only (see darkMode:'class' in tailwind.config.js).
  * Press feedback = a subtle spring to 97%; loading surfaces breathe.
  *
  * Type ladder (documented; applied via classes across screens):
@@ -336,7 +337,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   )
 }
 
-/** The brand mark — emerald magnifier tile with a brass lens dot (app-icon motif). */
+/** The brand mark — ink magnifier tile with a gold lens dot (app-icon motif). */
 export function BrandMark({ size = 64 }: { size?: number }) {
   return (
     <View className="relative items-center justify-center rounded-qb bg-primary" style={{ width: size, height: size }}>

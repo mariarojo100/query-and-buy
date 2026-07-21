@@ -1,9 +1,9 @@
 /**
  * TabBar — the app's bottom navigation, art-directed (not the default RN bar).
  *
- * Five slots: Home · Explore · Sell · Inbox · Profile. Sell is a raised emerald
+ * Five slots: Home · Explore · Sell · Inbox · Profile. Sell is a raised gold
  * circle (a deliberate brand action, not a generic floating FAB). Active tabs
- * use a filled glyph + emerald label; inactive use an outline glyph + muted
+ * use a filled glyph + gold label; inactive use an outline glyph + muted
  * label. Safe-area aware; hairline top seam + soft top shadow lift it off the
  * content.
  */

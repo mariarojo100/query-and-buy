@@ -62,13 +62,13 @@ export function TabBar({ state, navigation, unread = 0 }: BottomTabBarProps & { 
                 onPress={() => go(slot.name)}
                 accessibilityRole="button"
                 accessibilityLabel="Sell an item"
-                className="items-center justify-center rounded-full bg-primary active:opacity-90"
+                className="items-center justify-center rounded-full bg-accent active:opacity-90"
                 style={{
                   width: 52,
                   height: 52,
                   marginTop: -22,
-                  shadowColor: COLORS.primaryDark,
-                  shadowOpacity: 0.3,
+                  shadowColor: COLORS.accentDeep,
+                  shadowOpacity: 0.35,
                   shadowRadius: 10,
                   shadowOffset: { width: 0, height: 5 },
                   elevation: 8,
@@ -76,7 +76,7 @@ export function TabBar({ state, navigation, unread = 0 }: BottomTabBarProps & { 
               >
                 <Ionicons name="add" size={26} color="#fff" />
               </Pressable>
-              <Text className="mt-1 text-[10.5px] font-bold text-primary dark:text-primary-light">Sell</Text>
+              <Text className="mt-1 text-[10.5px] font-bold text-accent-deep">Sell</Text>
             </View>
           )
         }
@@ -94,7 +94,7 @@ export function TabBar({ state, navigation, unread = 0 }: BottomTabBarProps & { 
               <Ionicons
                 name={focused ? slot.iconActive : slot.icon}
                 size={22}
-                color={focused ? COLORS.primary : COLORS.muted}
+                color={focused ? COLORS.accentDeep : COLORS.muted}
               />
               {showBadge ? (
                 <View className="absolute -right-0.5 top-0 min-w-[16px] items-center justify-center rounded-full bg-danger px-1" style={{ height: 16 }}>
@@ -102,7 +102,7 @@ export function TabBar({ state, navigation, unread = 0 }: BottomTabBarProps & { 
                 </View>
               ) : null}
             </View>
-            <Text className={`mt-1 text-[10.5px] font-semibold ${focused ? 'text-primary dark:text-primary-light' : 'text-muted dark:text-muted-dark'}`}>
+            <Text className={`mt-1 text-[10.5px] font-semibold ${focused ? 'text-accent-deep' : 'text-muted dark:text-muted-dark'}`}>
               {slot.label}
             </Text>
           </Pressable>

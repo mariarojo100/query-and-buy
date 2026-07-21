@@ -11,7 +11,7 @@ const config: ExpoConfig = {
   scheme: 'queryandbuy',
   version: '0.1.0',
   orientation: 'portrait',
-  userInterfaceStyle: 'automatic',
+  userInterfaceStyle: 'light',
   newArchEnabled: true,
   icon: './assets/icon.png',
   ios: {

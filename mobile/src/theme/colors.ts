@@ -9,9 +9,9 @@ export const COLORS = {
   primaryDark: '#074A39',
   primaryLight: '#E4EEE8',
   primaryTint: '#F0F6F2',
-  accent: '#B2842F',
-  accentDeep: '#7C5A17',
-  accentLight: '#F3EAD4',
+  accent: '#C4A24E',
+  accentDeep: '#94742C',
+  accentLight: '#F4ECD6',
   // Status
   danger: '#C13B3B',
   success: '#1E8A5F',

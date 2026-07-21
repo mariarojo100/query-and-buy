@@ -94,33 +94,34 @@ export default function HomeScreen() {
         {/* ── Header ─────────────────────────────────────────────── */}
         <View className="flex-row items-center px-5 pt-2">
           <View className="flex-1">
-            <Text className="text-[20px] font-extrabold tracking-tight text-primary-dark dark:text-ink-dark">
+            <Text className="text-[20px] font-extrabold tracking-tight text-ink">
               Query <Text className="text-accent">&</Text> Buy
             </Text>
             <Pressable onPress={pickEmirate} hitSlop={8} className="mt-0.5 flex-row items-center" accessibilityLabel="Choose emirate">
-              <Ionicons name="location" size={12} color={COLORS.primary} />
-              <Text className="ml-1 text-[12.5px] font-semibold text-primary dark:text-primary-light">{emirateLabel}</Text>
-              <Ionicons name="chevron-down" size={12} color={COLORS.primary} />
+              <Ionicons name="location" size={12} color={COLORS.accentDeep} />
+              <Text className="ml-1 text-[12.5px] font-semibold text-ink">{emirateLabel}</Text>
+              <Ionicons name="chevron-down" size={12} color={COLORS.inkSoft} />
             </Pressable>
           </View>
           <Pressable
             onPress={() => (user ? router.push('/account/notifications' as never) : router.push('/(auth)/login'))}
-            hitSlop={8}
+            hitSlop={10}
             accessibilityLabel="Notifications"
-            className="h-10 w-10 items-center justify-center rounded-full border border-border bg-card active:opacity-80 dark:border-border-dark dark:bg-card-dark"
+            className="h-10 w-10 items-center justify-center active:opacity-60"
           >
-            <Ionicons name="notifications-outline" size={19} color={COLORS.inkSoft} />
+            <Ionicons name="notifications-outline" size={22} color={COLORS.ink} />
           </Pressable>
           <Pressable
             onPress={() => router.push(user ? '/(tabs)/account' : '/(auth)/login')}
             hitSlop={6}
             accessibilityLabel="Profile"
-            className="ml-2.5 h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary"
+            className="ml-1.5 h-10 w-10 items-center justify-center overflow-hidden rounded-full"
+            style={{ backgroundColor: '#D8D2C6' }}
           >
             {user?.avatarUrl ? (
               <Image source={{ uri: user.avatarUrl }} style={{ width: '100%', height: '100%' }} />
             ) : (
-              <Text className="text-[15px] font-bold text-white">{(user?.displayName ?? 'G').slice(0, 1).toUpperCase()}</Text>
+              <Text className="text-[15px] font-bold text-ink">{(user?.displayName ?? 'G').slice(0, 1).toUpperCase()}</Text>
             )}
           </Pressable>
         </View>
@@ -137,9 +138,9 @@ export default function HomeScreen() {
             <Text numberOfLines={1} className="ml-3 flex-1 text-[14px] text-muted dark:text-muted-dark">
               Search for items, brands or categories…
             </Text>
-            <View className="flex-row items-center rounded-full bg-primary px-2.5 py-1.5">
-              <Ionicons name="sparkles" size={12} color="#fff" />
-              <Text className="ml-1 text-[10.5px] font-bold text-white">AI</Text>
+            <View className="flex-row items-center rounded-full px-2.5 py-1.5" style={{ backgroundColor: COLORS.accentLight }}>
+              <Ionicons name="sparkles" size={12} color={COLORS.accentDeep} />
+              <Text className="ml-1 text-[10.5px] font-bold text-accent-deep">AI</Text>
             </View>
           </Pressable>
         </View>
@@ -164,7 +165,10 @@ export default function HomeScreen() {
 
         {/* ── Hero ───────────────────────────────────────────────── */}
         <View className="pt-4">
-          <HeroBanner onList={() => router.push(user ? '/sell/new' : '/(auth)/login')} />
+          <HeroBanner
+            onList={() => router.push(user ? '/sell/new' : '/(auth)/login')}
+            onExplore={() => router.push('/(tabs)/explore' as never)}
+          />
         </View>
 
         {/* ── Categories ─────────────────────────────────────────── */}
@@ -187,7 +191,7 @@ export default function HomeScreen() {
                   accessibilityLabel={`Browse ${c.name_en}`}
                 >
                   <View className="h-[58px] w-[58px] items-center justify-center rounded-2xl border border-border bg-card dark:border-border-dark dark:bg-card-dark">
-                    <Ionicons name={CATEGORY_ICONS[c.slug] ?? 'pricetag-outline'} size={24} color={COLORS.primary} />
+                    <Ionicons name={CATEGORY_ICONS[c.slug] ?? 'pricetag-outline'} size={24} color={COLORS.ink} />
                   </View>
                   <Text numberOfLines={2} className="mt-1.5 text-center text-[10.5px] font-semibold leading-[13px] text-ink-soft dark:text-ink-soft-dark">
                     {c.name_en}

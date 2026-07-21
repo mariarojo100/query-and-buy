@@ -16,13 +16,17 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./app/**/*.{ts,tsx}', './src/**/*.{ts,tsx}'],
+  // Day-mode-only product: `dark:` variants activate on a `dark` class that is
+  // never applied (see colorScheme.set('light') in app/_layout.tsx), so the UI
+  // always renders the light theme regardless of the device appearance.
+  darkMode: 'class',
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
       colors: {
         // ── Brand ────────────────────────────────────────────────
         primary: { DEFAULT: '#0B6B50', dark: '#074A39', light: '#E4EEE8', tint: '#F0F6F2' },
-        accent: { DEFAULT: '#B2842F', deep: '#7C5A17', light: '#F3EAD4' },
+        accent: { DEFAULT: '#C4A24E', deep: '#94742C', light: '#F4ECD6' },
 
         // ── Status ───────────────────────────────────────────────
         danger: { DEFAULT: '#C13B3B', tint: '#F8E6E3' },

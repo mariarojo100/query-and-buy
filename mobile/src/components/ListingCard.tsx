@@ -91,7 +91,7 @@ export function ListingCard({ listing }: { listing: FeedListingDto }) {
               <Text className="text-[9px] font-extrabold uppercase tracking-wide text-white">Featured</Text>
             </View>
           ) : showNew ? (
-            <View className="rounded-md bg-ink/75 px-2 py-1">
+            <View className="rounded-md bg-accent px-2 py-1">
               <Text className="text-[9px] font-extrabold uppercase tracking-wide text-white">New</Text>
             </View>
           ) : null}
@@ -121,7 +121,7 @@ export function ListingCard({ listing }: { listing: FeedListingDto }) {
             {[emirate, listing.published_at ? timeAgo(listing.published_at) : ''].filter(Boolean).join('  ·  ')}
           </Text>
           {verifiedSeller ? (
-            <Ionicons name="checkmark-circle" size={13} color={COLORS.primary} style={{ marginLeft: 5 }} />
+            <Ionicons name="checkmark-circle" size={13} color={COLORS.accent} style={{ marginLeft: 5 }} />
           ) : null}
         </View>
       </View>

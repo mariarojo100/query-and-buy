@@ -384,14 +384,14 @@ export function Chip({ label, onPress, selected = false, icon }: { label: string
       accessibilityState={{ selected }}
       className={`flex-row items-center rounded-full border px-3.5 py-2 active:opacity-80 ${
         selected
-          ? 'border-primary bg-primary'
+          ? 'border-accent bg-accent-light'
           : 'border-border bg-card dark:border-border-dark dark:bg-card-dark'
       }`}
     >
       {icon ? (
-        <Ionicons name={icon} size={13} color={selected ? '#fff' : COLORS.muted} style={{ marginRight: 5 }} />
+        <Ionicons name={icon} size={13} color={selected ? COLORS.accentDeep : COLORS.muted} style={{ marginRight: 5 }} />
       ) : null}
-      <Text className={`text-[12.5px] font-semibold ${selected ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>{label}</Text>
+      <Text className={`text-[12.5px] font-semibold ${selected ? 'text-ink' : 'text-ink dark:text-ink-dark'}`}>{label}</Text>
     </Pressable>
   )
 }
@@ -416,8 +416,8 @@ export function SectionHeader({
       </View>
       {action && onAction ? (
         <Pressable onPress={onAction} hitSlop={8} accessibilityRole="button" className="flex-row items-center">
-          <Text className="text-[13px] font-semibold text-primary dark:text-primary-light">{action}</Text>
-          <Ionicons name="chevron-forward" size={13} color={COLORS.primary} style={{ marginLeft: 1 }} />
+          <Text className="text-[13px] font-semibold text-ink-soft dark:text-ink-soft-dark">{action}</Text>
+          <Ionicons name="chevron-forward" size={13} color={COLORS.inkSoft} style={{ marginLeft: 1 }} />
         </Pressable>
       ) : null}
     </View>

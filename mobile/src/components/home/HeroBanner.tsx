@@ -1,23 +1,46 @@
 /**
  * HeroBanner — the home marketing carousel. Warm greige card, editorial ink
- * headline, an ink call-to-action with a gold arrow, and a paged set of value
- * props with a working dot indicator. The right-hand motif is a warm stand-in
- * for a lifestyle photo (swap in real marketing art later). Light theme only.
+ * headline, an ink CTA with a gold arrow, and a paged set of value props with a
+ * working dot indicator. A warm lifestyle photo sits on the right of each slide,
+ * blended into the card so the left-hand copy stays on a solid, legible ground.
+ * Light theme only.
+ *
+ * The hero photo is a remote stock image (Unsplash, free licence) for now —
+ * bundle it into assets/ + require() for offline production use.
  */
 import React, { useRef, useState } from 'react'
-import { Dimensions, ScrollView, Text, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native'
+import { Dimensions, ScrollView, StyleSheet, Text, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native'
+import { Image } from 'expo-image'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { ScalePressable } from '@/components/ui'
 import { COLORS } from '@/theme/colors'
 
-type Slide = { title: string; sub: string; cta: string; onPress: () => void; icon: keyof typeof Ionicons.glyphMap }
+const CARD = '#ECE7DB'
+const HERO_A = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80'
+const HERO_B = 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=800&q=80'
+
+type Slide = { title: string; sub: string; cta: string; onPress: () => void; image: string }
 
 const GUTTER = 20 // mirrors mx-5
 
 function HeroSlide({ slide, width }: { slide: Slide; width: number }) {
   return (
-    <View style={{ width }} className="flex-row overflow-hidden rounded-card" >
-      <View className="flex-1 py-5 pl-5 pr-2" style={{ maxWidth: '62%' }}>
+    <View style={{ width, height: 202 }}>
+      {/* Lifestyle photo on the right, blended into the card */}
+      <View className="absolute bottom-0 right-0 top-0 overflow-hidden" style={{ width: '55%' }}>
+        <Image source={{ uri: slide.image }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={300} />
+        <LinearGradient
+          colors={[CARD, 'rgba(236,231,219,0.15)', 'rgba(236,231,219,0)']}
+          locations={[0, 0.55, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
+
+      {/* Copy */}
+      <View className="py-5 pl-5 pr-2" style={{ maxWidth: '62%' }}>
         <Text className="text-[21px] font-extrabold leading-[26px] tracking-tight text-ink">{slide.title}</Text>
         <Text className="mt-2 text-[12.5px] leading-[17px] text-ink-soft">{slide.sub}</Text>
         <ScalePressable
@@ -32,21 +55,6 @@ function HeroSlide({ slide, width }: { slide: Slide; width: number }) {
           </View>
         </ScalePressable>
       </View>
-
-      {/* Warm lifestyle motif (stand-in) */}
-      <View className="flex-1 items-center justify-center">
-        <View className="absolute h-32 w-32 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.5)' }} />
-        <View
-          className="items-center justify-center rounded-2xl"
-          style={{ width: 78, height: 92, backgroundColor: '#FFFFFF', shadowColor: '#7A6A45', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 5 }}
-        >
-          <View className="h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: COLORS.accentLight }}>
-            <Ionicons name={slide.icon} size={22} color={COLORS.accentDeep} />
-          </View>
-          <View className="mt-2 h-1.5 w-11 rounded-full" style={{ backgroundColor: '#E7E1D3' }} />
-          <View className="mt-1 h-1.5 w-7 rounded-full" style={{ backgroundColor: '#E7E1D3' }} />
-        </View>
-      </View>
     </View>
   )
 }
@@ -57,9 +65,9 @@ export function HeroBanner({ onList, onExplore }: { onList: () => void; onExplor
   const ref = useRef<ScrollView>(null)
 
   const slides: Slide[] = [
-    { title: 'Premium finds.\nGreat prices.\nNear you.', sub: 'Buy and sell trusted items across the UAE.', cta: 'List your item', onPress: onList, icon: 'bag-handle' },
-    { title: 'Sell in\nminutes.', sub: 'Snap a photo — our AI writes the listing for you.', cta: 'Start selling', onPress: onList, icon: 'camera' },
-    { title: 'Buy with\nconfidence.', sub: 'Verified sellers across all seven emirates.', cta: 'Explore now', onPress: onExplore, icon: 'shield-checkmark' },
+    { title: 'Premium finds.\nGreat prices.\nNear you.', sub: 'Buy and sell trusted items across the UAE.', cta: 'List your item', onPress: onList, image: HERO_B },
+    { title: 'Sell in\nminutes.', sub: 'Snap a photo — our AI writes the listing for you.', cta: 'Start selling', onPress: onList, image: HERO_A },
+    { title: 'Buy with\nconfidence.', sub: 'Verified sellers across all seven emirates.', cta: 'Explore now', onPress: onExplore, image: HERO_B },
   ]
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -70,7 +78,7 @@ export function HeroBanner({ onList, onExplore }: { onList: () => void; onExplor
   return (
     <View
       className="mx-5 overflow-hidden rounded-card"
-      style={{ backgroundColor: '#ECE7DB', shadowColor: '#7A6A45', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 2 }}
+      style={{ backgroundColor: CARD, shadowColor: '#7A6A45', shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 2 }}
     >
       <ScrollView
         ref={ref}

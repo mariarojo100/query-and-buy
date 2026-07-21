@@ -1,8 +1,9 @@
 /**
  * AiPromoCard — home promo for the AI listing flow. Calm, useful, not gimmicky:
- * a short value line + an ink CTA, with a small composed "smart listing" motif
- * (an ink card with checklist rows + restrained gold sparkles). Light theme
- * only. Wires to the real sell flow.
+ * a short value line + an ink CTA, with a composed phone motif showing an
+ * AI-generated listing (image + title lines + gold price) and restrained gold
+ * sparkles. A phone mock rather than a stock photo, since it depicts the app
+ * itself. Light theme only. Wires to the real sell flow.
  */
 import React from 'react'
 import { Text, View } from 'react-native'
@@ -12,21 +13,33 @@ import { COLORS } from '@/theme/colors'
 
 function AiMotif() {
   return (
-    <View className="h-[76px] w-[72px] items-center justify-center">
-      <Ionicons name="sparkles" size={14} color={COLORS.accent} style={{ position: 'absolute', top: 0, right: 2 }} />
-      <Ionicons name="sparkles" size={9} color={COLORS.accent} style={{ position: 'absolute', bottom: 4, left: 0 }} />
+    <View className="h-[88px] w-[82px] items-center justify-center">
+      {/* sparkles */}
+      <Ionicons name="sparkles" size={15} color={COLORS.accent} style={{ position: 'absolute', top: -2, right: 2, zIndex: 2 }} />
+      <Ionicons name="sparkles" size={10} color={COLORS.accent} style={{ position: 'absolute', bottom: 2, left: -1, zIndex: 2 }} />
+      <Ionicons name="star" size={7} color={COLORS.accent} style={{ position: 'absolute', top: 22, left: 4, zIndex: 2 }} />
+      {/* phone */}
       <View
-        className="rounded-2xl bg-ink px-3 py-3"
-        style={{ shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 }}
+        style={{
+          width: 58,
+          height: 90,
+          transform: [{ rotate: '7deg' }],
+          backgroundColor: COLORS.ink,
+          shadowColor: '#000',
+          shadowOpacity: 0.22,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 5 },
+          elevation: 5,
+        }}
+        className="rounded-[15px] p-[3px]"
       >
-        {[0, 1, 2].map((i) => (
-          <View key={i} className="mb-1.5 flex-row items-center">
-            <View className="h-2.5 w-2.5 items-center justify-center rounded-full" style={{ backgroundColor: COLORS.accent }}>
-              <Ionicons name="checkmark" size={7} color={COLORS.ink} />
-            </View>
-            <View className="ml-1.5 h-1.5 rounded-full bg-white/35" style={{ width: i === 2 ? 16 : 24 }} />
-          </View>
-        ))}
+        {/* screen — a mini AI-generated listing */}
+        <View className="h-full w-full overflow-hidden rounded-[12px] bg-card p-1.5">
+          <View className="h-8 w-full rounded-md" style={{ backgroundColor: '#E7E1D3' }} />
+          <View className="mt-1.5 h-1 w-3/4 rounded-full" style={{ backgroundColor: '#D9D3C5' }} />
+          <View className="mt-1 h-1 w-1/2 rounded-full" style={{ backgroundColor: '#D9D3C5' }} />
+          <View className="mt-1.5 h-1.5 w-2/5 rounded-full" style={{ backgroundColor: COLORS.accent }} />
+        </View>
       </View>
     </View>
   )

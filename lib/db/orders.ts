@@ -109,6 +109,22 @@ const fail = (error: string): Fail => ({ ok: false, error })
 // --- reads ------------------------------------------------------------------
 
 /** The order (if any) + its offer history for a conversation. Participant-scoped. */
+/**
+ * True once BOTH parties have confirmed the order for this conversation (i.e.
+ * contact details are unlocked). Cheap single-column read — used by messaging
+ * to make contact-info filtering state-aware. Scoped to a participant.
+ */
+export async function isContactRevealedForConversation(
+  viewer: Viewer,
+  conversationId: string,
+): Promise<boolean> {
+  const order = await db.order.findFirst({
+    where: { conversationId, OR: [{ buyerId: viewer.id }, { sellerId: viewer.id }] },
+    select: { contactRevealed: true },
+  })
+  return order?.contactRevealed === true
+}
+
 export async function conversationOrderFor(viewer: Viewer, conversationId: string): Promise<ConversationOrder> {
   const order = await db.order.findFirst({
     where: { conversationId, OR: [{ buyerId: viewer.id }, { sellerId: viewer.id }] },
@@ -315,7 +331,7 @@ export async function confirmOrderFor(viewer: Viewer, orderId: string): Promise<
   }
 }
 
-export type CancelResult = { ok: true; conversationId: string | null } | Fail
+export type CancelResult = { ok: true; orderId: string; conversationId: string | null } | Fail
 
 /** Either party cancels. Frees the listing if it had been reserved by this order. */
 export async function cancelOrderFor(viewer: Viewer, orderId: string): Promise<CancelResult> {
@@ -332,7 +348,7 @@ export async function cancelOrderFor(viewer: Viewer, orderId: string): Promise<C
     ops.push(db.listing.updateMany({ where: { id: order.listingId, status: 'reserved' }, data: { status: 'active' } }))
   }
   await db.$transaction(ops)
-  return { ok: true, conversationId: order.conversationId }
+  return { ok: true, orderId: order.id, conversationId: order.conversationId }
 }
 
 export type SellSummary = { orderId: string; buyerId: string; sellerId: string; acceptedPriceFils: number | null; conversationId: string | null; listingId: string }

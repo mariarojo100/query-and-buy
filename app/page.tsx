@@ -1,5 +1,5 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { TrendingUpIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
@@ -8,8 +8,9 @@ import { SaveSearchButton } from '@/components/search/SaveSearchButton'
 import { SmartSearchBox } from '@/components/search/SmartSearchBox'
 import { CategoryChips } from '@/components/listing/CategoryChips'
 import { ListingResults } from '@/components/listing/ListingResults'
-import { TrustStats } from '@/components/home/TrustStats'
-import { CategoryShowcase } from '@/components/home/CategoryShowcase'
+import { HomeHero } from '@/components/home/HomeHero'
+import { CategoryRail } from '@/components/home/CategoryRail'
+import { TrustBar } from '@/components/home/TrustBar'
 import { ContinueNegotiation } from '@/components/home/ContinueNegotiation'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { WhyAI } from '@/components/home/WhyAI'
@@ -17,7 +18,6 @@ import { Button } from '@/components/ui/button'
 import {
   getActiveCategories,
   getCategoryBySlug,
-  getCategoryCounts,
   getFeaturedListings,
   getFilteredListings,
 } from '@/lib/listings/queries'
@@ -29,10 +29,47 @@ import {
   getSavedSearchMatches,
 } from '@/lib/personalization/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
+import {
+  resolveAttributeFieldsForSlug,
+  parseAttributeFilters,
+} from '@/lib/listings/attributeSchemas'
 import { getTrendingSearches } from '@/lib/search/intelligence'
 
 const NO_MATCH = ['00000000-0000-0000-0000-000000000000']
-const POPULAR = ['iPhone', 'Toyota', 'PlayStation 5', 'Apartment in Dubai', 'Rolex']
+
+/** True when the homepage is being used as a search/filter results view. */
+function hasActiveFilters(parsed: ReturnType<typeof parseSearch>): boolean {
+  return Boolean(
+    parsed.q ||
+      parsed.categorySlug ||
+      parsed.emirate ||
+      parsed.condition ||
+      parsed.minFils ||
+      parsed.maxFils ||
+      parsed.negotiable ||
+      parsed.featured ||
+      parsed.sinceDays ||
+      parsed.sort !== 'newest',
+  )
+}
+
+/**
+ * Filtered/search states of the homepage (e.g. /?q=iPhone, /?sort=price_asc)
+ * are near-duplicate, low-value URLs — keep them out of the index (but still
+ * let Google follow the links) and canonicalize back to the clean homepage.
+ * The unfiltered homepage keeps the site's default index:true.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<RawSearchParams>
+}): Promise<Metadata> {
+  const parsed = parseSearch(await searchParams)
+  if (hasActiveFilters(parsed)) {
+    return { robots: { index: false, follow: true }, alternates: { canonical: '/' } }
+  }
+  return {}
+}
 
 export default async function HomePage({
   searchParams,
@@ -59,6 +96,10 @@ export default async function HomePage({
     categoryIds = cat?.ids ?? NO_MATCH
   }
 
+  // Category-specific facet filters (only meaningful once a category is chosen).
+  const attributeFields = resolveAttributeFieldsForSlug(parsed.categorySlug, categories)
+  const attributeFilters = parseAttributeFilters(attributeFields, sp)
+
   const { listings, count } = await getFilteredListings({
     q: parsed.q,
     categoryIds,
@@ -70,11 +111,11 @@ export default async function HomePage({
     featured: parsed.featured,
     sinceDays: parsed.sinceDays,
     sort: parsed.sort,
+    attributes: attributeFilters,
   })
 
   const user = await getViewer()
   const favoritedIds = await getFavoritedIds(listings.map((l) => l.id))
-  const counts = hasFilters ? undefined : await getCategoryCounts(categories)
   const trending = hasFilters ? [] : await getTrendingSearches(8)
   const featured = hasFilters ? [] : await getFeaturedListings(8)
   const featuredFav = featured.length
@@ -109,9 +150,11 @@ export default async function HomePage({
           /* ---------- SEARCH RESULTS ---------- */
           <section id="listings" className="scroll-mt-20 py-8 sm:py-10">
             <div className="mb-6 flex items-end justify-between gap-4">
-              <div>
-                <p className="eyebrow">Results</p>
-                <h1 className="font-display mt-1.5 text-3xl tracking-tight">Search</h1>
+              <div className="min-w-0">
+                <p className="eyebrow">{count === 1 ? '1 result' : `${count.toLocaleString('en-AE')} results`}</p>
+                <h1 className="font-display mt-1.5 truncate text-3xl tracking-tight sm:text-4xl">
+                  {parsed.q?.trim() ? parsed.q : 'Browse listings'}
+                </h1>
               </div>
               <SaveSearchButton authed={!!user} />
             </div>
@@ -119,60 +162,44 @@ export default async function HomePage({
               <SmartSearchBox />
             </div>
             <div className="space-y-6">
-              <SearchControls categories={categories} />
+              <SearchControls
+                categories={categories}
+                attributeFields={attributeFields}
+                hideSearch
+                hideCategory
+              />
               <CategoryChips categories={categories} activeSlug={parsed.categorySlug} />
-              <div className="pt-2">{feed}</div>
+              <div className="pt-2">
+                <ListingResults
+                  listings={listings}
+                  count={count}
+                  favoritedIds={favoritedIds}
+                  authed={!!user}
+                  query={parsed.q}
+                  resetHref="/"
+                />
+              </div>
             </div>
           </section>
         ) : (
           <>
-            {/* ---------- COMPACT HERO ---------- */}
-            <section className="animate-rise pb-8 pt-10 text-center sm:pb-10 sm:pt-14">
-              <p className="eyebrow">AI Marketplace · United Arab Emirates</p>
-              <h1 className="font-display mx-auto mt-5 max-w-3xl text-[2.6rem] leading-[1.03] tracking-tight sm:text-6xl">
-                Snap. Sell. Done.
-              </h1>
-              <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Create a listing from your photos in seconds — buy &amp; sell beautifully across the
-                Emirates.
-              </p>
-              <div className="mx-auto mt-7 max-w-2xl">
-                <SmartSearchBox trending={trending.map((t) => t.query)} />
-              </div>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                <span className="eyebrow mr-1">Popular</span>
-                {POPULAR.map((q) => (
-                  <Link
-                    key={q}
-                    href={`/?q=${encodeURIComponent(q)}`}
-                    className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition hover:border-gold/40 hover:text-foreground"
-                  >
-                    {q}
-                  </Link>
-                ))}
-              </div>
+            <HomeHero
+              trending={trending.map((t) => t.query)}
+              listings={(featured.length ? featured : listings).slice(0, 8)}
+              favoritedIds={featured.length ? featuredFav : favoritedIds}
+              authed={!!user}
+            />
+
+            {/* ---------- CATEGORIES ---------- */}
+            <section className="py-6 sm:py-8">
+              <h2 className="font-display mb-5 text-2xl tracking-tight sm:text-3xl">
+                Browse by category
+              </h2>
+              <CategoryRail categories={categories} />
             </section>
 
-            {/* ---------- TRENDING TODAY (real search frequency) ---------- */}
-            {trending.length > 0 && (
-              <section className="py-6 sm:py-8">
-                <div className="mb-4 flex items-center gap-2">
-                  <TrendingUpIcon className="size-4 text-gold" />
-                  <h2 className="font-display text-xl tracking-tight sm:text-2xl">Trending today</h2>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {trending.map((t) => (
-                    <Link
-                      key={t.query}
-                      href={`/?q=${encodeURIComponent(t.query)}`}
-                      className="lift rounded-full border border-border bg-card px-3.5 py-1.5 text-sm shadow-soft transition hover:border-gold/40 hover:text-foreground"
-                    >
-                      {t.query}
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
+            {/* ---------- TRUST ---------- */}
+            <TrustBar />
 
             {/* ---------- PERSONALIZED (signed-in) ---------- */}
             {continueItems.length > 0 && (
@@ -235,35 +262,6 @@ export default async function HomePage({
               </section>
             )}
 
-            {/* ---------- CATEGORIES ---------- */}
-            <section className="py-8 sm:py-10">
-              <div className="mb-5">
-                <p className="eyebrow">Discover</p>
-                <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
-                  Browse by category
-                </h2>
-              </div>
-              <CategoryShowcase categories={categories} counts={counts} />
-            </section>
-
-            {/* ---------- FEATURED (admin-curated) ---------- */}
-            {featured.length > 0 && (
-              <section className="py-6 sm:py-8">
-                <div className="mb-5">
-                  <p className="eyebrow text-gold">★ Handpicked</p>
-                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
-                    Featured listings
-                  </h2>
-                </div>
-                <ListingResults
-                  listings={featured}
-                  count={featured.length}
-                  favoritedIds={featuredFav}
-                  authed={!!user}
-                />
-              </section>
-            )}
-
             {/* ---------- LISTINGS (early) ---------- */}
             <section id="listings" className="scroll-mt-20 py-4 sm:py-6">
               <div className="mb-6 flex items-end justify-between gap-3">
@@ -277,16 +275,10 @@ export default async function HomePage({
                   <Link href="/sell">Sell yours</Link>
                 </Button>
               </div>
-              <div className="space-y-6">
-                <SearchControls categories={categories} />
+              <div className="space-y-5">
                 <CategoryChips categories={categories} activeSlug={parsed.categorySlug} />
-                <div className="pt-2">{feed}</div>
+                <div className="pt-1">{feed}</div>
               </div>
-            </section>
-
-            {/* ---------- TRUST STATS ---------- */}
-            <section className="py-10 sm:py-14">
-              <TrustStats listings={count} />
             </section>
 
             {/* ---------- HOW IT WORKS ---------- */}

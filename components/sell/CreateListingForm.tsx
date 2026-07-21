@@ -1,6 +1,7 @@
 'use client'
+import { listingPath } from '@/lib/listings/slug'
 
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ImagePlusIcon, Loader2Icon, SparklesIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -16,6 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CategorySelect, type Category } from '@/components/sell/CategorySelect'
+import { AttributeFields } from '@/components/sell/AttributeFields'
+import { resolveAttributeFields } from '@/lib/listings/attributeSchemas'
 import { createListing } from '@/app/sell/actions'
 import { getListingUploadUrls } from '@/app/uploads/actions'
 import { EMIRATES } from '@/lib/profile/emirates'
@@ -46,6 +49,8 @@ export function CreateListingForm({
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const [attributes, setAttributes] = useState<Record<string, string>>({})
+  const [aiFilled, setAiFilled] = useState<Set<string>>(new Set())
   const [condition, setCondition] = useState<string>('used')
   const [emirate, setEmirate] = useState('')
   const [area, setArea] = useState('')
@@ -55,6 +60,38 @@ export function CreateListingForm({
   const [pricing, setPricing] = useState<AiPricing | null>(null)
   const [aiWarning, setAiWarning] = useState<string | null>(null)
   const [blocked, setBlocked] = useState<{ categories: string[] } | null>(null)
+
+  const attrFields = useMemo(() => {
+    const cat = categories.find((c) => c.id === categoryId)
+    const parent = cat?.parent_id ? categories.find((c) => c.id === cat.parent_id) : null
+    return resolveAttributeFields(cat?.slug, parent?.slug)
+  }, [categories, categoryId])
+
+  function setAttr(key: string, value: string) {
+    setAttributes((prev) => {
+      const next = { ...prev }
+      if (value === '') delete next[key]
+      else next[key] = value
+      return next
+    })
+    // A manual edit clears the "AI filled" flag on that field.
+    setAiFilled((prev) => {
+      if (!prev.has(key)) return prev
+      const next = new Set(prev)
+      next.delete(key)
+      return next
+    })
+  }
+
+  function onCategoryChange(id: string) {
+    setCategoryId(id)
+    // Drop attribute values that don't belong to the newly-picked category.
+    const cat = categories.find((c) => c.id === id)
+    const parent = cat?.parent_id ? categories.find((c) => c.id === cat.parent_id) : null
+    const keys = new Set(resolveAttributeFields(cat?.slug, parent?.slug).map((f) => f.key))
+    setAttributes((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => keys.has(k))))
+    setAiFilled((prev) => new Set([...prev].filter((k) => keys.has(k))))
+  }
 
   async function onGenerate() {
     if (pics.length === 0) {
@@ -85,6 +122,8 @@ export function CreateListingForm({
       if (d.description) setDescription(d.description)
       if (d.categoryId) setCategoryId(d.categoryId)
       if (d.condition) setCondition(d.condition)
+      setAttributes(d.attributes ?? {})
+      setAiFilled(new Set(Object.keys(d.attributes ?? {})))
       toast.success(
         d.lowConfidence.length
           ? `AI filled what it could — double-check: ${d.lowConfidence.join(', ')}.`
@@ -161,6 +200,7 @@ export function CreateListingForm({
         condition,
         emirate,
         area,
+        attributes,
         images,
       })
       // Server-side enforcement (defense in depth).
@@ -173,7 +213,7 @@ export function CreateListingForm({
       if (res.error || !res.id) throw new Error(res.error ?? 'Could not create listing.')
 
       toast.success('Listing published!')
-      router.push(`/listing/${res.id}`)
+      router.push(listingPath(title, res.id))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong.')
       setSubmitting(false)
@@ -234,19 +274,27 @@ export function CreateListingForm({
           Up to {MAX_IMAGES} photos, 5 MB each. The first photo is the cover.
         </p>
 
-        {/* Generate with AI */}
-        <div className="space-y-3 rounded-xl border border-border bg-accent/40 p-4">
+        {/* Generate with AI — the flow's differentiator, given the weight it deserves. */}
+        <div className="space-y-3 rounded-2xl border border-gold/30 bg-gold/[0.06] p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              Add photos, then let AI draft your title, description, category, and condition.
-            </p>
+            <div className="flex items-start gap-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gold/15 text-gold">
+                <SparklesIcon className="size-5" />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-foreground">Let AI write your listing</p>
+                <p className="mt-0.5 max-w-md text-xs leading-relaxed text-muted-foreground">
+                  {pics.length === 0
+                    ? 'Add a photo and AI drafts the title, description, category, condition, and a fair UAE price.'
+                    : 'Draft the title, description, category, condition, and a fair price from your photos.'}
+                </p>
+              </div>
+            </div>
             <Button
               type="button"
-              variant="secondary"
-              size="sm"
               onClick={onGenerate}
               disabled={aiLoading || pics.length === 0}
-              className="shrink-0"
+              className="shrink-0 rounded-full"
             >
               {aiLoading ? (
                 <Loader2Icon className="size-4 animate-spin" />
@@ -257,7 +305,7 @@ export function CreateListingForm({
             </Button>
           </div>
           {aiWarning && (
-            <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="rounded-md border border-gold/40 bg-gold/10 px-3 py-2 text-xs text-foreground">
               {aiWarning}
             </p>
           )}
@@ -269,7 +317,7 @@ export function CreateListingForm({
                   title={`${d.confidence}% confidence`}
                   className={`rounded-full border px-2 py-0.5 text-xs ${
                     d.confidence < 70
-                      ? 'border-amber-300 bg-amber-50 text-amber-800'
+                      ? 'border-gold/40 bg-gold/10 text-foreground'
                       : 'bg-background text-muted-foreground'
                   }`}
                 >
@@ -299,8 +347,26 @@ export function CreateListingForm({
 
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <CategorySelect categories={categories} value={categoryId} onChange={setCategoryId} />
+        <CategorySelect categories={categories} value={categoryId} onChange={onCategoryChange} />
       </div>
+
+      {attrFields.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium text-foreground">Specifications</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Optional — the more you add, the easier your item is to find. AI fills what it can
+              from your photos.
+            </p>
+          </div>
+          <AttributeFields
+            fields={attrFields}
+            values={attributes}
+            aiFilled={aiFilled}
+            onChange={setAttr}
+          />
+        </div>
+      )}
 
       <div className="border-t border-border pt-8">
         <h2 className="font-display text-lg leading-none">Pricing</h2>

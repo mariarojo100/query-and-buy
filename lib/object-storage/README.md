@@ -1,18 +1,23 @@
-# `lib/object-storage` — storage abstraction (migration foundation)
+# `lib/object-storage` — storage layer (Cloudflare R2)
 
-> **Status: scaffolding only, not wired into the running app.** The Phase 5
-> ("foundation") slice of the Supabase→self-managed migration. Query & Buy still
-> uploads to and reads from **Supabase Storage** via the browser client and
-> `lib/storage.ts`. Nothing here is imported by a page, action, or component
-> yet; it compiles and the offline parts are tested.
+> **Status: live in production.** All images (avatars, listing photos) upload to
+> and read from **Cloudflare R2**. Uploads use presigned PUTs; public reads are
+> served from two dedicated R2 custom domains. `lib/storage.ts` re-exports
+> `publicUrl` from here for the render sites.
 
-## Why `lib/object-storage` and not `lib/storage`
+## Public URLs — two-domain architecture
 
-`lib/storage.ts` is the live runtime helper (imported as `@/lib/storage` by 11
-render sites). A `lib/storage/` **directory** next to it would create import-
-resolution ambiguity and risk breaking those. So the skeleton lives here; at
-cutover it takes over the `lib/storage` name and the 11 `publicUrl` call sites
-switch import path only (the signature is identical).
+Each public bucket is served from its **own** R2 custom domain, hard-wired in
+`keys.ts#bucketPublicUrl` (the single source of truth — **no env var**):
+
+| Bucket | Public domain |
+|---|---|
+| `avatars` | `https://avatars.queryandbuy.com/<key>` |
+| `listing-images` | `https://images.queryandbuy.com/<key>` |
+
+`publicUrl(bucket, key)` (index.ts) and the driver's `publicUrl()` both delegate
+to it, so there is no `NEXT_PUBLIC_STORAGE_BASE_URL` — the driver needs only S3
+credentials.
 
 ## Contents
 
@@ -38,12 +43,13 @@ the browser PUTs to. That server action + the component rewrites are the Phase 5
 Bucket names and key layouts are byte-for-byte identical
 (`avatars/{userId}/{ts}.{ext}`, `listing-images/{userId}/{group}/{i}.{ext}`), so
 migrated objects and existing `listing_images.storage_key` values keep working.
-Only `profiles.avatar_url` (which stores a full URL) is rewritten during data
-migration, from the Supabase host to `NEXT_PUBLIC_STORAGE_BASE_URL`.
+`profiles.avatar_url` (which stores a full URL) was rewritten during data
+migration to the `avatars.queryandbuy.com` domain.
 
 ## Env
 
 `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_ACCESS_KEY_ID`,
-`STORAGE_SECRET_ACCESS_KEY`, `NEXT_PUBLIC_STORAGE_BASE_URL` (see `.env.example`).
-All lazily read — importing this module needs none of them, so the live app is
-unaffected while they are unset.
+`STORAGE_SECRET_ACCESS_KEY` (see `.env.example`) — used only by
+`getStorageDriver()` to sign uploads/deletes, read lazily on first use. Public
+read URLs need **no** env: they come from the fixed R2 custom domains in
+`keys.ts#bucketPublicUrl`.

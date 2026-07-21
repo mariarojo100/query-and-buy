@@ -21,7 +21,7 @@ function shell(title: string, body: string, cta: { href: string; label: string }
 }
 
 export function sendVerificationEmail(to: string, rawToken: string) {
-  const href = `${SITE_URL}/auth/confirm?token=${encodeURIComponent(rawToken)}`
+  const href = `${SITE_URL}/verify-email?token=${encodeURIComponent(rawToken)}`
   return sendEmail({
     to,
     subject: `Confirm your email — ${SITE_NAME}`,

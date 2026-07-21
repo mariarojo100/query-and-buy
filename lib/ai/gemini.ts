@@ -8,6 +8,7 @@ import type {
   RawSearchParse,
   SearchParseContext,
 } from '@/lib/ai/provider'
+import { attributeVocabulary } from '@/lib/listings/attributeSchemas'
 
 const MODEL = 'gemini-2.5-flash'
 const endpoint = (key: string) =>
@@ -144,7 +145,7 @@ Rules:
 - title.value: concise and specific, max 80 characters, no emojis.
 - description.value: 2–4 natural sentences in English highlighting brand, color, condition, and notable attributes a buyer cares about.
 - confidence: an integer 0–100 for THAT field, based only on what the photos actually show. If unsure, still give your best guess but use a low confidence.
-- key_attributes: 0–6 salient specs (e.g. {name:"Storage", value:"256GB"}).
+- key_attributes: the item's salient specs. When a spec applies, use these EXACT canonical names so they map to the listing form: ${attributeVocabulary().join(', ')}. Only include attributes you can actually determine from the photos (e.g. a car: {name:"Mileage", value:"45000"}, {name:"Transmission", value:"Automatic"}; a phone: {name:"Storage", value:"256GB"}). Omit anything you're unsure of.
 
 Pricing (pricing object): estimate the item's resale value in the UAE second-hand market in AED, using the category, brand, condition, visible attributes, and typical UAE demand, across three tiers:
 - quick_sale_aed: priced to sell within days (below market).

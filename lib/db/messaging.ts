@@ -245,23 +245,56 @@ export async function markConversationReadFor(viewer: Viewer, conversationId: st
 }
 
 export type SendResult =
-  | { ok: true; recipientId: string }
+  | {
+      ok: true
+      recipientId: string
+      /** True only for the very first message in the conversation — the "someone
+       *  reached out for the first time" signal that warrants an email. */
+      firstContact: boolean
+      /** Populated only when firstContact, for building the inquiry email. */
+      senderName: string
+      listingTitle: string
+      coverKey: string | null
+    }
   | { ok: false; reason: 'not_participant' | 'blocked' }
 
 export async function sendMessageFor(viewer: Viewer, conversationId: string, text: string): Promise<SendResult> {
   const conv = await db.conversation.findUnique({
     where: { id: conversationId },
-    select: { buyerId: true, sellerId: true, status: true },
+    select: { buyerId: true, sellerId: true, status: true, listingId: true },
   })
   if (!conv || (conv.buyerId !== viewer.id && conv.sellerId !== viewer.id)) return { ok: false, reason: 'not_participant' }
   if (conv.status === 'blocked') return { ok: false, reason: 'blocked' }
   const otherId = viewer.id === conv.buyerId ? conv.sellerId : conv.buyerId
   if (await blockExistsBetween(viewer.id, otherId)) return { ok: false, reason: 'blocked' }
 
+  // Whether anyone has spoken in this conversation yet — read BEFORE the insert.
+  const priorMessages = await db.message.count({ where: { conversationId } })
+  const firstContact = priorMessages === 0
+
   await db.$transaction([
     db.message.create({ data: { conversationId, senderId: viewer.id, body: text } }),
     db.conversation.update({ where: { id: conversationId }, data: { lastMessageAt: new Date() } }),
   ])
   const recipientId = viewer.id === conv.buyerId ? conv.sellerId : conv.buyerId
-  return { ok: true, recipientId }
+
+  // Only the first message needs richer context (for the inquiry email); every
+  // later message stays a cheap in-app-only notification.
+  let senderName = ''
+  let listingTitle = ''
+  let coverKey: string | null = null
+  if (firstContact) {
+    const [sender, listing] = await Promise.all([
+      db.profile.findUnique({ where: { id: viewer.id }, select: { displayName: true } }),
+      db.listing.findUnique({
+        where: { id: conv.listingId },
+        select: { titleEn: true, images: { select: { storageKey: true, position: true }, orderBy: { position: 'asc' }, take: 1 } },
+      }),
+    ])
+    senderName = sender?.displayName ?? 'A buyer'
+    listingTitle = listing?.titleEn ?? 'your listing'
+    coverKey = listing?.images[0]?.storageKey ?? null
+  }
+
+  return { ok: true, recipientId, firstContact, senderName, listingTitle, coverKey }
 }

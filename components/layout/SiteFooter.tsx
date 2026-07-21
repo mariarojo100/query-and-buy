@@ -32,6 +32,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     title: 'Company',
     links: [
       { label: 'About', href: '/about' },
+      { label: 'Guides', href: '/guides' },
       { label: 'Contact', href: '/contact' },
       { label: 'Help Center', href: '/help' },
       { label: 'FAQ', href: '/faq' },
@@ -40,9 +41,9 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
 ]
 
 const SOCIALS = [
-  { label: 'Instagram', href: '#' },
-  { label: 'X', href: '#' },
-  { label: 'Facebook', href: '#' },
+  { label: 'Instagram', href: 'https://www.instagram.com/queryandbuy' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/queryandbuy' },
+  { label: 'Facebook', href: 'https://www.facebook.com/p/Query-Buy-61575742207635/' },
 ]
 
 const TRUST = [
@@ -115,6 +116,8 @@ export function SiteFooter() {
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="transition-colors hover:text-foreground"
                 >
                   {s.label}

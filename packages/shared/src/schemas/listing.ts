@@ -76,6 +76,8 @@ export const CreateListingSchema = z.object({
   emirate: z.enum(EMIRATE_VALUES as [string, ...string[]], { message: 'Choose an emirate.' }),
   area: z.string().trim().max(120).optional(),
   isNegotiable: z.boolean().optional(),
+  /** Category-specific facets (server whitelists + coerces against the schema). */
+  attributes: z.record(z.string(), z.string()).optional(),
   images: z
     .array(ListingImageInputSchema)
     .min(1, 'Add at least one photo.')

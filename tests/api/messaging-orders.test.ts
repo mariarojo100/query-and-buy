@@ -18,8 +18,8 @@ const params = <T extends Record<string, string>>(p: T) => ({ params: Promise.re
 
 async function main() {
   await resetDb()
-  const seller = await makeUser()
-  const buyer = await makeUser()
+  const seller = await makeUser({ phoneVerified: true }) // confirming an order requires a verified phone
+  const buyer = await makeUser({ phoneVerified: true })
   const stranger = await makeUser()
   const tSeller = await accessTokenFor(seller.id)
   const tBuyer = await accessTokenFor(buyer.id)

@@ -17,6 +17,7 @@ import { Prisma } from '@/lib/generated/prisma/client'
 import type { ListingCondition, Emirate } from '@/lib/generated/prisma/enums'
 import { listingVisibleWhere } from '@/lib/authz/policies'
 import type { Viewer } from '@/lib/authz/viewer'
+import type { AttrFilter } from '@/lib/listings/attributeSchemas'
 
 export type SellerMini = {
   id: string
@@ -53,7 +54,9 @@ export type ListingDetail = {
   status: string
   emirate: string | null
   area: string | null
+  attributes: Record<string, string>
   category_name: string | null
+  category_slug: string | null
   published_at: string | null
   created_at: string
   seller_id: string
@@ -96,6 +99,7 @@ export type EditListing = {
   category_id: string
   emirate: string | null
   area: string | null
+  attributes: Record<string, string>
   status: string
   images: { storage_key: string; position: number }[]
 }
@@ -123,6 +127,8 @@ export type ListingFilters = {
   limit?: number
   /** Rows to skip — offset pagination for the mobile API's infinite feed. */
   offset?: number
+  /** Category-specific facet filters (already validated against the schema). */
+  attributes?: AttrFilter[]
 }
 
 export type CategoryLite = {
@@ -293,6 +299,17 @@ export async function filteredListings(filters: ListingFilters = {}): Promise<{ 
   if (filters.sinceDays && filters.sinceDays > 0) {
     const since = new Date(Date.now() - filters.sinceDays * 86_400_000)
     conds.push(Prisma.sql`l.published_at >= ${since}`)
+  }
+  for (const a of filters.attributes ?? []) {
+    // key is a schema-whitelisted field key ([a-z_]); value is a bound param.
+    if (a.op === 'eq') {
+      conds.push(Prisma.sql`l.attributes ->> ${a.key} = ${a.value}`)
+    } else {
+      // CASE guards the numeric cast so a non-numeric facet value can't error the query.
+      const n = Number(a.value)
+      const guarded = Prisma.sql`(case when (l.attributes ->> ${a.key}) ~ '^[0-9.]+$' then (l.attributes ->> ${a.key})::numeric end)`
+      conds.push(a.op === 'min' ? Prisma.sql`${guarded} >= ${n}` : Prisma.sql`${guarded} <= ${n}`)
+    }
   }
   const where = Prisma.join(conds, ' and ')
 
@@ -517,6 +534,7 @@ export async function listingForEdit(viewer: Viewer, id: string): Promise<EditLi
       categoryId: true,
       emirate: true,
       area: true,
+      attributes: true,
       status: true,
       images: { select: { storageKey: true, position: true }, orderBy: { position: 'asc' } },
     },
@@ -532,6 +550,7 @@ export async function listingForEdit(viewer: Viewer, id: string): Promise<EditLi
     category_id: row.categoryId,
     emirate: row.emirate,
     area: row.area,
+    attributes: toAttrMap(row.attributes),
     status: row.status,
     images: row.images.map((i) => ({ storage_key: i.storageKey, position: i.position })),
   }
@@ -551,10 +570,11 @@ export async function listingByIdVisible(viewer: Viewer | null, id: string): Pro
       status: true,
       emirate: true,
       area: true,
+      attributes: true,
       publishedAt: true,
       createdAt: true,
       sellerId: true,
-      category: { select: { nameEn: true } },
+      category: { select: { nameEn: true, slug: true } },
       images: { select: { storageKey: true, position: true }, orderBy: { position: 'asc' } },
       seller: {
         select: {
@@ -591,7 +611,9 @@ export async function listingByIdVisible(viewer: Viewer | null, id: string): Pro
     status: row.status,
     emirate: row.emirate,
     area: row.area,
+    attributes: toAttrMap(row.attributes),
     category_name: row.category?.nameEn ?? null,
+    category_slug: row.category?.slug ?? null,
     published_at: row.publishedAt ? row.publishedAt.toISOString() : null,
     created_at: row.createdAt.toISOString(),
     seller_id: row.sellerId,
@@ -633,12 +655,36 @@ export type WriteListingInput = {
   emirate: string
   area: string | null
   isNegotiable: boolean
+  /** Category-specific facets, already sanitised. Stored on Listing.attributes. */
+  attributes?: Record<string, string>
   images: ListingImageInput[]
 }
 
 export async function categoryIsActive(id: string): Promise<boolean> {
   const c = await db.category.findFirst({ where: { id, isActive: true }, select: { id: true } })
   return !!c
+}
+
+/** Resolve a category's slug and its parent's slug — used to pick its attribute schema. */
+export async function categorySlugChain(
+  id: string,
+): Promise<{ slug: string; parentSlug: string | null } | null> {
+  const c = await db.category.findFirst({
+    where: { id },
+    select: { slug: true, parent: { select: { slug: true } } },
+  })
+  if (!c) return null
+  return { slug: c.slug, parentSlug: c.parent?.slug ?? null }
+}
+
+/** Coerce a jsonb attributes value into a flat string map for DTOs. */
+function toAttrMap(v: unknown): Record<string, string> {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
+  const out: Record<string, string> = {}
+  for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+    if (val != null) out[k] = String(val)
+  }
+  return out
 }
 
 function imageCreateRows(listingId: string, images: ListingImageInput[]) {
@@ -667,6 +713,7 @@ export async function createListingFor(viewer: Viewer, input: WriteListingInput)
       emirate: input.emirate as Emirate,
       area: input.area,
       isNegotiable: input.isNegotiable,
+      attributes: input.attributes ?? {},
       status: 'active',
       publishedAt: now,
       expiresAt: expires,
@@ -695,6 +742,7 @@ export async function updateListingFor(
         emirate: input.emirate as Emirate,
         area: input.area,
         isNegotiable: input.isNegotiable,
+        attributes: input.attributes ?? {},
       },
     })
     if (upd.count === 0) return { notFound: true as const }

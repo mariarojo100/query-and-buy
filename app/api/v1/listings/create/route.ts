@@ -23,6 +23,12 @@ export async function POST(req: Request): Promise<Response> {
 
     const res = await createListingAs(viewer, parsed.data)
     if (res.error) {
+      if (res.needVerify || res.needPhoneVerify) {
+        return fail('verification_required', res.error, 403, {
+          needVerify: !!res.needVerify,
+          needPhoneVerify: !!res.needPhoneVerify,
+        })
+      }
       return res.blocked
         ? fail('blocked_content', res.error, 422, { categories: res.categories })
         : fail('invalid_input', res.error, 422)

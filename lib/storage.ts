@@ -1,7 +1,7 @@
 /**
- * Public storage URLs. Delegates to the target-stack object-storage layer,
- * which prefers NEXT_PUBLIC_STORAGE_BASE_URL and falls back to the Supabase
- * host until cutover (see lib/object-storage/index.ts#publicUrl).
+ * Public storage URLs. Delegates to the object-storage layer, which serves each
+ * bucket from its Cloudflare R2 custom domain (see lib/object-storage/index.ts#
+ * publicUrl → keys.ts#bucketPublicUrl).
  */
 export { publicUrl } from '@/lib/object-storage'
 

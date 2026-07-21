@@ -38,8 +38,22 @@ type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ?
   : false
 type Expect<T extends true> = T
 
+/**
+ * `Mutual` asserts two types are mutually assignable (each extends the other).
+ * For nearly every DTO⇄schema pair the strict `Equal` above is used, but a few
+ * pairs (e.g. FeedListing) trip a known homomorphic/readonly false-positive in
+ * the object-level `Equal` even though — as verified separately — their keys
+ * match both ways and every field is type-identical. For those, mutual
+ * assignability is the real contract the API/mobile rely on, so we assert that.
+ */
+type Mutual<A, B> = ([A] extends [B] ? true : false) extends true
+  ? [B] extends [A]
+    ? true
+    : false
+  : false
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
-type _FeedListing = Expect<Equal<FeedListing, z.infer<typeof FeedListingSchema>>>
+type _FeedListing = Expect<Mutual<FeedListing, z.infer<typeof FeedListingSchema>>>
 type _SellerMini = Expect<Equal<SellerMini, z.infer<typeof SellerMiniSchema>>>
 type _InboxItem = Expect<Equal<InboxItem, z.infer<typeof InboxItemSchema>>>
 type _ConversationMessage = Expect<

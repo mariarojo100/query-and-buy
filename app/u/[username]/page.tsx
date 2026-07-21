@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { maskContactInfo } from '@/lib/safety/contact'
 import { notFound } from 'next/navigation'
 import { CalendarDaysIcon, MapPinIcon, MessagesSquareIcon, PackageIcon, PencilIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
@@ -8,6 +9,8 @@ import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
+import { VerifiedAvatarBadge } from '@/components/profile/VerifiedAvatarBadge'
+import { ProfileBanner } from '@/components/profile/ProfileBanner'
 import { MessageSellerButton } from '@/components/profile/MessageSellerButton'
 import { ReportButton } from '@/components/report/ReportButton'
 import { TrustScore } from '@/components/trust/TrustScore'
@@ -34,9 +37,9 @@ import type { Profile } from '@/lib/profile/completion'
  *
  * Deferred / future work (intentionally NOT built yet):
  * - Phone verification: now real — `phone_verified` is flipped only by a genuine
- *   Supabase Auth OTP confirmation (see components/profile/PhoneVerification and
- *   the 20260702120000_phone_verification migration). Still requires an SMS
- *   provider to be configured in the Supabase dashboard to send codes.
+ *   OTP confirmation on the self-managed stack (see components/profile/
+ *   PhoneVerification, app/account/verifyPhone/actions, and lib/sms/twilio-verify).
+ *   Requires Twilio Verify env to be configured to deliver codes.
  * - Cover image: the hero uses a brand gradient. A `cover_image_url` column can
  *   be added later so sellers personalise the hero (fall back to the gradient).
  * - Pagination: reviews (6) and listings (12) are capped fetches. Add a
@@ -65,7 +68,9 @@ export async function generateMetadata({
   if (!profile) return { title: 'Profile not found · Query & Buy' }
   const name = sellerName(profile.display_name)
   const handle = publicHandle(profile.username)
-  const description = profile.bio ?? `${name} on Query & Buy — buy & sell across the UAE.`
+  const description = profile.bio
+    ? maskContactInfo(profile.bio)
+    : `${name} on Query & Buy — buy & sell across the UAE.`
   return {
     title: `${name}${handle ? ` (${handle})` : ''} · Query & Buy`,
     description,
@@ -125,35 +130,30 @@ export default async function PublicProfilePage({
     <>
       <SiteHeader />
       <main className="mx-auto w-full max-w-5xl px-5 pb-16 sm:px-8">
-        {/* Cover — soft brand gradient with a whisper of gold, not a flat block */}
-        <div className="relative mt-2 h-40 overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-success shadow-soft sm:h-56">
-          <div
-            className="absolute inset-0 opacity-[0.12]"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.9) 1px, transparent 0)',
-              backgroundSize: '22px 22px',
-            }}
-            aria-hidden
-          />
-          <div className="absolute -right-16 -top-24 size-72 rounded-full bg-white/10 blur-2xl" aria-hidden />
-          <div className="absolute -bottom-28 left-8 size-80 rounded-full bg-gold/25 blur-2xl" aria-hidden />
-          <div
-            className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/15 to-transparent"
-            aria-hidden
-          />
+        {/* Branded ink cover with the Q&B monogram watermark */}
+        <div className="relative mt-2 h-40 overflow-hidden rounded-3xl shadow-soft sm:h-56">
+          <ProfileBanner />
         </div>
 
-        {/* Identity */}
-        <div className="-mt-14 px-1 sm:-mt-16 sm:flex sm:items-end sm:gap-6">
-          <Avatar className="size-28 shrink-0 shadow-float ring-4 ring-background sm:size-32">
-            <AvatarImage src={profile.avatar_url ?? undefined} alt={`${name}'s profile photo`} />
-            <AvatarFallback className="bg-accent text-2xl text-accent-foreground">
-              {initials(name)}
-            </AvatarFallback>
-          </Avatar>
+        {/* Identity — the avatar (and only the avatar) overlaps the cover; the
+            name column stays in normal flow so a tall name/handle/meta block can
+            never ride up into the cover band. */}
+        <div className="px-1 sm:flex sm:items-start sm:gap-6">
+          <div className="relative -mt-14 size-28 shrink-0 sm:-mt-16 sm:size-32">
+            <Avatar className="size-full shadow-float ring-4 ring-background">
+              <AvatarImage src={profile.avatar_url ?? undefined} alt={`${name}'s profile photo`} />
+              <AvatarFallback className="bg-accent text-2xl text-accent-foreground">
+                {initials(name)}
+              </AvatarFallback>
+            </Avatar>
+            <VerifiedAvatarBadge
+              verified={profile.email_verified && profile.phone_verified}
+              size="lg"
+              className="bottom-1 right-1 ring-background"
+            />
+          </div>
 
-          <div className="mt-4 min-w-0 flex-1 sm:mb-1.5 sm:mt-0">
+          <div className="mt-4 min-w-0 flex-1 sm:mt-3">
             <h1 className="font-display text-3xl leading-tight tracking-tight break-words sm:text-4xl">
               {name}
             </h1>
@@ -173,7 +173,7 @@ export default async function PublicProfilePage({
             <SellerBadges badges={rep.badges} className="mt-3" />
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mb-1.5 sm:mt-0 sm:justify-end">
+          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-0 sm:justify-end sm:self-end sm:pb-1.5">
             {isSelf ? (
               <Button variant="outline" asChild>
                 <Link href="/account/settings">
@@ -196,8 +196,8 @@ export default async function PublicProfilePage({
           </div>
         </div>
 
-        {/* Reputation stat band */}
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {/* Reputation stat band — one cohesive strip, hairline-divided, not 5 floating cards. */}
+        <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border shadow-soft sm:grid-cols-3 lg:grid-cols-5">
           <StatCard label={stats.average != null ? 'Rating' : 'No ratings yet'}>
             {stats.average != null ? (
               <div className="flex items-center gap-2">
@@ -259,7 +259,9 @@ export default async function PublicProfilePage({
             </h2>
             {profile.bio ? (
               <p className="whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
-                {profile.bio}
+                {/* Legacy records may contain contact details entered before
+                    enforcement — masked at display until the owner edits. */}
+                {maskContactInfo(profile.bio)}
               </p>
             ) : (
               <div className="space-y-2">
@@ -336,7 +338,7 @@ export default async function PublicProfilePage({
 /** Uniform stat tile — equal height, value on top, label beneath. */
 function StatCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-h-[92px] flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-soft">
+    <div className="flex min-h-[92px] flex-col justify-between bg-card p-4">
       <div className="min-h-8">{children}</div>
       <p className="eyebrow mt-2">{label}</p>
     </div>

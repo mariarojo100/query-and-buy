@@ -21,7 +21,7 @@ import {
 } from '@/lib/orders/service'
 import * as orders from '@/lib/db/orders'
 
-type Result = { ok?: boolean; error?: string }
+type Result = { ok?: boolean; error?: string; needVerify?: boolean; needPhoneVerify?: boolean }
 
 export type { NegotiationSuggestion }
 
@@ -33,7 +33,7 @@ function touchAndRevalidate(conversationId: string | null | undefined) {
 }
 
 function finish(res: OrderServiceResult, alsoListing = false): Result {
-  if (!res.ok) return { error: res.error }
+  if (!res.ok) return { error: res.error, needVerify: res.needVerify, needPhoneVerify: res.needPhoneVerify }
   touchAndRevalidate(res.conversationId)
   if (alsoListing && res.listingId) {
     revalidatePath(`/listing/${res.listingId}`)

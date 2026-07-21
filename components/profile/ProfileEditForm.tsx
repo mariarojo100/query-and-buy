@@ -17,6 +17,7 @@ import {
 import { updateProfile, checkUsername } from '@/app/account/actions'
 import { EMIRATES } from '@/lib/profile/emirates'
 import { USERNAME_RE, normalizeUsername, type Profile } from '@/lib/profile/completion'
+import { detectContactInfo, BIO_CONTACT_HELPER } from '@/lib/safety/contact'
 
 const BIO_MAX = 300
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
@@ -28,7 +29,11 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
   const [username, setUsername] = useState(initialUsername)
   const [status, setStatus] = useState<UsernameStatus>('idle')
   const [emirate, setEmirate] = useState(profile.emirate ?? '')
-  const [bioLen, setBioLen] = useState((profile.bio ?? '').length)
+  const [bio, setBio] = useState(profile.bio ?? '')
+
+  // Deterministic contact-info check (same util the server enforces). Cheap,
+  // synchronous — safe to run on every keystroke; no AI / network.
+  const bioContact = detectContactInfo(bio)
 
   // Toast on save result.
   useEffect(() => {
@@ -56,7 +61,11 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
   }, [username, initialUsername])
 
   const blockSubmit =
-    isPending || status === 'checking' || status === 'taken' || status === 'invalid'
+    isPending ||
+    status === 'checking' ||
+    status === 'taken' ||
+    status === 'invalid' ||
+    bioContact.blocked
 
   return (
     <form action={formAction} className="space-y-5">
@@ -93,7 +102,7 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
             {status === 'checking' && (
               <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
             )}
-            {status === 'available' && <CheckIcon className="size-4 text-emerald-600" />}
+            {status === 'available' && <CheckIcon className="size-4 text-success" />}
             {(status === 'taken' || status === 'invalid') && (
               <XIcon className="size-4 text-destructive" />
             )}
@@ -131,7 +140,7 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
         <div className="flex items-center justify-between">
           <Label htmlFor="bio">Bio</Label>
           <span className="text-xs tabular-nums text-muted-foreground">
-            {bioLen}/{BIO_MAX}
+            {bio.length}/{BIO_MAX}
           </span>
         </div>
         <Textarea
@@ -139,10 +148,23 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
           name="bio"
           rows={4}
           maxLength={BIO_MAX}
-          defaultValue={profile.bio ?? ''}
-          onChange={(e) => setBioLen(e.target.value.length)}
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
           placeholder="Tell buyers a little about yourself…"
+          aria-invalid={bioContact.blocked}
+          aria-describedby="bio-help"
+          className={bioContact.blocked ? 'border-destructive focus-visible:ring-destructive/30' : undefined}
         />
+        {bioContact.blocked ? (
+          <p id="bio-help" className="text-xs text-destructive">
+            Please remove {bioContact.reasons.join(', ')}. Contact details and links become
+            available automatically after an order is confirmed.
+          </p>
+        ) : (
+          <p id="bio-help" className="text-xs text-muted-foreground">
+            {BIO_CONTACT_HELPER}
+          </p>
+        )}
       </div>
 
       <Button type="submit" disabled={blockSubmit} className="w-full sm:w-auto">

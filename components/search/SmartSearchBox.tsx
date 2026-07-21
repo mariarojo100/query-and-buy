@@ -1,4 +1,5 @@
 'use client'
+import { listingPath } from '@/lib/listings/slug'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -6,11 +7,10 @@ import {
   ClockIcon,
   LayersIcon,
   Loader2Icon,
+  MessageCircleIcon,
   PackageIcon,
   SearchIcon,
-  SparklesIcon,
   TrendingUpIcon,
-  XIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -122,7 +122,7 @@ export function SmartSearchBox({ trending = [] }: { trending?: string[] }) {
         s.type === 'category'
           ? { kind: 'category', label: s.label, href: `/category/${s.slug}` }
           : s.type === 'listing'
-            ? { kind: 'listing', label: s.label, href: `/listing/${s.id}` }
+            ? { kind: 'listing', label: s.label, href: listingPath(s.label, s.id) }
             : { kind: 'query', label: s.label, run: s.label },
       )
     }
@@ -180,7 +180,7 @@ export function SmartSearchBox({ trending = [] }: { trending?: string[] }) {
         }}
         className="flex items-center gap-2 rounded-full border border-border bg-card p-1.5 pl-5 shadow-soft transition focus-within:border-gold/40 focus-within:ring-1 focus-within:ring-gold/30"
       >
-        <SparklesIcon className="size-4 shrink-0 text-gold" />
+        <MessageCircleIcon className="size-[18px] shrink-0 text-gold" />
         <input
           value={text}
           onChange={(e) => {
@@ -198,7 +198,7 @@ export function SmartSearchBox({ trending = [] }: { trending?: string[] }) {
           autoComplete="off"
           className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground"
         />
-        <Button type="submit" disabled={loading || !text.trim()} className="shrink-0 rounded-full px-5">
+        <Button type="submit" disabled={loading} className="shrink-0 rounded-full px-5">
           {loading ? <Loader2Icon className="size-4 animate-spin" /> : 'Search'}
         </Button>
       </form>

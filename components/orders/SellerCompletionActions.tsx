@@ -86,7 +86,7 @@ export function SellerCompletionActions({
             size="sm"
             variant="outline"
             disabled={pending}
-            className="rounded-full border-amber-300 text-amber-700 transition hover:bg-amber-50 dark:border-amber-500/40 dark:text-amber-400 dark:hover:bg-amber-950/30"
+            className="rounded-full border-gold/50 text-gold transition hover:bg-gold/10"
           >
             <RotateCcwIcon className="size-4" />
             Re-activate
@@ -103,7 +103,7 @@ export function SellerCompletionActions({
           <AlertDialogFooter>
             <AlertDialogCancel>Keep reserved</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-amber-600 text-white hover:bg-amber-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => run(reactivateListing, 'Listing re-activated')}
             >
               Re-activate

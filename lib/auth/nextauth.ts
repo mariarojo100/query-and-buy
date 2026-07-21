@@ -10,8 +10,15 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { authConfig } from '@/lib/auth/config'
-import { verifyCredentials } from '@/lib/auth/credentials'
-import { resolveOAuthUser } from '@/lib/auth/oauth'
+import { verifyPassword } from '@/lib/auth/password'
+import {
+  getCredentialByEmail,
+  findUserIdByOAuth,
+  getUserIdByEmail,
+  linkOAuthAccount,
+  createUserAccount,
+  markEmailVerified,
+} from '@/lib/db/auth'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -20,11 +27,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       credentials: { email: {}, password: {} },
       async authorize(creds) {
-        const verified = await verifyCredentials(
-          String(creds?.email ?? ''),
-          String(creds?.password ?? ''),
-        )
-        return verified ? { id: verified.userId, email: verified.email } : null
+        const email = String(creds?.email ?? '').trim().toLowerCase()
+        const password = String(creds?.password ?? '')
+        if (!email || !password) return null
+        const cred = await getCredentialByEmail(email)
+        if (!cred || cred.status === 'banned' || cred.status === 'deleted') return null
+        if (!(await verifyPassword(password, cred.passwordHash))) return null
+        // Email must be confirmed before the account can be used. The login
+        // action detects this case and re-sends the confirmation link.
+        if (!cred.emailVerified) return null
+        return { id: cred.userId, email: cred.email ?? email }
       },
     }),
   ],
@@ -33,19 +45,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account, profile }) {
       // Credentials sign-ins are already validated in authorize().
       if (account?.provider !== 'google') return true
-      const p = profile as
-        | { email?: string; email_verified?: boolean; name?: string; picture?: string }
-        | undefined
+      const sub = account.providerAccountId
+      const p = profile as { email?: string; email_verified?: boolean; name?: string; picture?: string } | undefined
 
-      const uid = await resolveOAuthUser({
-        provider: 'google',
-        providerAccountId: account.providerAccountId,
-        email: p?.email ?? user.email,
-        emailVerified: p?.email_verified,
-        name: p?.name ?? user.name,
-        avatarUrl: p?.picture ?? user.image ?? null,
-      })
-      if (!uid) return false
+      let uid = await findUserIdByOAuth('google', sub)
+      if (!uid) {
+        const email = (p?.email ?? user.email ?? '').toLowerCase()
+        if (!email || p?.email_verified === false) return false
+        const existing = await getUserIdByEmail(email)
+        if (existing) {
+          await linkOAuthAccount(existing, 'google', sub)
+          // Google has verified this address (email_verified !== false above), so
+          // confirm the account — otherwise a provider-verified user could still
+          // be blocked from selling/buying by a stale unverified flag.
+          await markEmailVerified(existing)
+          uid = existing
+        } else {
+          const created = await createUserAccount({
+            email,
+            displayName: p?.name ?? user.name ?? email.split('@')[0],
+            oauth: { provider: 'google', providerAccountId: sub },
+            avatarUrl: p?.picture ?? user.image ?? null,
+            emailVerified: true,
+          })
+          uid = created.id
+        }
+      }
       // Ensure the JWT carries OUR user id, not Google's account id.
       user.id = uid
       return true

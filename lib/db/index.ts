@@ -1,11 +1,11 @@
 /**
- * lib/db — Prisma client singleton (MIGRATION FOUNDATION, not yet in runtime use)
+ * lib/db — Prisma client singleton (the live data-access entry point)
  * ===========================================================================
- * This is the future data-access entry point for the self-managed-Postgres
- * target (MIGRATION_BLUEPRINT.md, TARGET_ARCHITECTURE.md §5). It is NOT wired
- * into any page, server action, route handler, or component yet — the live app
- * still runs entirely on Supabase via utils/supabase/*. Importing this module
- * has no effect until something calls a query on `db`.
+ * The data-access entry point for the self-managed-Postgres stack
+ * (MIGRATION_BLUEPRINT.md, TARGET_ARCHITECTURE.md §5). Supabase has been fully
+ * removed; all reads/writes go through this Prisma client. The client is
+ * constructed lazily, so importing this module has no effect until something
+ * calls a query on `db`.
  *
  * Boundary rule (enforced by scripts/check-db-boundaries.mjs, see lib/db/README.md):
  *   `@/lib/db` (this file) may only be imported from inside `lib/db/**`.
@@ -18,15 +18,11 @@
 import { PrismaClient } from '@/lib/generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
-function createClient(): PrismaClient {
+function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {
-    // Thrown lazily on first real use, never at import time — keeps the app
-    // (which does not use this yet) unaffected when DATABASE_URL is absent.
-    throw new Error(
-      'DATABASE_URL is not set. The Prisma data layer is part of the in-progress ' +
-        'Supabase→self-managed migration and is not active yet; see lib/db/README.md.',
-    )
+    // Thrown lazily on first real use, never at import time.
+    throw new Error('DATABASE_URL is not set; see lib/db/README.md.')
   }
   const adapter = new PrismaPg({ connectionString })
   return new PrismaClient({ adapter })
@@ -44,7 +40,7 @@ let cached: PrismaClient | undefined = globalForDb.__qbPrisma
 export const db: PrismaClient = new Proxy({} as PrismaClient, {
   get(_target, prop, receiver) {
     if (!cached) {
-      cached = createClient()
+      cached = createPrismaClient()
       if (process.env.NODE_ENV !== 'production') globalForDb.__qbPrisma = cached
     }
     return Reflect.get(cached, prop, receiver)

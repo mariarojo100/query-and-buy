@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
+import { listingPath } from '@/lib/listings/slug'
 import { SellerCompletionActions } from '@/components/orders/SellerCompletionActions'
 import { formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
@@ -43,7 +44,7 @@ export function OrderCard({ order, role }: { order: OrderListItem; role: 'buyer'
     <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
       <div className="flex gap-4">
         <Link
-          href={listing ? `/listing/${listing.id}` : '#'}
+          href={listing ? listingPath(listing.title_en, listing.id) : '#'}
           className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-muted"
         >
           {listing?.cover_key ? (
@@ -64,7 +65,7 @@ export function OrderCard({ order, role }: { order: OrderListItem; role: 'buyer'
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <Link
-              href={listing ? `/listing/${listing.id}` : '#'}
+              href={listing ? listingPath(listing.title_en, listing.id) : '#'}
               className="font-display truncate text-base leading-tight hover:underline"
             >
               {listing?.title_en ?? 'Listing unavailable'}
@@ -98,7 +99,7 @@ export function OrderCard({ order, role }: { order: OrderListItem; role: 'buyer'
         )}
         {listing && (
           <Button asChild size="sm" variant="ghost" className="rounded-full">
-            <Link href={`/listing/${listing.id}`}>View listing</Link>
+            <Link href={listingPath(listing.title_en, listing.id)}>View listing</Link>
           </Button>
         )}
         {canConfirm && (
@@ -131,7 +132,7 @@ export function OrderCard({ order, role }: { order: OrderListItem; role: 'buyer'
         </p>
       )}
       {cancelledDeal && (
-        <p className="mt-3 border-t border-border pt-3 text-xs text-amber-700 dark:text-amber-400">
+        <p className="mt-3 border-t border-border pt-3 text-xs text-gold">
           {role === 'seller'
             ? 'Re-activated — back in search.'
             : 'Reservation cancelled by the seller.'}

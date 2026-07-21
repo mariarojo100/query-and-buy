@@ -29,7 +29,9 @@ export type SellerBadge = { key: BadgeKey; label: string; tone: 'emerald' | 'gol
  */
 export function computeBadges(r: ReputationStats): SellerBadge[] {
   const out: SellerBadge[] = []
-  const verified = r.emailVerified || r.phoneVerified
+  // A seller counts as verified only once BOTH email and phone are confirmed —
+  // the same full-verification bar as the avatar badge and the profile check.
+  const verified = r.emailVerified && r.phoneVerified
   const ageDays = r.memberSince ? (Date.now() - new Date(r.memberSince).getTime()) / 86_400_000 : 0
 
   if (r.avgRating != null && r.avgRating >= 4.5 && r.reviewCount >= 3)

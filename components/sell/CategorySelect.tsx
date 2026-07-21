@@ -12,6 +12,7 @@ import {
 
 export type Category = {
   id: string
+  slug: string
   name_en: string
   parent_id: string | null
   position: number

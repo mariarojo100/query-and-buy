@@ -1,16 +1,22 @@
 /**
  * lib/listings/write — create/update listing flows shared by the web actions
- * (app/sell/actions.ts, app/account/listings/actions.ts) and the mobile API.
- * Validation, the safety screen (BEFORE any DB write), moderation logging,
- * analytics, and orphaned-image cleanup live here.
+ * (app/sell/actions.ts, app/account/listings/actions.ts) AND the mobile API
+ * (app/api/v1/listings/*). Because both callers funnel through here, every
+ * safety rule lives in one place: verification gates, validation, the safety
+ * screen, contact-info prevention, category-facet coercion, moderation
+ * logging, analytics, and orphaned-image cleanup. The mobile app therefore
+ * enforces exactly the same rules as the website — it cannot bypass them.
  */
-import { createListingFor, updateListingFor, type ListingImageInput } from '@/lib/db/listings'
+import { createListingFor, updateListingFor, categorySlugChain, type ListingImageInput } from '@/lib/db/listings'
 import { getStorageDriver } from '@/lib/object-storage'
 import { aedToFils } from '@/lib/format'
 import { EMIRATE_VALUES } from '@/lib/profile/emirates'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
+import { detectContactInfo, CONTACT_BLOCK_MESSAGE } from '@/lib/safety/contact'
 import { logModeration } from '@/lib/safety/moderation-log'
+import { resolveAttributeFields, sanitizeAttributes } from '@/lib/listings/attributeSchemas'
+import { emailUnverified, phoneUnverified } from '@/lib/authz/require-verified'
 import { track } from '@/lib/analytics'
 import type { Viewer } from '@/lib/authz/viewer'
 
@@ -23,6 +29,7 @@ export type ListingWriteInput = {
   emirate: string
   area?: string
   isNegotiable?: boolean
+  attributes?: Record<string, string>
   images: ListingImageInput[]
 }
 
@@ -31,6 +38,8 @@ export type ListingWriteResult = {
   ok?: boolean
   error?: string
   blocked?: boolean
+  needVerify?: boolean
+  needPhoneVerify?: boolean
   categories?: string[]
 }
 
@@ -60,15 +69,9 @@ function validate(input: ListingWriteInput, mode: 'create' | 'update'): Validate
   return { title, description, priceFils, area: input.area?.trim() || null }
 }
 
-/** Create a listing (safety screen BEFORE any DB write; blocked → moderation log). */
-export async function createListingAs(
-  viewer: Viewer,
-  input: ListingWriteInput,
-): Promise<ListingWriteResult> {
-  const v = validate(input, 'create')
-  if ('error' in v) return { error: v.error }
-
-  const safety = analyzeListingSafety(v.title, v.description)
+/** Safety + contact screens (shared by create/update). Returns a blocking result or null. */
+async function screen(title: string, description: string): Promise<ListingWriteResult | null> {
+  const safety = analyzeListingSafety(title, description)
   if (!safety.safe) {
     await logModeration({
       source: 'listing',
@@ -78,6 +81,42 @@ export async function createListingAs(
     })
     return { blocked: true, error: PROHIBITED_MESSAGE, categories: safety.categories }
   }
+  const contact = detectContactInfo(`${title}\n${description}`)
+  if (contact.blocked) {
+    await logModeration({
+      source: 'listing',
+      decision: 'blocked',
+      confidence: 100,
+      reason: `Contact info: ${contact.reasons.join(', ')}`, // categories only, never raw
+    })
+    return { blocked: true, error: CONTACT_BLOCK_MESSAGE }
+  }
+  return null
+}
+
+/** Whitelist + coerce category-specific facets against the category's schema. */
+async function coerceAttributes(categoryId: string, raw: Record<string, string> | undefined) {
+  const chain = await categorySlugChain(categoryId)
+  return sanitizeAttributes(resolveAttributeFields(chain?.slug, chain?.parentSlug), raw)
+}
+
+/** Create a listing. Verification → validation → safety+contact screen (BEFORE any DB write). */
+export async function createListingAs(
+  viewer: Viewer,
+  input: ListingWriteInput,
+): Promise<ListingWriteResult> {
+  const gate = emailUnverified(viewer)
+  if (gate) return gate
+  const phoneGate = await phoneUnverified(viewer)
+  if (phoneGate) return phoneGate
+
+  const v = validate(input, 'create')
+  if ('error' in v) return { error: v.error }
+
+  const blocked = await screen(v.title, v.description)
+  if (blocked) return blocked
+
+  const attributes = await coerceAttributes(input.category_id, input.attributes)
 
   const res = await createListingFor(viewer, {
     title: v.title,
@@ -88,6 +127,7 @@ export async function createListingAs(
     emirate: input.emirate,
     area: v.area,
     isNegotiable: input.isNegotiable ?? true,
+    attributes,
     images: input.images,
   })
   if (res.error) return { error: res.error }
@@ -96,17 +136,22 @@ export async function createListingAs(
   return { id: res.id, ok: true }
 }
 
-/** Update a listing + replace its image set (owner-only; re-screens safety). */
+/** Update a listing + replace its image set (owner-only; re-screens safety + contact). */
 export async function updateListingAs(
   viewer: Viewer,
   input: ListingWriteInput & { id: string },
 ): Promise<ListingWriteResult> {
+  const gate = emailUnverified(viewer)
+  if (gate) return gate
+
   const v = validate(input, 'update')
   if ('error' in v) return { error: v.error }
 
-  // Re-screen on edit so a safe listing can't be edited into prohibited content.
-  const safety = analyzeListingSafety(v.title, v.description)
-  if (!safety.safe) return { blocked: true, error: PROHIBITED_MESSAGE, categories: safety.categories }
+  // Re-screen on edit so a safe listing can't be edited into prohibited/contact content.
+  const blocked = await screen(v.title, v.description)
+  if (blocked) return blocked
+
+  const attributes = await coerceAttributes(input.category_id, input.attributes)
 
   const res = await updateListingFor(viewer, {
     id: input.id,
@@ -118,6 +163,7 @@ export async function updateListingAs(
     emirate: input.emirate,
     area: v.area,
     isNegotiable: input.isNegotiable ?? true,
+    attributes,
     images: input.images,
   })
   if ('error' in res) return { error: res.error }

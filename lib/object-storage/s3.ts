@@ -4,21 +4,19 @@
  * ===========================================================================
  * One implementation for Cloudflare R2, AWS S3, and MinIO — they differ only by
  * endpoint/credentials (env). `forcePathStyle` keeps MinIO and R2 happy.
- * Public URLs are served from NEXT_PUBLIC_STORAGE_BASE_URL (an R2 custom domain
- * / CloudFront / MinIO proxy), matching how the buckets are public today.
+ * Public reads are served from each bucket's R2 custom domain (keys.ts#
+ * bucketPublicUrl); this driver only signs uploads and deletes.
  */
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import type { StorageDriver, PresignedUpload } from '@/lib/object-storage/driver'
-import type { BucketName, AllowedImageMime } from '@/lib/object-storage/keys'
+import { bucketPublicUrl, type BucketName, type AllowedImageMime } from '@/lib/object-storage/keys'
 
 export interface S3DriverConfig {
   endpoint: string
   region: string
   accessKeyId: string
   secretAccessKey: string
-  /** Public base URL for object reads, e.g. https://cdn.queryandbuy.ae */
-  publicBaseUrl: string
   forcePathStyle?: boolean
 }
 
@@ -26,7 +24,6 @@ const DEFAULT_PRESIGN_TTL = 60 // seconds
 
 export class S3StorageDriver implements StorageDriver {
   private readonly client: S3Client
-  private readonly publicBaseUrl: string
 
   constructor(config: S3DriverConfig) {
     this.client = new S3Client({
@@ -35,7 +32,6 @@ export class S3StorageDriver implements StorageDriver {
       credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
       forcePathStyle: config.forcePathStyle ?? true,
     })
-    this.publicBaseUrl = config.publicBaseUrl.replace(/\/$/, '')
   }
 
   async presignPut(input: {
@@ -75,6 +71,6 @@ export class S3StorageDriver implements StorageDriver {
   }
 
   publicUrl(bucket: BucketName, key: string): string {
-    return `${this.publicBaseUrl}/${bucket}/${key}`
+    return bucketPublicUrl(bucket, key)
   }
 }

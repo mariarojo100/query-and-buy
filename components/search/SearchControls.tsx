@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { SearchIcon, XIcon } from 'lucide-react'
+import { SearchIcon, SlidersHorizontalIcon, XIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +18,7 @@ import {
 import { EMIRATES } from '@/lib/profile/emirates'
 import { CONDITIONS } from '@/lib/listings/conditions'
 import type { CategoryLite } from '@/lib/listings/queries'
+import { describeAttributeParam, type AttrField } from '@/lib/listings/attributeSchemas'
 
 const ALL = '__all__'
 const FILTER_KEYS = [
@@ -32,6 +33,8 @@ const FILTER_KEYS = [
   'negotiable',
   'featured',
 ]
+// Only these count toward the "Filters" badge (q + sort are surfaced elsewhere).
+const REFINE_KEYS = ['category', 'emirate', 'condition', 'min', 'max', 'since', 'negotiable', 'featured']
 const SORTS = [
   { value: 'newest', label: 'Newest' },
   { value: 'oldest', label: 'Oldest' },
@@ -47,12 +50,20 @@ const DATES = [
   { value: '30', label: 'Last 30 days' },
 ]
 
+const money = (v: string) => Number(v).toLocaleString('en-AE')
+
 export function SearchControls({
   categories,
+  attributeFields = [],
   hideCategory = false,
+  hideSearch = false,
 }: {
   categories: CategoryLite[]
+  /** Category-specific facet fields to expose as filters (empty when no category). */
+  attributeFields?: AttrField[]
   hideCategory?: boolean
+  /** Omit the text search field — used where a primary search box sits above. */
+  hideSearch?: boolean
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -61,6 +72,18 @@ export function SearchControls({
   const [q, setQ] = useState(params.get('q') ?? '')
   const [min, setMin] = useState(params.get('min') ?? '')
   const [max, setMax] = useState(params.get('max') ?? '')
+  const [attrNums, setAttrNums] = useState<Record<string, string>>({})
+  const [open, setOpen] = useState(false)
+
+  const attrSelects = attributeFields.filter((f) => f.type === 'select')
+  const attrNumbers = attributeFields.filter((f) => f.type === 'number')
+  const attrNumVal = (name: string) => attrNums[name] ?? params.get(name) ?? ''
+  const applyAttrNum = (name: string) => {
+    if (attrNums[name] === undefined) return
+    const v = attrNums[name].trim()
+    if (v === (params.get(name) ?? '')) return
+    setParam(name, v)
+  }
 
   function push(mutate: (p: URLSearchParams) => void) {
     const p = new URLSearchParams(params.toString())
@@ -90,102 +113,106 @@ export function SearchControls({
     .sort((a, b) => a.position - b.position)
   const childrenOf = (id: string) =>
     categories.filter((c) => c.parent_id === id).sort((a, b) => a.position - b.position)
+  const categoryName = (slug: string) =>
+    categories.find((c) => c.slug === slug)?.name_en ?? slug
 
-  const hasFilters = FILTER_KEYS.some((k) => params.has(k))
+  const attrParams = Array.from(new Set(Array.from(params.keys()).filter((k) => k.startsWith('a_'))))
+  const hasFilters = FILTER_KEYS.some((k) => params.has(k)) || attrParams.length > 0
+  const refineCount = REFINE_KEYS.filter((k) => params.has(k)).length + attrParams.length
+
+  // Active refinements as removable chips — the user sees exactly what's narrowing results.
+  const minV = params.get('min')
+  const maxV = params.get('max')
+  const priceChip =
+    minV && maxV
+      ? `AED ${money(minV)}–${money(maxV)}`
+      : minV
+        ? `AED ${money(minV)}+`
+        : maxV
+          ? `Under AED ${money(maxV)}`
+          : null
+
+  type Chip = { label: string; clear: () => void }
+  const chips: Chip[] = []
+  const catV = params.get('category')
+  if (catV) chips.push({ label: categoryName(catV), clear: () => setParam('category', '') })
+  const emV = params.get('emirate')
+  if (emV) chips.push({ label: EMIRATES.find((e) => e.value === emV)?.label ?? emV, clear: () => setParam('emirate', '') })
+  const condV = params.get('condition')
+  if (condV) chips.push({ label: CONDITIONS.find((c) => c.value === condV)?.label ?? condV, clear: () => setParam('condition', '') })
+  if (priceChip)
+    chips.push({
+      label: priceChip,
+      clear: () => {
+        setMin('')
+        setMax('')
+        push((p) => {
+          p.delete('min')
+          p.delete('max')
+        })
+      },
+    })
+  const sinceV = params.get('since')
+  if (sinceV) chips.push({ label: DATES.find((d) => d.value === sinceV)?.label ?? sinceV, clear: () => setParam('since', '') })
+  if (params.get('negotiable') === '1') chips.push({ label: 'Negotiable', clear: () => setParam('negotiable', '') })
+  if (params.get('featured') === '1') chips.push({ label: 'Featured', clear: () => setParam('featured', '') })
+  for (const key of attrParams) {
+    const d = describeAttributeParam(key, params.get(key) ?? '')
+    chips.push({
+      label: d?.label ?? key,
+      clear: () => {
+        setAttrNums((s) => {
+          const next = { ...s }
+          delete next[key]
+          return next
+        })
+        setParam(key, '')
+      },
+    })
+  }
+
+  const clearAll = () => {
+    setQ('')
+    setMin('')
+    setMax('')
+    setAttrNums({})
+    setOpen(false)
+    router.push(pathname)
+  }
+
+  const triggerCls = 'w-full'
 
   return (
     <div className="space-y-3">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          setParam('q', q.trim())
-        }}
-        className="flex gap-2"
-      >
-        <div className="relative flex-1">
-          <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search listings…"
-            className="pl-9"
-            aria-label="Search listings"
-          />
-        </div>
-        <Button type="submit">Search</Button>
-      </form>
-
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {!hideCategory && (
-          <Select
-            value={params.get('category') ?? ALL}
-            onValueChange={(v) => setParam('category', v === ALL ? '' : v)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All categories</SelectItem>
-              {parents.map((p) => {
-                const kids = childrenOf(p.id)
-                return kids.length > 0 ? (
-                  <SelectGroup key={p.id}>
-                    <SelectLabel>{p.name_en}</SelectLabel>
-                    {kids.map((k) => (
-                      <SelectItem key={k.id} value={k.slug}>
-                        {k.name_en}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                ) : (
-                  <SelectItem key={p.id} value={p.slug}>
-                    {p.name_en}
-                  </SelectItem>
-                )
-              })}
-            </SelectContent>
-          </Select>
-        )}
-
-        <Select
-          value={params.get('emirate') ?? ALL}
-          onValueChange={(v) => setParam('emirate', v === ALL ? '' : v)}
+      {!hideSearch && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            setParam('q', q.trim())
+          }}
+          className="flex gap-2"
         >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Emirate" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>All emirates</SelectItem>
-            {EMIRATES.map((e) => (
-              <SelectItem key={e.value} value={e.value}>
-                {e.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <div className="relative flex-1">
+            <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search listings…"
+              className="pl-9"
+              aria-label="Search listings"
+            />
+          </div>
+          <Button type="submit">Search</Button>
+        </form>
+      )}
 
-        <Select
-          value={params.get('condition') ?? ALL}
-          onValueChange={(v) => setParam('condition', v === ALL ? '' : v)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Condition" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Any condition</SelectItem>
-            {CONDITIONS.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
+      {/* Control bar — sort stays out; everything else lives behind one Filters toggle. */}
+      <div className="flex flex-wrap items-center gap-2">
         <Select
           value={params.get('sort') ?? 'newest'}
           onValueChange={(v) => setParam('sort', v === 'newest' ? '' : v)}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="h-9 w-auto min-w-[150px] rounded-full" aria-label="Sort">
             <SelectValue placeholder="Sort" />
           </SelectTrigger>
           <SelectContent>
@@ -197,107 +224,283 @@ export function SearchControls({
           </SelectContent>
         </Select>
 
-        <Select
-          value={params.get('since') ?? ALL}
-          onValueChange={(v) => setParam('since', v === ALL ? '' : v)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Date posted" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Any time</SelectItem>
-            {DATES.map((d) => (
-              <SelectItem key={d.value} value={d.value}>
-                {d.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-      </div>
-
-      {/* Price range — reuses the same Input + grid as the dropdowns above. */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        <div className="relative">
-          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-            AED
-          </span>
-          <Input
-            type="number"
-            min={0}
-            inputMode="numeric"
-            value={min}
-            onChange={(e) => setMin(e.target.value)}
-            onKeyDown={onPriceKeyDown}
-            placeholder="Min Price"
-            aria-label="Minimum price in AED"
-            className="pl-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-          />
-        </div>
-        <div className="relative">
-          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-            AED
-          </span>
-          <Input
-            type="number"
-            min={0}
-            inputMode="numeric"
-            value={max}
-            onChange={(e) => setMax(e.target.value)}
-            onKeyDown={onPriceKeyDown}
-            placeholder="Max Price"
-            aria-label="Maximum price in AED"
-            className="pl-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-          />
-        </div>
-        <Button
+        <button
           type="button"
-          onClick={applyPrice}
-          className="col-span-2 h-8 w-full rounded-lg sm:col-span-1"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className={cn(
+            'inline-flex h-9 items-center gap-2 rounded-full border px-4 text-sm font-medium transition',
+            open || refineCount > 0
+              ? 'border-foreground/20 bg-accent/60 text-foreground'
+              : 'border-border text-muted-foreground hover:text-foreground',
+          )}
         >
-          Apply
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        {[
-          { key: 'negotiable', label: 'Negotiable' },
-          { key: 'featured', label: 'Featured' },
-        ].map((t) => {
-          const on = params.get(t.key) === '1'
-          return (
-            <button
-              key={t.key}
-              type="button"
-              aria-pressed={on}
-              onClick={() => setParam(t.key, on ? '' : '1')}
-              className={cn(
-                'rounded-full border px-3 py-1 text-xs transition',
-                on
-                  ? 'border-transparent bg-primary text-primary-foreground'
-                  : 'border-border text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t.label}
-            </button>
-          )
-        })}
+          <SlidersHorizontalIcon className="size-4" />
+          Filters
+          {refineCount > 0 && (
+            <span className="tnum inline-flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+              {refineCount}
+            </span>
+          )}
+        </button>
 
         {hasFilters && (
           <button
             type="button"
-            onClick={() => {
-              setQ('')
-              setMin('')
-              setMax('')
-              router.push(pathname)
-            }}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            onClick={clearAll}
+            className="inline-flex items-center gap-1 rounded-full px-2 text-sm text-muted-foreground transition hover:text-foreground"
           >
             <XIcon className="size-3.5" /> Clear all
           </button>
         )}
       </div>
+
+      {/* Active refinements — visible and individually removable. */}
+      {chips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {chips.map((c) => (
+            <button
+              key={c.label}
+              type="button"
+              onClick={c.clear}
+              className="group inline-flex items-center gap-1.5 rounded-full border border-border bg-card py-1 pl-3 pr-2 text-xs font-medium text-foreground shadow-soft transition hover:border-foreground/25"
+            >
+              {c.label}
+              <XIcon className="size-3.5 text-muted-foreground transition group-hover:text-foreground" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Advanced panel — collapsed by default so the results lead, not the controls. */}
+      {open && (
+        <div className="animate-in fade-in-0 slide-in-from-top-1 space-y-3 rounded-2xl border border-border bg-card p-4 shadow-soft duration-150">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {!hideCategory && (
+              <Select
+                value={params.get('category') ?? ALL}
+                onValueChange={(v) => setParam('category', v === ALL ? '' : v)}
+              >
+                <SelectTrigger className={triggerCls}>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>All categories</SelectItem>
+                  {parents.map((p) => {
+                    const kids = childrenOf(p.id)
+                    return kids.length > 0 ? (
+                      <SelectGroup key={p.id}>
+                        <SelectLabel>{p.name_en}</SelectLabel>
+                        {kids.map((k) => (
+                          <SelectItem key={k.id} value={k.slug}>
+                            {k.name_en}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ) : (
+                      <SelectItem key={p.id} value={p.slug}>
+                        {p.name_en}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            )}
+
+            <Select
+              value={params.get('emirate') ?? ALL}
+              onValueChange={(v) => setParam('emirate', v === ALL ? '' : v)}
+            >
+              <SelectTrigger className={triggerCls}>
+                <SelectValue placeholder="Emirate" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All emirates</SelectItem>
+                {EMIRATES.map((e) => (
+                  <SelectItem key={e.value} value={e.value}>
+                    {e.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={params.get('condition') ?? ALL}
+              onValueChange={(v) => setParam('condition', v === ALL ? '' : v)}
+            >
+              <SelectTrigger className={triggerCls}>
+                <SelectValue placeholder="Condition" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Any condition</SelectItem>
+                {CONDITIONS.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={params.get('since') ?? ALL}
+              onValueChange={(v) => setParam('since', v === ALL ? '' : v)}
+            >
+              <SelectTrigger className={triggerCls}>
+                <SelectValue placeholder="Date posted" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Any time</SelectItem>
+                {DATES.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>
+                    {d.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                AED
+              </span>
+              <Input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                value={min}
+                onChange={(e) => setMin(e.target.value)}
+                onKeyDown={onPriceKeyDown}
+                placeholder="Min price"
+                aria-label="Minimum price in AED"
+                className="pl-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+            </div>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                AED
+              </span>
+              <Input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                value={max}
+                onChange={(e) => setMax(e.target.value)}
+                onKeyDown={onPriceKeyDown}
+                placeholder="Max price"
+                aria-label="Maximum price in AED"
+                className="pl-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+            </div>
+            <Button type="button" onClick={applyPrice} variant="outline" className="col-span-2 sm:col-span-1">
+              Apply price
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {[
+              { key: 'negotiable', label: 'Negotiable only' },
+              { key: 'featured', label: 'Featured only' },
+            ].map((t) => {
+              const on = params.get(t.key) === '1'
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setParam(t.key, on ? '' : '1')}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 text-xs font-medium transition',
+                    on
+                      ? 'border-transparent bg-primary text-primary-foreground'
+                      : 'border-border text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Category-specific facets — only present once a category is in scope. */}
+          {(attrSelects.length > 0 || attrNumbers.length > 0) && (
+            <div className="space-y-3 border-t border-border pt-3">
+              <p className="text-xs font-medium text-muted-foreground">Details</p>
+              {attrSelects.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {attrSelects.map((f) => (
+                    <Select
+                      key={f.key}
+                      value={params.get(`a_${f.key}`) ?? ALL}
+                      onValueChange={(v) => setParam(`a_${f.key}`, v === ALL ? '' : v)}
+                    >
+                      <SelectTrigger className={triggerCls} aria-label={f.label}>
+                        <SelectValue placeholder={f.label} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL}>Any {f.label.toLowerCase()}</SelectItem>
+                        {f.options?.map((o) => (
+                          <SelectItem key={o} value={o}>
+                            {o}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ))}
+                </div>
+              )}
+              {attrNumbers.map((f) => {
+                const minName = `a_${f.key}_min`
+                const maxName = `a_${f.key}_max`
+                const numCls =
+                  '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                return (
+                  <div key={f.key} className="flex items-center gap-2">
+                    <span className="w-28 shrink-0 text-xs text-muted-foreground">
+                      {f.label}
+                      {f.unit ? ` (${f.unit})` : ''}
+                    </span>
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="Min"
+                      aria-label={`Minimum ${f.label}`}
+                      value={attrNumVal(minName)}
+                      onChange={(e) => setAttrNums((s) => ({ ...s, [minName]: e.target.value }))}
+                      onBlur={() => applyAttrNum(minName)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          applyAttrNum(minName)
+                        }
+                      }}
+                      className={numCls}
+                    />
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="Max"
+                      aria-label={`Maximum ${f.label}`}
+                      value={attrNumVal(maxName)}
+                      onChange={(e) => setAttrNums((s) => ({ ...s, [maxName]: e.target.value }))}
+                      onBlur={() => applyAttrNum(maxName)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          applyAttrNum(maxName)
+                        }
+                      }}
+                      className={numCls}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

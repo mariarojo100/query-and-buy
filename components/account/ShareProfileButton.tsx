@@ -4,8 +4,16 @@ import { useState } from 'react'
 import { CheckIcon, Share2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
-export function ShareProfileButton({ username }: { username: string | null }) {
+export function ShareProfileButton({
+  username,
+  onDark = false,
+}: {
+  username: string | null
+  /** Style for placement on the dark ink banner. */
+  onDark?: boolean
+}) {
   const [copied, setCopied] = useState(false)
 
   async function share() {
@@ -36,7 +44,16 @@ export function ShareProfileButton({ username }: { username: string | null }) {
   }
 
   return (
-    <Button variant="outline" size="sm" className="rounded-full" onClick={share}>
+    <Button
+      variant="outline"
+      size="sm"
+      className={cn(
+        'rounded-full',
+        onDark &&
+          'border-primary-foreground/25 bg-primary-foreground/5 text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground',
+      )}
+      onClick={share}
+    >
       {copied ? <CheckIcon className="size-4" /> : <Share2Icon className="size-4" />}
       Share
     </Button>

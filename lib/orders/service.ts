@@ -11,6 +11,7 @@ import { getProvider } from '@/lib/ai/provider'
 import { aedToFils, formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { dispatch, dispatchAll, type DispatchInput } from '@/lib/notifications/dispatch'
+import { emailUnverified, phoneUnverified } from '@/lib/authz/require-verified'
 import { track } from '@/lib/analytics'
 import * as orders from '@/lib/db/orders'
 import type { Viewer } from '@/lib/authz/viewer'
@@ -23,6 +24,8 @@ export type OrderServiceResult = {
   error?: string
   conversationId?: string | null
   listingId?: string
+  needVerify?: boolean
+  needPhoneVerify?: boolean
 }
 
 function imageUrl(coverKey: string | null): string | null {
@@ -41,6 +44,10 @@ export async function makeOfferAs(
   conversationId: string,
   amountAed: string | number,
 ): Promise<OrderServiceResult> {
+  // Making an offer requires a confirmed email (enforced here → mobile too).
+  const gate = emailUnverified(viewer)
+  if (gate) return { ok: false, error: gate.error, needVerify: true }
+
   const fils = aedToFils(amountAed)
   if (fils == null || fils <= 0) return { ok: false, error: 'Enter a valid amount.' }
   if (fils > MAX_FILS) return { ok: false, error: 'That amount is too large.' }
@@ -115,6 +122,10 @@ export async function respondToOfferAs(
 
 /** Buyer/seller confirms. When BOTH confirm: reveal contacts + listing → reserved. */
 export async function confirmOrderAs(viewer: Viewer, orderId: string): Promise<OrderServiceResult> {
+  // Confirming a deal unlocks contact exchange → requires a verified phone.
+  const phoneGate = await phoneUnverified(viewer)
+  if (phoneGate) return { ok: false, error: phoneGate.error, needPhoneVerify: true }
+
   const res = await orders.confirmOrderFor(viewer, orderId)
   if (!res.ok) return { ok: false, error: res.error }
   if (res.both) track('order_confirmed', { orderId: res.orderId })

@@ -173,6 +173,8 @@ model User {
   hasMobileVerified Boolean    @default(false) @map("has_mobile_verified")
   hasEmailVerified  Boolean    @default(false) @map("has_email_verified")
   hasEidVerified    Boolean    @default(false) @map("has_eid_verified")
+  emailVerifiedAt   DateTime?  @map("email_verified_at") @db.Timestamptz(6)
+  phoneVerifiedAt   DateTime?  @map("phone_verified_at") @db.Timestamptz(6)
   flagged           Boolean    @default(false)
   lastActiveAt      DateTime?  @map("last_active_at") @db.Timestamptz(6)
   createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)

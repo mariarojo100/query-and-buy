@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { listingPath } from '@/lib/listings/slug'
 import Image from 'next/image'
 import { notFound, redirect } from 'next/navigation'
 import { ChevronLeftIcon, ImageIcon } from 'lucide-react'
@@ -100,7 +101,7 @@ export default async function ConversationPage({
               </div>
               {listing ? (
                 <Link
-                  href={`/listing/${listing.id}`}
+                  href={listingPath(listing.title_en, listing.id)}
                   className="truncate text-xs text-muted-foreground hover:text-foreground"
                 >
                   {listing.title_en}
@@ -112,7 +113,7 @@ export default async function ConversationPage({
 
             {listing && (
               <Link
-                href={`/listing/${listing.id}`}
+                href={listingPath(listing.title_en, listing.id)}
                 className="hidden shrink-0 items-center gap-2.5 rounded-xl border border-border bg-card px-2.5 py-1.5 shadow-sm transition hover:shadow-soft sm:flex"
               >
                 <div className="relative size-9 shrink-0 overflow-hidden rounded-lg bg-muted">
@@ -146,6 +147,7 @@ export default async function ConversationPage({
             otherAvatarUrl={otherAvatar}
             otherLastReadAt={view.otherLastReadAt}
             currency={currency}
+            listingPriceFils={listing?.price_fils}
             order={
               order
                 ? {

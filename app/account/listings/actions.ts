@@ -1,5 +1,11 @@
 'use server'
 
+/**
+ * My-listings actions — lifecycle (sold / delete / pause) + edit. The edit
+ * path is a thin wrapper over the shared listing-write service so the mobile
+ * API enforces the same validation, safety + contact re-screen, verification,
+ * and facet coercion (lib/listings/write.ts).
+ */
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
 import {
@@ -10,7 +16,7 @@ import {
 } from '@/lib/db/listings'
 import { updateListingAs, type ListingWriteInput } from '@/lib/listings/write'
 
-type Result = { ok?: boolean; error?: string; blocked?: boolean; categories?: string[] }
+type Result = { ok?: boolean; error?: string; blocked?: boolean; categories?: string[]; needVerify?: boolean }
 
 function revalidateListing(id: string) {
   revalidatePath('/account/listings')
@@ -48,18 +54,12 @@ export async function setListingPaused(id: string, paused: boolean): Promise<Res
 export type UpdateListingInput = ListingWriteInput & { id: string }
 export type { ListingImageInput }
 
-/**
- * Update a listing — thin wrapper over lib/listings/write.ts (shared with the
- * mobile API): validation, the edit-time safety re-screen, and orphaned-image
- * cleanup all live in the service.
- */
+/** Update a listing — thin wrapper over the shared listing-write service. */
 export async function updateListing(input: UpdateListingInput): Promise<Result> {
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in.' }
-
   const res = await updateListingAs(viewer, input)
-  if (res.error) return { error: res.error, blocked: res.blocked, categories: res.categories }
-
+  if (res.error) return { error: res.error, blocked: res.blocked, categories: res.categories, needVerify: res.needVerify }
   revalidateListing(input.id)
   return { ok: true }
 }

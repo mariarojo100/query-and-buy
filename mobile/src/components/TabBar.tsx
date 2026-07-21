@@ -62,11 +62,11 @@ export function TabBar({ state, navigation, unread = 0 }: BottomTabBarProps & { 
                 onPress={() => go(slot.name)}
                 accessibilityRole="button"
                 accessibilityLabel="Sell an item"
-                className="items-center justify-center rounded-2xl bg-primary active:opacity-90"
+                className="items-center justify-center rounded-full bg-primary active:opacity-90"
                 style={{
-                  width: 50,
-                  height: 50,
-                  marginTop: -20,
+                  width: 52,
+                  height: 52,
+                  marginTop: -22,
                   shadowColor: COLORS.primaryDark,
                   shadowOpacity: 0.3,
                   shadowRadius: 10,
@@ -91,9 +91,6 @@ export function TabBar({ state, navigation, unread = 0 }: BottomTabBarProps & { 
             className="flex-1 items-center"
           >
             <View className="h-8 w-14 items-center justify-center rounded-full">
-              {focused ? (
-                <View className="absolute h-8 w-14 rounded-full bg-primary-light dark:bg-primary/15" />
-              ) : null}
               <Ionicons
                 name={focused ? slot.iconActive : slot.icon}
                 size={22}

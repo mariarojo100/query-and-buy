@@ -142,7 +142,10 @@ export async function linkOAuthAccount(userId: string, provider: string, provide
 /** Replaces sync_email_verified(): mirror confirmed email into users + profiles. */
 export async function markEmailVerified(userId: string): Promise<void> {
   await db.$transaction([
-    db.user.update({ where: { id: userId }, data: { hasEmailVerified: true } }),
+    db.user.update({
+      where: { id: userId },
+      data: { hasEmailVerified: true, emailVerifiedAt: new Date() },
+    }),
     db.profile.update({ where: { id: userId }, data: { emailVerified: true } }),
   ])
 }
@@ -153,7 +156,10 @@ export async function markEmailVerified(userId: string): Promise<void> {
  */
 export async function markPhoneVerified(userId: string, phoneE164: string): Promise<void> {
   await db.$transaction([
-    db.user.update({ where: { id: userId }, data: { phoneE164, hasMobileVerified: true } }),
+    db.user.update({
+      where: { id: userId },
+      data: { phoneE164, hasMobileVerified: true, phoneVerifiedAt: new Date() },
+    }),
     db.profile.update({ where: { id: userId }, data: { phoneVerified: true } }),
   ])
 }

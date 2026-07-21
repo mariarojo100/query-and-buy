@@ -13,6 +13,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { ApiError } from '@/api/client'
 import { COLORS } from '@/theme/colors'
 import { Button, BrandMark, Field } from '@/components/ui'
+import { GoogleButton } from '@/components/GoogleButton'
 
 // Warm minimalist-interior stock photo (Unsplash, free licence), bundled locally
 // so the hero renders offline. Source: unsplash.com/photos/photo-1586023492125.
@@ -28,9 +29,6 @@ export default function SignupScreen() {
     resolver: zodResolver(SignupSchema),
     defaultValues: { email: '', password: '', displayName: '' },
   })
-
-  // Not backed by the mobile app/API yet — honest placeholder (no fake success).
-  const onGoogle = () => Alert.alert('Google sign-in', 'Google sign-in isn’t set up in this build yet.')
 
   const submit = form.handleSubmit(async (values) => {
     setServerError(null)
@@ -141,15 +139,7 @@ export default function SignupScreen() {
               <Text className="mx-3 text-[13px] text-muted">or</Text>
               <View className="h-px flex-1 bg-border" />
             </View>
-            <Pressable
-              onPress={onGoogle}
-              accessibilityRole="button"
-              accessibilityLabel="Continue with Google"
-              className="h-[54px] flex-row items-center justify-center rounded-2xl border border-border bg-card active:opacity-90"
-            >
-              <Ionicons name="logo-google" size={18} color="#DB4437" />
-              <Text className="ml-2.5 text-[15px] font-semibold text-ink">Continue with Google</Text>
-            </Pressable>
+            <GoogleButton onSuccess={() => router.back()} onError={(m) => Alert.alert('Google sign-in', m)} />
 
             <Pressable onPress={() => router.replace('/(auth)/login')} className="mt-5 flex-row items-center justify-center py-2">
               <Text className="text-[14px] text-muted">Already have an account? </Text>

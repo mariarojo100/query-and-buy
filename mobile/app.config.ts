@@ -40,6 +40,7 @@ const config: ExpoConfig = {
     'expo-secure-store',
     'expo-font',
     'expo-notifications',
+    'expo-web-browser',
     [
       'expo-splash-screen',
       { image: './assets/splash.png', imageWidth: 220, backgroundColor: '#faf9f6' },

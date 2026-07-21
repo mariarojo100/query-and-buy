@@ -27,6 +27,8 @@ type AuthState = {
   ready: boolean
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, displayName: string) => Promise<void>
+  /** Exchange a device-obtained Google id_token for a session (POST /auth/google). */
+  googleLogin: (idToken: string) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -84,6 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [applySession],
   )
 
+  const googleLogin = useCallback(
+    async (idToken: string) => {
+      const pair = await api<TokenPairResponse>('/auth/google', { body: { idToken }, anonymous: true })
+      await applySession(pair)
+    },
+    [applySession],
+  )
+
   const logout = useCallback(async () => {
     const tokens = await getTokens()
     if (tokens?.refreshToken) {
@@ -105,8 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, ready, login, signup, logout, refreshUser }),
-    [user, ready, login, signup, logout, refreshUser],
+    () => ({ user, ready, login, signup, googleLogin, logout, refreshUser }),
+    [user, ready, login, signup, googleLogin, logout, refreshUser],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

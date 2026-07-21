@@ -3,10 +3,7 @@
  * headline, an ink CTA with a gold arrow, and a paged set of value props with a
  * working dot indicator. A warm lifestyle photo sits on the right of each slide,
  * blended into the card so the left-hand copy stays on a solid, legible ground.
- * Light theme only.
- *
- * The hero photo is a remote stock image (Unsplash, free licence) for now —
- * bundle it into assets/ + require() for offline production use.
+ * Light theme only. Hero photos are Unsplash (free licence), bundled locally.
  */
 import React, { useRef, useState } from 'react'
 import { Dimensions, ScrollView, StyleSheet, Text, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native'
@@ -17,10 +14,10 @@ import { ScalePressable } from '@/components/ui'
 import { COLORS } from '@/theme/colors'
 
 const CARD = '#ECE7DB'
-const HERO_A = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80'
-const HERO_B = 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=800&q=80'
+const HERO_A = require('../../../assets/hero-interior.jpg')
+const HERO_B = require('../../../assets/hero-armchair.jpg')
 
-type Slide = { title: string; sub: string; cta: string; onPress: () => void; image: string }
+type Slide = { title: string; sub: string; cta: string; onPress: () => void; image: number }
 
 const GUTTER = 20 // mirrors mx-5
 
@@ -29,7 +26,7 @@ function HeroSlide({ slide, width }: { slide: Slide; width: number }) {
     <View style={{ width, height: 202 }}>
       {/* Lifestyle photo on the right, blended into the card */}
       <View className="absolute bottom-0 right-0 top-0 overflow-hidden" style={{ width: '55%' }}>
-        <Image source={{ uri: slide.image }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={300} />
+        <Image source={slide.image} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={300} />
         <LinearGradient
           colors={[CARD, 'rgba(236,231,219,0.15)', 'rgba(236,231,219,0)']}
           locations={[0, 0.55, 1]}

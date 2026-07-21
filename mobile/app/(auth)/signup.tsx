@@ -14,9 +14,9 @@ import { ApiError } from '@/api/client'
 import { COLORS } from '@/theme/colors'
 import { Button, BrandMark, Field } from '@/components/ui'
 
-// Warm minimalist-interior stock photo (Unsplash, free licence). For production,
-// download this into assets/ and require() it so the hero works offline.
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=900&q=80'
+// Warm minimalist-interior stock photo (Unsplash, free licence), bundled locally
+// so the hero renders offline. Source: unsplash.com/photos/photo-1586023492125.
+const HERO_IMAGE = require('../../assets/hero-interior.jpg')
 
 export default function SignupScreen() {
   const router = useRouter()
@@ -49,7 +49,7 @@ export default function SignupScreen() {
     <View className="flex-1 bg-background">
       {/* ── Hero (lifestyle photo + soft scrim) ─────────────────── */}
       <View className="absolute left-0 right-0 top-0" style={{ height: 340 }}>
-        <Image source={{ uri: HERO_IMAGE }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={300} />
+        <Image source={HERO_IMAGE} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={300} />
         <LinearGradient
           colors={['rgba(246,245,240,0.82)', 'rgba(246,245,240,0.34)', 'rgba(246,245,240,0.66)']}
           locations={[0, 0.55, 1]}

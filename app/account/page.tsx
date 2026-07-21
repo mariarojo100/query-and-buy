@@ -1,12 +1,16 @@
 import { getViewer } from '@/lib/auth/session'
 import { profileById, repeatBuyersFor } from '@/lib/db/profiles'
 import { getSellerReputation } from '@/lib/reputation/queries'
-import { getProfileReviews } from '@/lib/reviews/queries'
 import { getActivity } from '@/lib/account/activity'
+import { getSellerListings } from '@/lib/listings/queries'
 import { computeTrust } from '@/lib/trust/score'
 import { ReputationCard } from '@/components/account/ReputationCard'
+import { AboutCard } from '@/components/account/AboutCard'
+import { ListingsPreviewCard } from '@/components/account/ListingsPreviewCard'
 import { ActivityTimeline } from '@/components/account/ActivityTimeline'
+import { CardHeading } from '@/components/account/CardHeading'
 import { ProfileCompletion } from '@/components/profile/ProfileCompletion'
+import { VerifyEmailBanner } from '@/components/account/VerifyEmailBanner'
 import type { Profile } from '@/lib/profile/completion'
 
 export const metadata = { title: 'My profile · Query & Buy' }
@@ -24,13 +28,12 @@ export default async function AccountOverviewPage() {
   const profile = (await profileById(user.id)) as TrustProfile | null
   if (!profile) return null
 
-  const [rep, recentReviews, activity] = await Promise.all([
+  const [rep, activity, listings, repeatBuyers] = await Promise.all([
     getSellerReputation(profile.id, { withResponse: true }),
-    getProfileReviews(profile.id, 4),
-    getActivity(profile.id, profile.member_since, 12),
+    getActivity(profile.id, profile.member_since, 6),
+    getSellerListings(profile.id, { limit: 3 }),
+    repeatBuyersFor(profile.id),
   ])
-
-  const repeatBuyers = await repeatBuyersFor(profile.id)
 
   const trust = computeTrust({
     display_name: profile.display_name,
@@ -46,22 +49,31 @@ export default async function AccountOverviewPage() {
   })
 
   return (
-    <div className="grid gap-6 lg:grid-cols-5">
-      <div className="space-y-6 lg:col-span-3">
-        <ReputationCard
-          rep={rep}
-          trustScore={trust.score}
-          repeatBuyers={repeatBuyers}
-          recentReviews={recentReviews}
-        />
-        <ProfileCompletion profile={profile} />
-      </div>
-      <div className="lg:col-span-2">
-        <div className="rounded-3xl border border-border bg-card p-5 shadow-soft sm:p-6">
-          <h2 className="font-display mb-5 text-xl tracking-tight">Activity</h2>
-          <ActivityTimeline events={activity} />
+    <div className="space-y-6">
+      {!profile.email_verified && <VerifyEmailBanner email={user.email} />}
+
+      {/* Overview: About · Reputation · Recent activity · Listings */}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-12">
+        <div className="lg:col-span-3">
+          <AboutCard profile={profile} avgReplyMinutes={rep.response.avgMinutes} />
+        </div>
+        <div className="lg:col-span-4">
+          <ReputationCard rep={rep} trustScore={trust.score} repeatBuyers={repeatBuyers} />
+        </div>
+        <div className="lg:col-span-3">
+          <div className="h-full rounded-3xl border border-border bg-card p-5 shadow-soft">
+            <CardHeading>Recent activity</CardHeading>
+            <div className="mt-4">
+              <ActivityTimeline events={activity} />
+            </div>
+          </div>
+        </div>
+        <div className="lg:col-span-2">
+          <ListingsPreviewCard listings={listings} activeCount={profile.listings_count} />
         </div>
       </div>
+
+      <ProfileCompletion profile={profile} />
     </div>
   )
 }

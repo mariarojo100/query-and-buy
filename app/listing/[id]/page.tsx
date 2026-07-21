@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { maskContactInfo } from '@/lib/safety/contact'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { ChevronLeftIcon, PencilIcon, ShieldCheckIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
@@ -20,33 +21,37 @@ import { formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
+import { formatAttributesForDisplay } from '@/lib/listings/attributeSchemas'
 import { ListingCard } from '@/components/listing/ListingCard'
 import { getListingById, getSellerListings, getSimilarListings } from '@/lib/listings/queries'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, productJsonLd } from '@/lib/seo'
 import { absoluteUrl } from '@/lib/site'
+import { extractListingId, listingSlug } from '@/lib/listings/slug'
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
-  const { id } = await params
-  const listing = await getListingById(id)
+  const { id: param } = await params
+  const listingId = extractListingId(param)
+  const listing = listingId ? await getListingById(listingId) : null
   if (!listing) return { title: 'Listing not found · Query & Buy' }
-  const desc = listing.description.slice(0, 155)
+  const desc = maskContactInfo(listing.description).slice(0, 155)
   const img = listing.images[0]
     ? publicUrl(LISTING_IMAGES_BUCKET, listing.images[0].storage_key)
     : undefined
+  const slug = listingSlug(listing.title_en, listing.id)
   return {
     title: `${listing.title_en} · Query & Buy`,
     description: desc,
-    alternates: { canonical: `/listing/${id}` },
+    alternates: { canonical: `/listing/${slug}` },
     openGraph: {
       type: 'website',
       title: listing.title_en,
       description: desc,
-      url: absoluteUrl(`/listing/${id}`),
+      url: absoluteUrl(`/listing/${slug}`),
       images: img ? [img] : undefined,
     },
     twitter: {
@@ -73,9 +78,16 @@ export default async function ListingDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
-  const listing = await getListingById(id)
+  const { id: param } = await params
+  const listingId = extractListingId(param)
+  if (!listingId) notFound()
+  const listing = await getListingById(listingId)
   if (!listing) notFound()
+
+  // Canonicalise the URL: redirect bare-UUID or stale-slug requests to the
+  // keyword slug so there's a single indexable URL per listing.
+  const canonicalSlug = listingSlug(listing.title_en, listing.id)
+  if (param !== canonicalSlug) permanentRedirect(`/listing/${canonicalSlug}`)
 
   const user = await getViewer()
   const isOwner = user?.id === listing.seller_id
@@ -87,6 +99,7 @@ export default async function ListingDetailPage({
   const similarFav = await getFavoritedIds(similar.map((l) => l.id))
   const sellerRep = await getSellerReputation(listing.seller_id, { withResponse: true })
 
+  const specs = formatAttributesForDisplay(listing.attributes)
   const location = [listing.area, emirateLabel(listing.emirate)].filter(Boolean).join(', ')
   const posted = listing.published_at ?? listing.created_at
   const seller = listing.seller
@@ -116,7 +129,10 @@ export default async function ListingDetailPage({
           }),
           breadcrumbJsonLd([
             { name: 'Home', path: '/' },
-            { name: listing.title_en, path: `/listing/${listing.id}` },
+            ...(listing.category_slug && listing.category_name
+              ? [{ name: listing.category_name, path: `/category/${listing.category_slug}` }]
+              : []),
+            { name: listing.title_en, path: `/listing/${canonicalSlug}` },
           ]),
         ]}
       />
@@ -136,7 +152,7 @@ export default async function ListingDetailPage({
               <span className="text-muted-foreground">This is your listing.</span>
             </p>
             <Button asChild size="sm" variant="outline" className="rounded-full">
-              <Link href={`/listing/${id}/edit`}>
+              <Link href={`/listing/${listing.id}/edit`}>
                 <PencilIcon className="size-4" />
                 Edit
               </Link>
@@ -144,22 +160,18 @@ export default async function ListingDetailPage({
           </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
-          {/* Gallery + description */}
-          <div className="lg:col-span-7">
+        {/* Blocks stay in reading order for narrow screens — gallery, then the
+            title/price/CTA details, then the long description. On lg the explicit
+            grid placement restores the two-column layout: gallery top-left, sticky
+            details on the right (spanning both rows), description bottom-left. */}
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:gap-x-12 lg:gap-y-8">
+          {/* Gallery */}
+          <div className="lg:col-span-7 lg:col-start-1 lg:row-start-1">
             <ImageGallery keys={listing.images.map((i) => i.storage_key)} title={listing.title_en} />
-
-            {/* Description sits directly under the image */}
-            <section className="mt-8 border-t border-border pt-8">
-              <p className="eyebrow">Description</p>
-              <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
-                {listing.description}
-              </p>
-            </section>
           </div>
 
           {/* Details */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2">
             <div className="lg:sticky lg:top-24">
               <p className="eyebrow">{listing.category_name ?? 'Listing'}</p>
               <h1 className="font-display mt-3 text-3xl leading-tight tracking-tight sm:text-[2.5rem]">
@@ -227,6 +239,34 @@ export default async function ListingDetailPage({
               )}
             </div>
           </div>
+
+          {/* Specifications — category-specific facets, when present. */}
+          {specs.length > 0 && (
+            <section className="border-t border-border pt-8 lg:col-span-7 lg:col-start-1 lg:row-start-2">
+              <p className="eyebrow">Details</p>
+              <dl className="mt-4 grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2">
+                {specs.map((s) => (
+                  <div
+                    key={s.key}
+                    className="flex items-baseline justify-between gap-4 border-b border-border/60 pb-3"
+                  >
+                    <dt className="text-sm text-muted-foreground">{s.label}</dt>
+                    <dd className="text-sm font-medium text-foreground">{s.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+
+          {/* Description — after the details on mobile; bottom-left on lg. */}
+          <section className="border-t border-border pt-8 lg:col-span-7 lg:col-start-1 lg:row-start-3">
+            <p className="eyebrow">Description</p>
+            <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
+              {/* Legacy listings may contain contact details entered before
+                  enforcement — masked at display until the owner edits. */}
+              {maskContactInfo(listing.description)}
+            </p>
+          </section>
         </div>
 
         {related.length > 0 && (

@@ -18,15 +18,11 @@
 import { PrismaClient } from '@/lib/generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
-function createClient(): PrismaClient {
+function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {
-    // Thrown lazily on first real use, never at import time — keeps the app
-    // (which does not use this yet) unaffected when DATABASE_URL is absent.
-    throw new Error(
-      'DATABASE_URL is not set. The Prisma data layer is part of the in-progress ' +
-        'Supabase→self-managed migration and is not active yet; see lib/db/README.md.',
-    )
+    // Thrown lazily on first real use, never at import time.
+    throw new Error('DATABASE_URL is not set; see lib/db/README.md.')
   }
   const adapter = new PrismaPg({ connectionString })
   return new PrismaClient({ adapter })
@@ -44,7 +40,7 @@ let cached: PrismaClient | undefined = globalForDb.__qbPrisma
 export const db: PrismaClient = new Proxy({} as PrismaClient, {
   get(_target, prop, receiver) {
     if (!cached) {
-      cached = createClient()
+      cached = createPrismaClient()
       if (process.env.NODE_ENV !== 'production') globalForDb.__qbPrisma = cached
     }
     return Reflect.get(cached, prop, receiver)

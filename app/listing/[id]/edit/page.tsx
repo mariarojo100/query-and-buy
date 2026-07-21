@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { EditListingForm } from '@/components/listing/EditListingForm'
 import { getListingForEdit, getActiveCategories } from '@/lib/listings/queries'
+import { extractListingId } from '@/lib/listings/slug'
 import type { Category } from '@/components/sell/CategorySelect'
 
 export const metadata = { title: 'Edit listing · Query & Buy' }
@@ -15,7 +16,8 @@ export default async function EditListingPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
+  const { id: param } = await params
+  const id = extractListingId(param) ?? param
   const user = await getViewer()
   if (!user) redirect(`/login?redirectTo=/listing/${id}/edit`)
 

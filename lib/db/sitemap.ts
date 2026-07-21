@@ -6,7 +6,7 @@ import { db } from '@/lib/db'
 
 export type SitemapData = {
   categorySlugs: string[]
-  listings: { id: string; lastModified: Date }[]
+  listings: { id: string; title: string; lastModified: Date }[]
   profiles: { username: string; lastModified: Date }[]
 }
 
@@ -17,13 +17,13 @@ export async function sitemapData(): Promise<SitemapData> {
       where: { status: 'active', deletedAt: null },
       orderBy: { publishedAt: { sort: 'desc', nulls: 'last' } },
       take: 5000,
-      select: { id: true, publishedAt: true, updatedAt: true },
+      select: { id: true, titleEn: true, publishedAt: true, updatedAt: true },
     }),
     db.profile.findMany({ where: { username: { not: null } }, take: 5000, select: { username: true, updatedAt: true } }),
   ])
   return {
     categorySlugs: cats.map((c) => c.slug),
-    listings: listings.map((l) => ({ id: l.id, lastModified: l.updatedAt ?? l.publishedAt ?? new Date() })),
+    listings: listings.map((l) => ({ id: l.id, title: l.titleEn, lastModified: l.updatedAt ?? l.publishedAt ?? new Date() })),
     profiles: profiles
       .filter((p): p is { username: string; updatedAt: Date } => p.username != null)
       .map((p) => ({ username: p.username, lastModified: p.updatedAt })),

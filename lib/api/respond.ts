@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server'
 export type ApiErrorCode =
   | 'unauthorized'
   | 'forbidden'
+  | 'verification_required'
   | 'not_found'
   | 'invalid_input'
   | 'rate_limited'

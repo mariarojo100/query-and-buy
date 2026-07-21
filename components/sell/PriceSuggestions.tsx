@@ -35,7 +35,7 @@ export function PriceSuggestions({
         <span
           className={cn(
             'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-            low ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800',
+            low ? 'bg-warning/20 text-warning-foreground' : 'bg-success/15 text-success',
           )}
         >
           {pricing.confidence}% confidence

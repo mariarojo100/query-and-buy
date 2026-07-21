@@ -1,14 +1,13 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import { BadgeCheckIcon, EyeIcon, ImageIcon, MapPinIcon } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { initials } from '@/components/profile/ProfileHeader'
+import { BadgeCheckIcon, MapPinIcon, StarIcon } from 'lucide-react'
+import { SafeListingImage } from '@/components/listing/SafeListingImage'
 import { FavoriteButton } from '@/components/listing/FavoriteButton'
 import { formatPrice, formatRelativeTime } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
 import { BLUR_DATA_URL } from '@/lib/blur'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
+import { listingPath } from '@/lib/listings/slug'
 import type { FeedListing } from '@/lib/listings/queries'
 
 export function ListingCard({
@@ -27,43 +26,42 @@ export function ListingCard({
   const condition = conditionLabel(listing.condition)
 
   return (
-    <Link href={`/listing/${listing.id}`} className="lift group block focus-visible:outline-none">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted shadow-soft transition-shadow duration-300 group-hover:shadow-float group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2">
+    <Link
+      href={listingPath(listing.title_en, listing.id)}
+      className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+    >
+      {/* Media — the photo does the work; a single condition signal, nothing else. */}
+      <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-muted shadow-soft transition-shadow duration-300 group-hover:shadow-float">
         {listing.cover_key ? (
-          <Image
+          <SafeListingImage
             src={publicUrl(LISTING_IMAGES_BUCKET, listing.cover_key)}
-            alt={listing.title_en}
-            fill
+            alt={[listing.title_en, condition, location].filter(Boolean).join(' – ')}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+            className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
           />
         ) : (
-          <div className="flex size-full items-center justify-center text-muted-foreground">
-            <ImageIcon className="size-8 opacity-30" />
+          <div className="flex size-full items-center justify-center bg-gradient-to-br from-accent via-muted to-secondary/70">
+            <span className="font-display select-none text-3xl tracking-tight text-primary/40">
+              Q&amp;B
+            </span>
           </div>
         )}
 
-        {/* legibility gradient for the location chip */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-foreground/[0.06]" />
 
-        {/* top row: badges + favorite */}
-        <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-          <div className="flex flex-wrap gap-1.5">
+        {/* top-left: at most one or two quiet signals */}
+        <div className="absolute inset-x-2.5 top-2.5 flex items-start justify-between gap-2">
+          <div className="flex flex-col items-start gap-1.5">
             {listing.is_featured && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gold px-2 py-1 text-[11px] font-semibold text-white shadow-sm">
-                ★ Featured
-              </span>
-            )}
-            {verified && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-emerald-900 shadow-sm backdrop-blur">
-                <BadgeCheckIcon className="size-3.5 text-gold" />
-                Verified
+              <span className="inline-flex items-center gap-1 rounded-md bg-card/95 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-gold shadow-sm backdrop-blur-sm">
+                <StarIcon className="size-3 fill-gold" />
+                Featured
               </span>
             )}
             {condition && (
-              <span className="rounded-full bg-white/85 px-2 py-1 text-[11px] font-medium text-neutral-800 shadow-sm backdrop-blur">
+              <span className="rounded-md bg-card/90 px-2 py-1 text-[11px] font-medium text-foreground/80 shadow-sm backdrop-blur-sm">
                 {condition}
               </span>
             )}
@@ -72,49 +70,40 @@ export function ListingCard({
             listingId={listing.id}
             initialFavorited={favorited}
             authed={authed}
-            className="size-9 rounded-full bg-white/90 text-neutral-900 shadow-sm backdrop-blur transition hover:bg-white"
+            className="size-9 rounded-full bg-card/90 text-foreground shadow-sm backdrop-blur-sm transition hover:bg-card"
           />
         </div>
-
-        {/* bottom-left location chip on the gradient */}
-        {location && (
-          <p className="absolute inset-x-3 bottom-3 flex items-center gap-1 text-xs font-medium text-white">
-            <MapPinIcon className="size-3.5 shrink-0" />
-            <span className="truncate">{location}</span>
-          </p>
-        )}
       </div>
 
-      <div className="px-1 pt-3.5">
-        <h3 className="font-display line-clamp-1 text-[17px] leading-snug">{listing.title_en}</h3>
-
-        <div className="mt-1.5 flex items-end justify-between gap-2">
-          <p className="tnum text-lg font-bold tracking-tight">
+      {/* Info — price leads, title identifies, one quiet meta line carries place + trust. */}
+      <div className="px-0.5 pt-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="tnum text-[17px] font-semibold tracking-tight text-foreground">
             {formatPrice(listing.price_fils, listing.currency)}
           </p>
-          <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-            {listing.view_count > 0 && (
-              <span className="inline-flex items-center gap-0.5">
-                <EyeIcon className="size-3" />
-                {listing.view_count}
-              </span>
-            )}
-            {posted && <span>{posted}</span>}
-          </div>
+          {posted && <span className="shrink-0 text-xs text-muted-foreground">{posted}</span>}
         </div>
 
-        {seller && (
-          <div className="mt-2.5 flex items-center gap-2 border-t border-border pt-2.5">
-            <Avatar className="size-6">
-              <AvatarImage src={seller.avatar_url ?? undefined} alt={seller.display_name} />
-              <AvatarFallback className="text-[10px]">
-                {initials(seller.display_name)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-              {seller.display_name}
-            </span>
-            {verified && <BadgeCheckIcon className="size-3.5 shrink-0 text-gold" />}
+        <h3 className="mt-1 line-clamp-1 text-sm leading-snug text-foreground/80">
+          {listing.title_en}
+        </h3>
+
+        {(location || verified) && (
+          <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+            {location && (
+              <>
+                <MapPinIcon className="size-3.5 shrink-0" />
+                <span className="truncate">{location}</span>
+              </>
+            )}
+            {verified && (
+              <span
+                className="ml-auto inline-flex shrink-0 items-center gap-1 text-gold"
+                title="Verified seller"
+              >
+                <BadgeCheckIcon className="size-3.5" />
+              </span>
+            )}
           </div>
         )}
       </div>

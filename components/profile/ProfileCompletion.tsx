@@ -34,7 +34,7 @@ export function ProfileCompletion({ profile }: { profile: Profile }) {
                 data-done={item.done}
               >
                 {item.done ? (
-                  <CheckCircle2Icon className="size-4 text-emerald-600" />
+                  <CheckCircle2Icon className="size-4 text-success" />
                 ) : (
                   <CircleIcon className="size-4 text-muted-foreground/50" />
                 )}

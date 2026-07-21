@@ -61,7 +61,7 @@ export async function makeUser(
   for (const role of new Set<AppRole>(['user', ...roles])) {
     await db.userRole.create({ data: { userId: id, role } })
   }
-  return { id, viewer: deriveViewer({ id, email, roles }) }
+  return { id, viewer: deriveViewer({ id, email, roles, emailVerified: true }) }
 }
 
 let categoryId: string | null = null

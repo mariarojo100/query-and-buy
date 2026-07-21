@@ -1,4 +1,5 @@
 import { SITE_NAME, SITE_URL, SITE_DESCRIPTION, absoluteUrl } from '@/lib/site'
+import { listingSlug } from '@/lib/listings/slug'
 
 /** Organization schema (brand identity). */
 export function organizationJsonLd(): Record<string, unknown> {
@@ -58,7 +59,7 @@ export function productJsonLd(input: {
       availability: input.available
         ? 'https://schema.org/InStock'
         : 'https://schema.org/SoldOut',
-      url: absoluteUrl(`/listing/${input.id}`),
+      url: absoluteUrl(`/listing/${listingSlug(input.title, input.id)}`),
       ...(input.condition ? { itemCondition: CONDITION_MAP[input.condition] } : {}),
     },
   }
@@ -74,6 +75,63 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]): Recor
       position: i + 1,
       name: it.name,
       item: absoluteUrl(it.path),
+    })),
+  }
+}
+
+/**
+ * ItemList schema for a grid of listings on a category / category-in-city page.
+ * Gives search engines an explicit, ordered map of the products on the page.
+ */
+export function itemListJsonLd(
+  items: { name: string; path: string }[],
+  opts: { name?: string } = {},
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    ...(opts.name ? { name: opts.name } : {}),
+    numberOfItems: items.length,
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      url: absoluteUrl(it.path),
+    })),
+  }
+}
+
+/** Article (BlogPosting) schema for a guide / blog post. */
+export function articleJsonLd(input: {
+  title: string
+  description: string
+  path: string
+  published: string
+  updated: string
+}): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: input.title,
+    description: input.description,
+    datePublished: input.published,
+    dateModified: input.updated,
+    url: absoluteUrl(input.path),
+    mainEntityOfPage: { '@type': 'WebPage', '@id': absoluteUrl(input.path) },
+    author: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+    publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+  }
+}
+
+/** FAQPage schema from {question, answer} pairs (eligible for FAQ rich results). */
+export function faqJsonLd(faqs: { question: string; answer: string }[]): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
     })),
   }
 }

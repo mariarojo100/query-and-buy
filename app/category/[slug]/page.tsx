@@ -14,9 +14,18 @@ import {
 } from '@/lib/listings/queries'
 import { getFavoritedIds } from '@/lib/favorites/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
+import {
+  resolveAttributeFieldsForSlug,
+  parseAttributeFilters,
+} from '@/lib/listings/attributeSchemas'
+import { CityLinks } from '@/components/category/CityLinks'
+import { CategorySeoContent } from '@/components/category/CategorySeoContent'
+import { RelatedGuides } from '@/components/category/RelatedGuides'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { breadcrumbJsonLd } from '@/lib/seo'
+import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd } from '@/lib/seo'
+import { categoryFaqs, categoryIntro, categoryMetaDescription } from '@/lib/seo/categoryContent'
 import { absoluteUrl } from '@/lib/site'
+import { listingPath } from '@/lib/listings/slug'
 
 export async function generateMetadata({
   params,
@@ -26,16 +35,18 @@ export async function generateMetadata({
   const { slug } = await params
   const cat = await getCategoryBySlug(slug)
   if (!cat) return { title: 'Category not found · Query & Buy' }
-  const description = `Buy and sell ${cat.category.name_en} across the UAE on Query & Buy.`
+  const name = cat.category.name_en
+  const description = categoryMetaDescription(slug, name)
   return {
-    title: `${cat.category.name_en} · Query & Buy`,
+    title: `${name} for Sale in the UAE · Query & Buy`,
     description,
     alternates: { canonical: `/category/${slug}` },
     openGraph: {
       type: 'website',
-      title: `${cat.category.name_en} · Query & Buy`,
+      title: `${name} for Sale in the UAE · Query & Buy`,
       description,
       url: absoluteUrl(`/category/${slug}`),
+      locale: 'en_AE',
     },
   }
 }
@@ -51,8 +62,15 @@ export default async function CategoryPage({
   const cat = await getCategoryBySlug(slug)
   if (!cat) notFound()
 
-  const parsed = parseSearch(await searchParams)
+  const name = cat.category.name_en
+  const { lead } = categoryIntro(slug, name)
+  const sp = await searchParams
+  const parsed = parseSearch(sp)
   const categories = await getActiveCategories()
+
+  // Facet filters for this category (from the route slug).
+  const attributeFields = resolveAttributeFieldsForSlug(slug, categories)
+  const attributeFilters = parseAttributeFilters(attributeFields, sp)
 
   const { listings, count } = await getFilteredListings({
     q: parsed.q,
@@ -65,6 +83,7 @@ export default async function CategoryPage({
     featured: parsed.featured,
     sinceDays: parsed.sinceDays,
     sort: parsed.sort,
+    attributes: attributeFilters,
   })
 
   const user = await getViewer()
@@ -74,10 +93,17 @@ export default async function CategoryPage({
     <>
       <SiteHeader />
       <JsonLd
-        data={breadcrumbJsonLd([
-          { name: 'Home', path: '/' },
-          { name: cat.category.name_en, path: `/category/${slug}` },
-        ])}
+        data={[
+          breadcrumbJsonLd([
+            { name: 'Home', path: '/' },
+            { name, path: `/category/${slug}` },
+          ]),
+          itemListJsonLd(
+            listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.id) })),
+            { name },
+          ),
+          faqJsonLd(categoryFaqs(slug, name)),
+        ]}
       />
       <main className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6 sm:py-8">
         <Link
@@ -90,22 +116,26 @@ export default async function CategoryPage({
         <div>
           <p className="eyebrow">Category</p>
           <h1 className="font-display mt-2 text-3xl tracking-tight sm:text-4xl">
-            {cat.category.name_en}
+            {name} for Sale in the UAE
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Listings in {cat.category.name_en} across the UAE.
-          </p>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{lead}</p>
         </div>
+
+        <CityLinks categorySlug={slug} categoryName={name} />
 
         <CategoryChips categories={categories} activeSlug={slug} />
         {/* Category is fixed by the route, so hide it from the filters. */}
-        <SearchControls categories={categories} hideCategory />
+        <SearchControls categories={categories} attributeFields={attributeFields} hideCategory />
         <ListingResults
           listings={listings}
           count={count}
           favoritedIds={favoritedIds}
           authed={!!user}
         />
+
+        <CategorySeoContent slug={slug} name={name} />
+
+        <RelatedGuides categorySlug={slug} />
       </main>
     </>
   )

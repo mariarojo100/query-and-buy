@@ -89,10 +89,22 @@ export async function createUserAccount(input: CreateUserAccountInput): Promise<
 export async function getCredentialByEmail(email: string) {
   const user = await db.user.findUnique({
     where: { email },
-    select: { id: true, email: true, status: true, authCredential: { select: { passwordHash: true } } },
+    select: {
+      id: true,
+      email: true,
+      status: true,
+      hasEmailVerified: true,
+      authCredential: { select: { passwordHash: true } },
+    },
   })
   if (!user?.authCredential) return null
-  return { userId: user.id, email: user.email, status: user.status, passwordHash: user.authCredential.passwordHash }
+  return {
+    userId: user.id,
+    email: user.email,
+    status: user.status,
+    emailVerified: user.hasEmailVerified,
+    passwordHash: user.authCredential.passwordHash,
+  }
 }
 
 /** Set (or replace) a user's password hash — used by reset and by OAuth users adding a password. */
@@ -209,4 +221,101 @@ export async function incrementPhoneOtpAttempts(userId: string): Promise<void> {
 
 export async function clearPhoneOtp(userId: string): Promise<void> {
   await db.authPhoneOtp.deleteMany({ where: { userId } })
+}
+
+// --- verification helpers (email + phone verification feature) --------------
+
+/** Verification state for guards + the account settings section. */
+export async function getVerificationState(userId: string): Promise<{
+  email: string | null
+  phoneE164: string | null
+  emailVerified: boolean
+  phoneVerified: boolean
+} | null> {
+  const u = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true, phoneE164: true, hasEmailVerified: true, hasMobileVerified: true },
+  })
+  if (!u) return null
+  return {
+    email: u.email,
+    phoneE164: u.phoneE164,
+    emailVerified: u.hasEmailVerified,
+    phoneVerified: u.hasMobileVerified,
+  }
+}
+
+/** True iff the user's phone is verified (source of truth = users.hasMobileVerified). */
+export async function isPhoneVerified(userId: string): Promise<boolean> {
+  const u = await db.user.findUnique({ where: { id: userId }, select: { hasMobileVerified: true } })
+  return u?.hasMobileVerified ?? false
+}
+
+/** Owner of an E.164 number, if any (for duplicate-phone checks). */
+export async function findUserIdByPhone(phoneE164: string): Promise<string | null> {
+  const u = await db.user.findUnique({ where: { phoneE164 }, select: { id: true } })
+  return u?.id ?? null
+}
+
+/**
+ * Change an as-yet-unverified account's email. Keeps the verified flags false;
+ * returns false if the new email is taken by a different account. Callers should
+ * invalidate outstanding email-verify tokens after this.
+ */
+export async function changeUnverifiedEmail(userId: string, newEmail: string): Promise<boolean> {
+  const existing = await db.user.findUnique({ where: { email: newEmail }, select: { id: true } })
+  if (existing && existing.id !== userId) return false
+  await db.$transaction([
+    db.user.update({ where: { id: userId }, data: { email: newEmail, hasEmailVerified: false } }),
+    db.profile.update({ where: { id: userId }, data: { emailVerified: false } }),
+  ])
+  return true
+}
+
+/** Invalidate all still-unused tokens of a type for a user (mark them used). */
+export async function invalidateVerificationTokens(
+  userId: string,
+  type: VerificationTokenType,
+): Promise<void> {
+  await db.authVerificationToken.updateMany({
+    where: { userId, type, usedAt: null },
+    data: { usedAt: new Date() },
+  })
+}
+
+export type EmailTokenOutcome =
+  | { status: 'ok'; userId: string }
+  | { status: 'already_verified' }
+  | { status: 'expired' }
+  | { status: 'invalid' }
+
+/**
+ * Consume an email-verify token with a distinct outcome so the UI can show the
+ * right state. Single-use + race-safe. An unknown hash is always "invalid" so
+ * we never leak which tokens ever existed.
+ */
+export async function consumeEmailVerifyToken(tokenHash: string): Promise<EmailTokenOutcome> {
+  return db.$transaction(async (tx) => {
+    const row = await tx.authVerificationToken.findUnique({
+      where: { tokenHash },
+      select: { userId: true, type: true, expiresAt: true, usedAt: true },
+    })
+    if (!row || row.type !== 'email_verify') return { status: 'invalid' }
+
+    if (row.usedAt) {
+      const u = await tx.user.findUnique({
+        where: { id: row.userId },
+        select: { hasEmailVerified: true },
+      })
+      return u?.hasEmailVerified ? { status: 'already_verified' } : { status: 'invalid' }
+    }
+    if (row.expiresAt.getTime() < Date.now()) return { status: 'expired' }
+
+    const claimed = await tx.authVerificationToken.updateMany({
+      where: { tokenHash, usedAt: null },
+      data: { usedAt: new Date() },
+    })
+    if (claimed.count !== 1) return { status: 'invalid' }
+    return { status: 'ok', userId: row.userId }
+  })
 }

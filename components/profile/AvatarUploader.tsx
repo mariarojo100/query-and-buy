@@ -18,11 +18,14 @@ export function AvatarUploader({
   displayName,
   initialUrl,
   avatarClassName,
+  overlay = false,
 }: {
   userId: string
   displayName: string
   initialUrl: string | null
   avatarClassName?: string
+  /** Clean mode: no button below — click the avatar (hover shows a camera hint). */
+  overlay?: boolean
 }) {
   const [url, setUrl] = useState(initialUrl)
   const [uploading, setUploading] = useState(false)
@@ -62,6 +65,36 @@ export function AvatarUploader({
     }
   }
 
+  const hiddenInput = (
+    <input ref={inputRef} type="file" accept={ALLOWED.join(',')} className="hidden" onChange={onFile} />
+  )
+
+  if (overlay) {
+    return (
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        className="group relative block rounded-full outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        aria-label={url ? 'Change profile photo' : 'Upload profile photo'}
+      >
+        <Avatar className={cn('size-28 sm:size-32', avatarClassName)}>
+          <AvatarImage src={url ?? undefined} alt={displayName} />
+          <AvatarFallback className="text-3xl">{initials(displayName)}</AvatarFallback>
+        </Avatar>
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/45 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+          <CameraIcon className="size-6 text-white" />
+        </span>
+        {uploading && (
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45">
+            <Loader2Icon className="size-6 animate-spin text-white" />
+          </span>
+        )}
+        {hiddenInput}
+      </button>
+    )
+  }
+
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative">
@@ -76,13 +109,7 @@ export function AvatarUploader({
         )}
       </div>
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ALLOWED.join(',')}
-        className="hidden"
-        onChange={onFile}
-      />
+      {hiddenInput}
       <Button
         type="button"
         variant="outline"

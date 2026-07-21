@@ -10,12 +10,14 @@ const PAPER = '#fafaf8'
 const SUPPORT_EMAIL = 'support@queryandbuy.ae'
 
 export type EmailKind =
+  | 'new_inquiry'
   | 'offer_received'
   | 'counter_received'
   | 'offer_accepted'
   | 'buyer_confirmed'
   | 'seller_confirmed'
   | 'order_confirmed'
+  | 'order_cancelled'
   | 'contact_unlocked'
   | 'listing_reserved'
   | 'item_sold'
@@ -56,6 +58,19 @@ type Opts = {
 function configFor(kind: EmailKind, d: EmailData): { subject: string; opts: Opts } {
   const price = d.priceLabel ? `<strong>${d.priceLabel}</strong>` : 'the agreed amount'
   switch (kind) {
+    case 'new_inquiry':
+      return {
+        subject: '💬 Someone is interested in your listing',
+        opts: {
+          heading: 'You have a new inquiry',
+          intro: `${esc(d.buyerName ?? 'A buyer')} messaged you about your listing. Open the conversation to reply.`,
+          ctaLabel: 'Open Conversation',
+          callout: {
+            label: 'Tip',
+            text: 'Fast replies win more deals — keep the chat on Query & Buy until you agree on a price.',
+          },
+        },
+      }
     case 'offer_received':
       return {
         subject: '📩 New Offer Received for Your Listing',
@@ -138,6 +153,19 @@ function configFor(kind: EmailKind, d: EmailData): { subject: string; opts: Opts
             'Always inspect the item before payment.',
             'Meet in a safe, public location.',
           ],
+        },
+      }
+    case 'order_cancelled':
+      return {
+        subject: 'Order Cancelled',
+        opts: {
+          heading: 'The order was cancelled',
+          intro: `The order for <strong>${esc(d.listingTitle)}</strong> was cancelled. No further action is needed — the item is available again if you'd like to restart.`,
+          ctaLabel: 'Open Conversation',
+          callout: {
+            label: 'What happens now',
+            text: 'The deal is off and any reservation on the item has been released.',
+          },
         },
       }
     case 'reservation_cancelled':

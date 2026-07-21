@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { CookieConsent } from "@/components/consent/CookieConsent";
 import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { GoogleAds } from "@/components/analytics/GoogleAds";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
@@ -63,6 +65,8 @@ export default function RootLayout({
     >
       <body className="min-h-screen">
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
+        <GoogleAds />
+        <GoogleAnalytics />
         <ThemeProvider>
           {children}
           <MobileTabBar />

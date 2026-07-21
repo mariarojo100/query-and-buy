@@ -43,6 +43,7 @@ import { statusMeta } from '@/lib/listings/status'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { markSold, setListingPaused, softDeleteListing } from '@/app/account/listings/actions'
 import type { MyListing } from '@/lib/listings/queries'
+import { listingPath } from '@/lib/listings/slug'
 
 export function PremiumListingCard({ listing }: { listing: MyListing }) {
   const router = useRouter()
@@ -66,7 +67,7 @@ export function PremiumListingCard({ listing }: { listing: MyListing }) {
 
   return (
     <div className="lift group overflow-hidden rounded-2xl border border-border bg-card shadow-soft transition-shadow hover:shadow-float">
-      <Link href={`/listing/${listing.id}`} className="relative block aspect-[16/10] overflow-hidden bg-muted">
+      <Link href={listingPath(listing.title_en, listing.id)} className="relative block aspect-[16/10] overflow-hidden bg-muted">
         {listing.cover_key ? (
           <Image
             src={publicUrl(LISTING_IMAGES_BUCKET, listing.cover_key)}

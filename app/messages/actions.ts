@@ -1,7 +1,13 @@
 'use server'
 
+/**
+ * Messaging actions — thin web wrappers. Verification, contact protection, and
+ * recipient notifications live in the shared services (lib/messaging/service,
+ * lib/db/messaging) so the mobile API enforces the same rules.
+ */
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
+import { emailUnverified } from '@/lib/authz/require-verified'
 import { createConversationFor, markConversationReadFor } from '@/lib/db/messaging'
 import { sendMessageAs } from '@/lib/messaging/service'
 
@@ -11,9 +17,11 @@ import { sendMessageAs } from '@/lib/messaging/service'
  */
 export async function createConversation(
   listingId: string,
-): Promise<{ conversationId?: string; error?: string; needAuth?: boolean }> {
+): Promise<{ conversationId?: string; error?: string; needAuth?: boolean; needVerify?: boolean }> {
   const viewer = await getViewer()
   if (!viewer) return { needAuth: true }
+  const gate = emailUnverified(viewer)
+  if (gate) return gate
   const res = await createConversationFor(viewer, listingId)
   if (res.conversationId) revalidatePath('/messages')
   return res
@@ -28,21 +36,16 @@ export async function markConversationRead(conversationId: string): Promise<{ ok
   return { ok }
 }
 
-/**
- * Send a message in a conversation. Validation, contact protection, and the
- * recipient notification live in lib/messaging/service.ts (shared with the
- * mobile API).
- */
+/** Send a message — validation, verification, contact protection, and the
+ *  recipient notification all live in lib/messaging/service.ts (shared). */
 export async function sendMessage(
   conversationId: string,
   body: string,
-): Promise<{ ok?: boolean; error?: string; blocked?: boolean }> {
+): Promise<{ ok?: boolean; error?: string; blocked?: boolean; needVerify?: boolean }> {
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in.' }
-
   const res = await sendMessageAs(viewer, conversationId, body)
-  if (!res.ok) return { error: res.error, blocked: res.blocked }
-
+  if (!res.ok) return { error: res.error, blocked: res.blocked, needVerify: res.needVerify }
   revalidatePath(`/messages/${conversationId}`)
   revalidatePath('/messages')
   return { ok: true }

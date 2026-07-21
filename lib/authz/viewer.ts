@@ -28,6 +28,8 @@ export interface Viewer {
   readonly id: string
   readonly email: string | null
   readonly roles: readonly AppRole[]
+  /** users.has_email_verified — the account confirmed its email. Gates transacting. */
+  readonly emailVerified: boolean
   /** role ∈ STAFF_ROLES — mirrors the SQL is_staff() helper. */
   readonly isStaff: boolean
   /** role ∈ ADMIN_ROLES, or email ∈ ADMIN_EMAILS — mirrors is_admin() + the env gate. */
@@ -48,14 +50,15 @@ export interface ViewerInput {
   id: string
   email: string | null
   roles: readonly AppRole[]
+  emailVerified: boolean
 }
 
 /**
  * Build a Viewer from already-fetched identity data (session id/email + the
  * user_roles rows). Pure — no I/O. The single place isStaff/isAdmin are decided.
  */
-export function deriveViewer({ id, email, roles }: ViewerInput): Viewer {
+export function deriveViewer({ id, email, roles, emailVerified }: ViewerInput): Viewer {
   const isStaff = roles.some((r) => STAFF_ROLES.includes(r))
   const isAdmin = roles.some((r) => ADMIN_ROLES.includes(r)) || isAdminEmail(email)
-  return { id, email, roles, isStaff, isAdmin }
+  return { id, email, roles, emailVerified, isStaff, isAdmin }
 }

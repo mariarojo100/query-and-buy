@@ -67,6 +67,7 @@ export function NegotiationChat({
   otherLastReadAt,
   currency,
   order,
+  listingPriceFils,
   alreadyReviewed = false,
   disabled = false,
 }: {
@@ -79,6 +80,7 @@ export function NegotiationChat({
   otherLastReadAt: string | null
   currency: string
   order: OrderLite
+  listingPriceFils?: number
   alreadyReviewed?: boolean
   disabled?: boolean
 }) {
@@ -132,6 +134,7 @@ export function NegotiationChat({
                       senderIsBuyer={it.sender_id === buyerId}
                       otherName={otherName}
                       currency={currency}
+                      listingPriceFils={listingPriceFils}
                       orderClosed={
                         !order ||
                         ['confirmed', 'cancelled', 'completed'].includes(order.status)
@@ -239,6 +242,7 @@ function OfferBubble({
   otherName,
   currency,
   orderClosed,
+  listingPriceFils,
 }: {
   offer: Extract<TimelineItem, { kind: 'offer' }>
   mine: boolean
@@ -246,12 +250,25 @@ function OfferBubble({
   otherName: string
   currency: string
   orderClosed: boolean
+  listingPriceFils?: number
 }) {
   const [pending, start] = useTransition()
   const router = useRouter()
   const verb = senderIsBuyer ? 'offered' : 'countered'
   const who = mine ? 'You' : otherName
   const canRespond = !mine && offer.status === 'pending' && !orderClosed
+
+  // Context vs the asking price — so no one has to do the math mid-negotiation.
+  const delta = listingPriceFils != null ? listingPriceFils - offer.amount_fils : null
+  const pct = delta != null && listingPriceFils ? Math.round((Math.abs(delta) / listingPriceFils) * 100) : 0
+  const askingContext =
+    delta == null
+      ? null
+      : delta > 0
+        ? `${formatPrice(delta, currency)} below asking · ${pct}%`
+        : delta < 0
+          ? `${formatPrice(-delta, currency)} above asking`
+          : 'Matches the asking price'
 
   function respond(action: 'accept' | 'decline') {
     start(async () => {
@@ -287,6 +304,9 @@ function OfferBubble({
       <p className="font-display mt-2 text-2xl tracking-tight tnum">
         {formatPrice(offer.amount_fils, currency)}
       </p>
+      {askingContext && (
+        <p className="mt-0.5 text-xs text-muted-foreground">{askingContext}</p>
+      )}
 
       {canRespond && (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -487,9 +507,9 @@ function NegotiationDock({
           </div>
         ))}
       {cancelledDeal && (
-        <div className="mx-3 mt-3 flex items-center gap-2 rounded-2xl border border-amber-300/60 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-950/20">
-          <RotateCcwIcon className="size-4 text-amber-600 dark:text-amber-400" />
-          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+        <div className="mx-3 mt-3 flex items-center gap-2 rounded-2xl border border-gold/40 bg-gold/10 p-4">
+          <RotateCcwIcon className="size-4 text-gold" />
+          <p className="text-sm font-medium text-foreground">
             {role === 'seller'
               ? 'You re-activated this listing — it’s back in search.'
               : 'Reservation cancelled by the seller — the item is available again.'}
@@ -658,7 +678,7 @@ function NegotiationDock({
           size="icon"
           disabled={pending || !text.trim()}
           aria-label="Send"
-          className="size-11 shrink-0 rounded-full bg-gradient-to-br from-primary to-emerald-800 shadow-sm transition hover:opacity-95"
+          className="size-11 shrink-0 rounded-full bg-primary shadow-sm transition hover:opacity-90"
         >
           <SendIcon className="size-4" />
         </Button>

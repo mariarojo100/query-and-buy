@@ -1,6 +1,7 @@
 'use client'
+import { listingPath } from '@/lib/listings/slug'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ImagePlusIcon, Loader2Icon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -16,6 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CategorySelect, type Category } from '@/components/sell/CategorySelect'
+import { AttributeFields } from '@/components/sell/AttributeFields'
+import { resolveAttributeFields } from '@/lib/listings/attributeSchemas'
 import { updateListing } from '@/app/account/listings/actions'
 import { getListingUploadUrls } from '@/app/uploads/actions'
 import { EMIRATES } from '@/lib/profile/emirates'
@@ -56,11 +59,35 @@ export function EditListingForm({
   const [description, setDescription] = useState(listing.description)
   const [price, setPrice] = useState(String(listing.price_fils / 100))
   const [categoryId, setCategoryId] = useState(listing.category_id)
+  const [attributes, setAttributes] = useState<Record<string, string>>(listing.attributes ?? {})
   const [condition, setCondition] = useState(listing.condition)
   const [emirate, setEmirate] = useState(listing.emirate ?? '')
   const [area, setArea] = useState(listing.area ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [blocked, setBlocked] = useState<{ categories: string[] } | null>(null)
+
+  const attrFields = useMemo(() => {
+    const cat = categories.find((c) => c.id === categoryId)
+    const parent = cat?.parent_id ? categories.find((c) => c.id === cat.parent_id) : null
+    return resolveAttributeFields(cat?.slug, parent?.slug)
+  }, [categories, categoryId])
+
+  function setAttr(key: string, value: string) {
+    setAttributes((prev) => {
+      const next = { ...prev }
+      if (value === '') delete next[key]
+      else next[key] = value
+      return next
+    })
+  }
+
+  function onCategoryChange(id: string) {
+    setCategoryId(id)
+    const cat = categories.find((c) => c.id === id)
+    const parent = cat?.parent_id ? categories.find((c) => c.id === cat.parent_id) : null
+    const keys = new Set(resolveAttributeFields(cat?.slug, parent?.slug).map((f) => f.key))
+    setAttributes((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => keys.has(k))))
+  }
 
   function addFiles(list: FileList | null) {
     if (!list) return
@@ -139,6 +166,7 @@ export function EditListingForm({
         condition,
         emirate,
         area,
+        attributes,
         images,
       })
       if (res.blocked) {
@@ -150,7 +178,7 @@ export function EditListingForm({
       if (res.error) throw new Error(res.error)
 
       toast.success('Listing updated.')
-      router.push(`/listing/${listing.id}`)
+      router.push(listingPath(listing.title_en, listing.id))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong.')
       setSubmitting(false)
@@ -223,8 +251,15 @@ export function EditListingForm({
 
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <CategorySelect categories={categories} value={categoryId} onChange={setCategoryId} />
+        <CategorySelect categories={categories} value={categoryId} onChange={onCategoryChange} />
       </div>
+
+      {attrFields.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-foreground">Specifications</p>
+          <AttributeFields fields={attrFields} values={attributes} onChange={setAttr} />
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
@@ -329,7 +364,7 @@ export function EditListingForm({
           type="button"
           variant="outline"
           size="lg"
-          onClick={() => router.push(`/listing/${listing.id}`)}
+          onClick={() => router.push(listingPath(listing.title_en, listing.id))}
         >
           Cancel
         </Button>

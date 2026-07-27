@@ -70,21 +70,9 @@ const nextConfig: NextConfig = {
     ]
   },
 
-  // Canonical host: 308-redirect www.queryandbuy.com → queryandbuy.com so the
-  // apex (which every <link rel="canonical"> already points to) is the single
-  // indexed host. No-op if the edge/CDN already normalises the Host header;
-  // cannot loop because the destination host never matches this rule.
-  async redirects() {
-    if (isDev) return []
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.queryandbuy.com' }],
-        destination: 'https://queryandbuy.com/:path*',
-        permanent: true,
-      },
-    ]
-  },
+  // Note: the www.queryandbuy.com → queryandbuy.com canonicalisation lives in
+  // middleware.ts, which emits a classic 301 (Next's redirects() only supports
+  // 307/308). Keeping it in one place avoids two competing host redirects.
 
   images: {
     formats: ['image/avif', 'image/webp'],

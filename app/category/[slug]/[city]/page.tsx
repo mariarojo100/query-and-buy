@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { ChevronLeftIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
+import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SearchControls } from '@/components/search/SearchControls'
 import { ListingResults } from '@/components/listing/ListingResults'
 import { CityLinks } from '@/components/category/CityLinks'
@@ -13,12 +14,18 @@ import {
   getActiveCategories,
   getCategoryBySlug,
   getFilteredListings,
+  categoryAncestry,
 } from '@/lib/listings/queries'
 import { getFavoritedIds } from '@/lib/favorites/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd } from '@/lib/seo'
-import { categoryFaqs, categoryIntro, categoryMetaDescription } from '@/lib/seo/categoryContent'
+import {
+  categoryFaqs,
+  categoryIntro,
+  categoryMetaDescription,
+  categoryHeading,
+} from '@/lib/seo/categoryContent'
 import { absoluteUrl } from '@/lib/site'
 import { citySlugToEmirate, emirateBySlug } from '@/lib/profile/emirates'
 import { listingPath } from '@/lib/listings/slug'
@@ -34,7 +41,7 @@ export async function generateMetadata({
   if (!cat || !cityRec) return { title: 'Not found · Query & Buy' }
 
   const name = cat.category.name_en
-  const title = `${name} for Sale in ${cityRec.label}, UAE · Query & Buy`
+  const title = `${categoryHeading(name, `${cityRec.label}, UAE`)} · Query & Buy`
   const description = categoryMetaDescription(slug, name, cityRec.label)
   const path = `/category/${slug}/${city}`
   return {
@@ -94,7 +101,10 @@ export default async function CategoryCityPage({
         data={[
           breadcrumbJsonLd([
             { name: 'Home', path: '/' },
-            { name, path: `/category/${slug}` },
+            ...categoryAncestry(categories, slug).map((c) => ({
+              name: c.name,
+              path: `/category/${c.slug}`,
+            })),
             { name: cityRec.label, path },
           ]),
           itemListJsonLd(
@@ -117,7 +127,7 @@ export default async function CategoryCityPage({
             {name} · {cityRec.label}
           </p>
           <h1 className="font-display mt-2 text-3xl tracking-tight sm:text-4xl">
-            {name} for Sale in {cityRec.label}
+            {categoryHeading(name, cityRec.label)}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{lead}</p>
         </div>
@@ -137,6 +147,7 @@ export default async function CategoryCityPage({
 
         <RelatedGuides categorySlug={slug} />
       </main>
+      <SiteFooter />
     </>
   )
 }

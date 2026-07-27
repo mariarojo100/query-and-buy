@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { CompassIcon } from 'lucide-react'
 import { SiteHeader } from '@/components/layout/SiteHeader'
+import { SiteFooter } from '@/components/layout/SiteFooter'
 import { Button } from '@/components/ui/button'
 
 export default function NotFound() {
@@ -25,6 +26,7 @@ export default function NotFound() {
           </Button>
         </div>
       </main>
+      <SiteFooter />
     </>
   )
 }

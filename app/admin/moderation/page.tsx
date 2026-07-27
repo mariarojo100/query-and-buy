@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { listReports } from '@/lib/admin/queries'
+import { listingPath } from '@/lib/listings/slug'
 import { formatRelativeTime } from '@/lib/format'
 import { AdminEmpty, AdminPageHeader, StatusBadge } from '@/components/admin/ui'
 import { ModerationRowActions } from '@/components/admin/RowActions'
@@ -63,7 +64,7 @@ export default async function AdminModerationPage({
                   <td className="px-4 py-3">
                     {r.listing_id ? (
                       <Link
-                        href={`/listing/${r.listing_id}`}
+                        href={listingPath(r.listing_title ?? '', r.listing_id)}
                         target="_blank"
                         className="text-primary hover:underline"
                       >

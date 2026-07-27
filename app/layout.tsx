@@ -37,12 +37,23 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
   alternates: { canonical: '/' },
   robots: { index: true, follow: true },
+  // Explicit icon set so crawlers and iOS home-screen see a declared favicon /
+  // apple-touch-icon (the SVG mark doubles for both). app/opengraph-image.tsx
+  // separately supplies og:image + twitter:image for every route.
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,
     title: 'Query & Buy — AI marketplace for the UAE',
     description: SITE_DESCRIPTION,
-    url: SITE_URL,
+    // No `url` here on purpose: a root-level og:url would leak the homepage URL
+    // onto every child page that doesn't set its own (about, terms, guides…),
+    // contradicting each page's canonical. Pages that want og:url set it in
+    // their own generateMetadata (homepage, listings, category pages).
     locale: 'en_AE',
   },
   twitter: {

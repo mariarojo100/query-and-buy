@@ -324,6 +324,7 @@ export type AdminReportRow = {
   created_at: string
   admin_notes: string | null
   listing_id: string | null
+  listing_title: string | null
   reported_user_id: string | null
   message_id: string | null
   reporterName: string
@@ -343,6 +344,7 @@ export async function listReports(opts: { status?: string }): Promise<AdminRepor
       createdAt: true,
       adminNotes: true,
       listingId: true,
+      listing: { select: { titleEn: true } },
       reportedUserId: true,
       messageId: true,
       reporter: { select: { displayName: true } },
@@ -356,6 +358,7 @@ export async function listReports(opts: { status?: string }): Promise<AdminRepor
     created_at: r.createdAt.toISOString(),
     admin_notes: r.adminNotes,
     listing_id: r.listingId,
+    listing_title: r.listing?.titleEn ?? null,
     reported_user_id: r.reportedUserId,
     message_id: r.messageId,
     reporterName: r.reporter?.displayName ?? 'Unknown',

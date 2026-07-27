@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { ChevronLeftIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
+import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SearchControls } from '@/components/search/SearchControls'
 import { CategoryChips } from '@/components/listing/CategoryChips'
 import { ListingResults } from '@/components/listing/ListingResults'
@@ -11,6 +12,7 @@ import {
   getActiveCategories,
   getCategoryBySlug,
   getFilteredListings,
+  categoryAncestry,
 } from '@/lib/listings/queries'
 import { getFavoritedIds } from '@/lib/favorites/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
@@ -23,7 +25,12 @@ import { CategorySeoContent } from '@/components/category/CategorySeoContent'
 import { RelatedGuides } from '@/components/category/RelatedGuides'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd } from '@/lib/seo'
-import { categoryFaqs, categoryIntro, categoryMetaDescription } from '@/lib/seo/categoryContent'
+import {
+  categoryFaqs,
+  categoryIntro,
+  categoryMetaDescription,
+  categoryHeading,
+} from '@/lib/seo/categoryContent'
 import { absoluteUrl } from '@/lib/site'
 import { listingPath } from '@/lib/listings/slug'
 
@@ -37,13 +44,14 @@ export async function generateMetadata({
   if (!cat) return { title: 'Category not found · Query & Buy' }
   const name = cat.category.name_en
   const description = categoryMetaDescription(slug, name)
+  const title = `${categoryHeading(name, 'the UAE')} · Query & Buy`
   return {
-    title: `${name} for Sale in the UAE · Query & Buy`,
+    title,
     description,
     alternates: { canonical: `/category/${slug}` },
     openGraph: {
       type: 'website',
-      title: `${name} for Sale in the UAE · Query & Buy`,
+      title,
       description,
       url: absoluteUrl(`/category/${slug}`),
       locale: 'en_AE',
@@ -96,7 +104,10 @@ export default async function CategoryPage({
         data={[
           breadcrumbJsonLd([
             { name: 'Home', path: '/' },
-            { name, path: `/category/${slug}` },
+            ...categoryAncestry(categories, slug).map((c) => ({
+              name: c.name,
+              path: `/category/${c.slug}`,
+            })),
           ]),
           itemListJsonLd(
             listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.id) })),
@@ -116,7 +127,7 @@ export default async function CategoryPage({
         <div>
           <p className="eyebrow">Category</p>
           <h1 className="font-display mt-2 text-3xl tracking-tight sm:text-4xl">
-            {name} for Sale in the UAE
+            {categoryHeading(name, 'the UAE')}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{lead}</p>
         </div>
@@ -137,6 +148,7 @@ export default async function CategoryPage({
 
         <RelatedGuides categorySlug={slug} />
       </main>
+      <SiteFooter />
     </>
   )
 }

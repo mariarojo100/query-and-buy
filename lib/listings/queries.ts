@@ -22,6 +22,31 @@ export const getActiveCategories = repo.activeCategories
 export const getCategoryCounts = repo.categoryCounts
 export const getCategoryBySlug = repo.categoryBySlug
 
+/**
+ * Ancestor trail for a category slug, top-level first, ending with the category
+ * itself — e.g. Property → Apartments for Sale. Used to build full breadcrumb
+ * hierarchies (Home › Property › Apartments for Sale › Dubai) instead of the
+ * flat Home › Category › City trail. Walks parent_id within the supplied
+ * category list (already loaded on the page), so it costs no extra query.
+ */
+export function categoryAncestry(
+  categories: repo.CategoryLite[],
+  slug: string,
+): { name: string; slug: string }[] {
+  const bySlug = new Map(categories.map((c) => [c.slug, c]))
+  const byId = new Map(categories.map((c) => [c.id, c]))
+  const start = bySlug.get(slug)
+  if (!start) return []
+  const trail: { name: string; slug: string }[] = []
+  let cur: repo.CategoryLite | undefined = start
+  let guard = 0
+  while (cur && guard++ < 6) {
+    trail.unshift({ name: cur.name_en, slug: cur.slug })
+    cur = cur.parent_id ? byId.get(cur.parent_id) : undefined
+  }
+  return trail
+}
+
 /** All of the current user's listings (owner-scoped). */
 export async function getMyListings(): Promise<repo.MyListing[]> {
   const viewer = await getViewer()

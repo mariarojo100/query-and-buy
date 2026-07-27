@@ -126,7 +126,7 @@ export default async function AdminListingsPage({
                   <td className="px-4 py-3 text-muted-foreground">{formatRelativeTime(r.created_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
-                      <ViewListingLink id={r.id} />
+                      <ViewListingLink id={r.id} title={r.title_en} />
                       <ListingRowActions id={r.id} status={r.status} featured={r.is_featured} />
                     </div>
                   </td>

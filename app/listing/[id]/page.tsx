@@ -5,6 +5,7 @@ import { notFound, permanentRedirect } from 'next/navigation'
 import { ChevronLeftIcon, PencilIcon, ShieldCheckIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
+import { SiteFooter } from '@/components/layout/SiteFooter'
 import { ImageGallery } from '@/components/listing/ImageGallery'
 import { ContactSellerButton } from '@/components/listing/ContactSellerButton'
 import { FavoriteButton } from '@/components/listing/FavoriteButton'
@@ -301,6 +302,8 @@ export default async function ListingDetailPage({
           </section>
         )}
       </main>
+
+      <SiteFooter />
 
       {!isOwner && (
         <StickyContactBar listingId={listing.id} authed={!!user} priceLabel={priceLabel} />

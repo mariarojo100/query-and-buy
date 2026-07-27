@@ -34,6 +34,7 @@ import {
   parseAttributeFilters,
 } from '@/lib/listings/attributeSchemas'
 import { getTrendingSearches } from '@/lib/search/intelligence'
+import { absoluteUrl } from '@/lib/site'
 
 const NO_MATCH = ['00000000-0000-0000-0000-000000000000']
 
@@ -68,7 +69,9 @@ export async function generateMetadata({
   if (hasActiveFilters(parsed)) {
     return { robots: { index: false, follow: true }, alternates: { canonical: '/' } }
   }
-  return {}
+  // Canonical homepage sets its own og:url (root layout intentionally omits it
+  // so it doesn't leak onto child pages).
+  return { openGraph: { url: absoluteUrl('/') } }
 }
 
 export default async function HomePage({

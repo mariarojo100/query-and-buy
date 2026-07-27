@@ -84,6 +84,11 @@ const CATEGORY_SEO: Record<string, CategorySeo> = {
         answer:
           'Used laptops, consoles and cameras from private sellers are typically priced well below retail. Prices are listed upfront in AED and many sellers accept reasonable offers.',
       },
+      {
+        question: 'Do used electronics on Query & Buy come with a warranty?',
+        answer:
+          'Some items still carry the manufacturer or store warranty — ask the seller for the receipt or box. Even without one, testing the device in person before you pay is the best protection.',
+      },
     ],
   },
   mobiles: {
@@ -101,6 +106,11 @@ const CATEGORY_SEO: Record<string, CategorySeo> = {
         question: 'What should I check when buying a second-hand phone?',
         answer:
           'Test calls, Wi-Fi, cameras, Face/Touch ID and charging in person, confirm the IMEI, and check for screen or frame damage. Prices are shown upfront in AED and are often negotiable.',
+      },
+      {
+        question: 'How much can I save buying a used phone in {city}?',
+        answer:
+          'Recent-generation iPhones and Galaxy models typically sell well below retail once a newer model launches. Compare a few listings, check battery health, and message the seller to negotiate.',
       },
     ],
   },
@@ -120,6 +130,11 @@ const CATEGORY_SEO: Record<string, CategorySeo> = {
         answer:
           'People relocating often sell quality furniture and appliances at a fraction of retail. Check the measurements and condition photos, and message the seller with any questions before viewing.',
       },
+      {
+        question: 'Is the price on furniture and appliance listings negotiable?',
+        answer:
+          'Often, yes — especially for sellers moving out on a deadline. Prices are shown upfront in AED; message the seller to make a fair offer and to agree pickup or delivery.',
+      },
     ],
   },
   fashion: {
@@ -137,6 +152,11 @@ const CATEGORY_SEO: Record<string, CategorySeo> = {
         question: 'Can I sell my pre-loved clothes and accessories here?',
         answer:
           'Yes. Snap a few photos and Query & Buy helps generate the title, description and a suggested price in seconds — you review and publish. Your contact details stay private until a deal is agreed.',
+      },
+      {
+        question: 'How should I pay when buying fashion or watches in {city}?',
+        answer:
+          'Inspect the item in person first, then pay on collection — never transfer money in advance or off-platform. For high-value pieces, confirm authenticity and serial numbers before you meet.',
       },
     ],
   },
@@ -156,6 +176,11 @@ const CATEGORY_SEO: Record<string, CategorySeo> = {
         answer:
           'Providers list an indicative price in AED. Confirm the final quote and what it includes before the work starts, as it can vary with the size and scope of the job.',
       },
+      {
+        question: 'How do I know a service provider in {city} is reliable?',
+        answer:
+          'Review the provider’s profile and past listings, ask for examples of previous work, and agree the scope, price and timing in writing through the app before you book.',
+      },
     ],
   },
   hobbies: {
@@ -173,6 +198,11 @@ const CATEGORY_SEO: Record<string, CategorySeo> = {
         question: 'Can I find used bicycles and gym equipment nearby?',
         answer:
           'Yes — browse this category and filter by emirate to find listings close to you. Prices are shown upfront in AED and many sellers accept offers.',
+      },
+      {
+        question: 'What should I check before buying used sports or kids gear?',
+        answer:
+          'Check sizing, wear and completeness, and test any moving or folding parts. For car seats and safety gear, confirm the item is within its expiry and has never been in an accident.',
       },
     ],
   },
@@ -192,6 +222,11 @@ const CATEGORY_SEO: Record<string, CategorySeo> = {
         answer:
           'It is a fast way to reach local buyers for surplus or end-of-life business assets. Add clear photos and specs, and your contact details stay private until you agree a deal.',
       },
+      {
+        question: 'Can I arrange delivery or collection for large equipment in {city}?',
+        answer:
+          'Yes — agree pickup or delivery directly with the seller through the app. For machinery and bulky fittings, confirm dimensions, access and who arranges transport before you finalise.',
+      },
     ],
   },
 }
@@ -208,6 +243,16 @@ function fallback(name: string): CategorySeo {
         question: `How do I buy ${name} in {city}?`,
         answer:
           'Browse the listings, message the seller through the app to ask questions or make an offer, and arrange to meet or view the item before you complete the purchase.',
+      },
+      {
+        question: `Is it safe to buy ${name} on Query & Buy in {city}?`,
+        answer:
+          'Yes. Your contact details stay private until you choose to share them, listings are AI-moderated, and we recommend meeting in a public place and inspecting the item before you pay.',
+      },
+      {
+        question: `Can I sell my own ${name} on Query & Buy?`,
+        answer:
+          'Absolutely. Snap a few photos and Query & Buy helps generate the title, description and a suggested AED price in seconds — you review and publish, then buyers message you directly.',
       },
     ],
   }
@@ -235,12 +280,30 @@ export function categoryIntro(
   }
 }
 
-/** Unique meta description for a category or category-in-city page (≤ ~160 chars). */
+/**
+ * Clamp a composed description to Google's ~160-char display window without
+ * cutting a word in half: prefer to end on a sentence boundary in the back
+ * half, otherwise trim to the last whole word.
+ */
+function clampMeta(text: string, max = 158): string {
+  if (text.length <= max) return text
+  const slice = text.slice(0, max)
+  const lastPeriod = slice.lastIndexOf('. ')
+  if (lastPeriod >= 120) return slice.slice(0, lastPeriod + 1)
+  const lastSpace = slice.lastIndexOf(' ')
+  return `${slice.slice(0, lastSpace > 0 ? lastSpace : max).replace(/[\s,;:—-]+$/, '')}…`
+}
+
+/**
+ * Unique meta description for a category or category-in-city page. Composes the
+ * category lead with its supporting detail so every page ships a distinct,
+ * ~150-char description (the old lead-only copy was ~99 chars — too thin to use
+ * the full snippet width and easy for Google to rewrite).
+ */
 export function categoryMetaDescription(slug: string, name: string, city?: string | null): string {
   const seo = seoFor(slug, name)
-  const base = seo.lead.replace('{place}', place(city))
-  const suffix = ' Prices in AED, no hidden fees.'
-  return (base + suffix).slice(0, 160)
+  const lead = seo.lead.replace('{place}', place(city))
+  return clampMeta(`${lead} ${seo.detail}`)
 }
 
 /** Category-specific FAQs with {city} substituted (falls back to "the UAE"). */
@@ -260,4 +323,17 @@ export function categoryFaqs(
 /** Popular search terms within a category (for supporting copy / internal links). */
 export function categoryPopular(slug: string, name: string): string[] {
   return seoFor(slug, name).popular
+}
+
+/**
+ * Build a "{category} for Sale in {place}" heading/title without doubling the
+ * intent phrase. Some category names already carry it (e.g. "Apartments for
+ * Sale", "Rooms for Rent"), which previously produced "Apartments for Sale for
+ * Sale in Dubai". If the name already states sale/rent intent we keep it as-is;
+ * otherwise we append "for Sale".
+ */
+export function categoryHeading(name: string, place: string): string {
+  const hasIntent = /\bfor (sale|rent)\b/i.test(name)
+  const subject = hasIntent ? name : `${name} for Sale`
+  return `${subject} in ${place}`
 }

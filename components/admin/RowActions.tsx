@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { RowMenu } from '@/components/admin/RowMenu'
+import { listingPath } from '@/lib/listings/slug'
 import {
   moderateReport,
   removeReview,
@@ -116,9 +117,13 @@ export function AiRowActions({ id }: { id: string }) {
   )
 }
 
-export function ViewListingLink({ id }: { id: string }) {
+export function ViewListingLink({ id, title }: { id: string; title?: string }) {
   return (
-    <Link href={`/listing/${id}`} className="text-sm text-primary hover:underline" target="_blank">
+    <Link
+      href={listingPath(title ?? '', id)}
+      className="text-sm text-primary hover:underline"
+      target="_blank"
+    >
       View
     </Link>
   )

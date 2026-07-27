@@ -6,6 +6,7 @@ import { CalendarDaysIcon, MapPinIcon, MessagesSquareIcon, PackageIcon, PencilIc
 import { getViewer } from '@/lib/auth/session'
 import { profileByUsername } from '@/lib/db/profiles'
 import { SiteHeader } from '@/components/layout/SiteHeader'
+import { SiteFooter } from '@/components/layout/SiteFooter'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initials } from '@/components/profile/ProfileHeader'
@@ -331,6 +332,7 @@ export default async function PublicProfilePage({
           )}
         </section>
       </main>
+      <SiteFooter />
     </>
   )
 }

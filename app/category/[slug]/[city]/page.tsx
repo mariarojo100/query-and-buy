@@ -26,7 +26,7 @@ import {
   categoryMetaDescription,
   categoryHeading,
 } from '@/lib/seo/categoryContent'
-import { absoluteUrl } from '@/lib/site'
+import { absoluteUrl, OG_IMAGE } from '@/lib/site'
 import { citySlugToEmirate, emirateBySlug } from '@/lib/profile/emirates'
 import { listingPath } from '@/lib/listings/slug'
 
@@ -53,6 +53,7 @@ export async function generateMetadata({
       title,
       description,
       url: absoluteUrl(path),
+      images: [OG_IMAGE],
       locale: 'en_AE',
     },
   }

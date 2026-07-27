@@ -31,7 +31,7 @@ import {
   categoryMetaDescription,
   categoryHeading,
 } from '@/lib/seo/categoryContent'
-import { absoluteUrl } from '@/lib/site'
+import { absoluteUrl, OG_IMAGE } from '@/lib/site'
 import { listingPath } from '@/lib/listings/slug'
 
 export async function generateMetadata({
@@ -54,6 +54,7 @@ export async function generateMetadata({
       title,
       description,
       url: absoluteUrl(`/category/${slug}`),
+      images: [OG_IMAGE],
       locale: 'en_AE',
     },
   }

@@ -109,7 +109,7 @@ export default async function CategoryCityPage({
             { name: cityRec.label, path },
           ]),
           itemListJsonLd(
-            listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.id) })),
+            listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.public_id) })),
             { name: `${name} in ${cityRec.label}` },
           ),
           faqJsonLd(categoryFaqs(slug, name, cityRec.label)),

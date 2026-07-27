@@ -27,7 +27,7 @@ export function ListingCard({
 
   return (
     <Link
-      href={listingPath(listing.title_en, listing.id)}
+      href={listingPath(listing.title_en, listing.public_id)}
       className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
     >
       {/* Media — the photo does the work; a single condition signal, nothing else. */}

@@ -32,6 +32,7 @@ export async function favoritesFeedFor(viewer: Viewer): Promise<FeedListing[]> {
       listing: {
         select: {
           id: true,
+          publicId: true,
           titleEn: true,
           priceFils: true,
           currency: true,
@@ -78,6 +79,7 @@ export async function favoritesFeedFor(viewer: Viewer): Promise<FeedListing[]> {
       : null
     out.push({
       id: l.id,
+      public_id: l.publicId,
       title_en: l.titleEn,
       price_fils: Number(l.priceFils),
       currency: l.currency,

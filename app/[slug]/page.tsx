@@ -111,7 +111,7 @@ export default async function CategoryPage({
             })),
           ]),
           itemListJsonLd(
-            listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.id) })),
+            listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.public_id) })),
             { name },
           ),
           faqJsonLd(categoryFaqs(slug, name)),

@@ -30,6 +30,7 @@ export type SellerMini = {
 
 export type FeedListing = {
   id: string
+  public_id: string
   title_en: string
   price_fils: number
   currency: string
@@ -45,6 +46,7 @@ export type FeedListing = {
 
 export type ListingDetail = {
   id: string
+  public_id: string
   title_en: string
   description: string
   price_fils: number
@@ -148,6 +150,7 @@ function coverKey(images: { storage_key: string; position: number }[] | null | u
 
 const feedSelect = {
   id: true,
+  publicId: true,
   titleEn: true,
   priceFils: true,
   currency: true,
@@ -185,6 +188,7 @@ function sellerMiniOf(p: FeedRow['seller']['profile']): SellerMini | null {
 function mapFeed(l: FeedRow): FeedListing {
   return {
     id: l.id,
+    public_id: l.publicId,
     title_en: l.titleEn,
     price_fils: Number(l.priceFils),
     currency: l.currency,
@@ -203,6 +207,7 @@ function mapFeed(l: FeedRow): FeedListing {
 
 type RawFeedRow = {
   id: string
+  public_id: string
   title_en: string
   price_fils: bigint
   currency: string
@@ -258,6 +263,7 @@ async function sellerMapFor(ids: string[]): Promise<Map<string, SellerMini>> {
 function mapRaw(r: RawFeedRow, sellers: Map<string, SellerMini>): FeedListing {
   return {
     id: r.id,
+    public_id: r.public_id,
     title_en: r.title_en,
     price_fils: Number(r.price_fils),
     currency: r.currency,
@@ -314,7 +320,7 @@ export async function filteredListings(filters: ListingFilters = {}): Promise<{ 
   const where = Prisma.join(conds, ' and ')
 
   const rows = await db.$queryRaw<RawFeedRow[]>(Prisma.sql`
-    select l.id, l.title_en, l.price_fils, l.currency, l.emirate, l.area, l.condition, l.seller_id,
+    select l.id, l.public_id, l.title_en, l.price_fils, l.currency, l.emirate, l.area, l.condition, l.seller_id,
            l.published_at, l.is_featured, l.view_count,
            coalesce((select jsonb_agg(jsonb_build_object('storage_key', li.storage_key, 'position', li.position) order by li.position)
                      from listing_images li where li.listing_id = l.id), '[]'::jsonb) as images
@@ -556,11 +562,15 @@ export async function listingForEdit(viewer: Viewer, id: string): Promise<EditLi
   }
 }
 
-export async function listingByIdVisible(viewer: Viewer | null, id: string): Promise<ListingDetail | null> {
+async function listingVisibleBy(
+  viewer: Viewer | null,
+  match: Prisma.ListingWhereInput,
+): Promise<ListingDetail | null> {
   const row = await db.listing.findFirst({
-    where: { AND: [{ id }, listingVisibleWhere(viewer)] },
+    where: { AND: [match, listingVisibleWhere(viewer)] },
     select: {
       id: true,
+      publicId: true,
       titleEn: true,
       description: true,
       priceFils: true,
@@ -602,6 +612,7 @@ export async function listingByIdVisible(viewer: Viewer | null, id: string): Pro
   const p = row.seller.profile
   return {
     id: row.id,
+    public_id: row.publicId,
     title_en: row.titleEn,
     description: row.description,
     price_fils: Number(row.priceFils),
@@ -635,6 +646,22 @@ export async function listingByIdVisible(viewer: Viewer | null, id: string): Pro
         }
       : null,
   }
+}
+
+/** Visible listing detail by UUID (legacy URLs, admin links, internal lookups). */
+export async function listingByIdVisible(
+  viewer: Viewer | null,
+  id: string,
+): Promise<ListingDetail | null> {
+  return listingVisibleBy(viewer, { id })
+}
+
+/** Visible listing detail by the short public_id (the canonical URL slug key). */
+export async function listingByPublicIdVisible(
+  viewer: Viewer | null,
+  publicId: string,
+): Promise<ListingDetail | null> {
+  return listingVisibleBy(viewer, { publicId })
 }
 
 // --- owner-scoped writes (Phase 4) ------------------------------------------

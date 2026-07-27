@@ -24,11 +24,26 @@ import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
 import { formatAttributesForDisplay } from '@/lib/listings/attributeSchemas'
 import { ListingCard } from '@/components/listing/ListingCard'
-import { getListingById, getSellerListings, getSimilarListings } from '@/lib/listings/queries'
+import {
+  getListingById,
+  getListingByPublicId,
+  getSellerListings,
+  getSimilarListings,
+} from '@/lib/listings/queries'
+import type { ListingDetail } from '@/lib/listings/queries'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, productJsonLd } from '@/lib/seo'
 import { absoluteUrl } from '@/lib/site'
-import { extractListingId, listingSlug } from '@/lib/listings/slug'
+import { extractListingRef, listingSlug } from '@/lib/listings/slug'
+
+/**
+ * Resolve a listing from a route param. A trailing UUID is a legacy URL
+ * (look up by id); otherwise the trailing token is the short public_id.
+ */
+function resolveListing(param: string): Promise<ListingDetail | null> {
+  const ref = extractListingRef(param)
+  return ref.kind === 'uuid' ? getListingById(ref.value) : getListingByPublicId(ref.value)
+}
 
 export async function generateMetadata({
   params,
@@ -36,14 +51,13 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
   const { id: param } = await params
-  const listingId = extractListingId(param)
-  const listing = listingId ? await getListingById(listingId) : null
+  const listing = await resolveListing(param)
   if (!listing) return { title: 'Listing not found · Query & Buy' }
   const desc = maskContactInfo(listing.description).slice(0, 155)
   const img = listing.images[0]
     ? publicUrl(LISTING_IMAGES_BUCKET, listing.images[0].storage_key)
     : undefined
-  const slug = listingSlug(listing.title_en, listing.id)
+  const slug = listingSlug(listing.title_en, listing.public_id)
   return {
     title: `${listing.title_en} · Query & Buy`,
     description: desc,
@@ -80,14 +94,12 @@ export default async function ListingDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id: param } = await params
-  const listingId = extractListingId(param)
-  if (!listingId) notFound()
-  const listing = await getListingById(listingId)
+  const listing = await resolveListing(param)
   if (!listing) notFound()
 
-  // Canonicalise the URL: redirect bare-UUID or stale-slug requests to the
-  // keyword slug so there's a single indexable URL per listing.
-  const canonicalSlug = listingSlug(listing.title_en, listing.id)
+  // Canonicalise the URL: redirect legacy-UUID or stale-slug requests to the
+  // keyword slug with the short public_id, so there's a single indexable URL.
+  const canonicalSlug = listingSlug(listing.title_en, listing.public_id)
   if (param !== canonicalSlug) permanentRedirect(`/listing/${canonicalSlug}`)
 
   const user = await getViewer()
@@ -119,7 +131,7 @@ export default async function ListingDetailPage({
       <JsonLd
         data={[
           productJsonLd({
-            id: listing.id,
+            slug: canonicalSlug,
             title: listing.title_en,
             description: listing.description,
             priceAed: listing.price_fils / 100,

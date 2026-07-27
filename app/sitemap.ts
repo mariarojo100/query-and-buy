@@ -33,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     for (const l of listings)
-      entries.push({ url: absoluteUrl(`/listing/${listingSlug(l.title, l.id)}`), lastModified: l.lastModified, changeFrequency: 'weekly', priority: 0.8 })
+      entries.push({ url: absoluteUrl(`/listing/${listingSlug(l.title, l.publicId)}`), lastModified: l.lastModified, changeFrequency: 'weekly', priority: 0.8 })
 
     for (const p of profiles)
       entries.push({ url: absoluteUrl(`/u/${p.username}`), lastModified: p.lastModified, changeFrequency: 'weekly', priority: 0.5 })

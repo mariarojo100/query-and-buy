@@ -61,15 +61,21 @@ export async function getListingForEdit(id: string): Promise<repo.EditListing | 
   return repo.listingForEdit(viewer, id)
 }
 
-/** Single listing for the detail page, gated by the visibility policy. */
-export async function getListingById(id: string): Promise<repo.ListingDetail | null> {
-  // getViewer touches request cookies; fall back to anonymous (public visibility)
-  // in build/ISR contexts where there is no request scope.
-  let viewer: Awaited<ReturnType<typeof getViewer>> = null
+/** Resolve the current viewer, tolerating build/ISR contexts with no request. */
+async function viewerOrNull(): Promise<Awaited<ReturnType<typeof getViewer>>> {
   try {
-    viewer = await getViewer()
+    return await getViewer()
   } catch {
-    viewer = null
+    return null
   }
-  return repo.listingByIdVisible(viewer, id)
+}
+
+/** Single listing for the detail page (by UUID), gated by the visibility policy. */
+export async function getListingById(id: string): Promise<repo.ListingDetail | null> {
+  return repo.listingByIdVisible(await viewerOrNull(), id)
+}
+
+/** Single listing for the detail page (by short public_id), visibility-gated. */
+export async function getListingByPublicId(publicId: string): Promise<repo.ListingDetail | null> {
+  return repo.listingByPublicIdVisible(await viewerOrNull(), publicId)
 }

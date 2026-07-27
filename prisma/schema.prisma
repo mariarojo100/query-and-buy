@@ -296,6 +296,10 @@ model Category {
 /// `location` is PostGIS geography(Point,4326) with a GIST index.
 model Listing {
   id            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Short, URL-friendly public identifier (12 hex chars). The DB generates it
+  // on insert, so application create code doesn't need to. Used as the trailing
+  // key in listing URLs (/listing/{title-slug}-{publicId}) in place of the UUID.
+  publicId      String                    @unique @default(dbgenerated("substr(md5(gen_random_uuid()::text), 1, 12)")) @map("public_id")
   sellerId      String                    @map("seller_id") @db.Uuid
   categoryId    String                    @map("category_id") @db.Uuid
   titleEn       String                    @map("title_en")

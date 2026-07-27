@@ -12,8 +12,18 @@ import type { Viewer } from '@/lib/authz/viewer'
 
 function clientKey(req: Request, viewer: Viewer | null): string {
   if (viewer) return viewer.id
+  // The site sits behind Cloudflare, which sets CF-Connecting-IP to the real
+  // client IP and cannot be spoofed by the client (unlike the leftmost, fully
+  // client-controlled X-Forwarded-For value). Prefer it; fall back to the
+  // RIGHTMOST XFF hop (added by the trusted proxy) rather than the leftmost.
+  const cf = req.headers.get('cf-connecting-ip')?.trim()
+  if (cf) return cf
   const fwd = req.headers.get('x-forwarded-for')
-  return fwd ? fwd.split(',')[0].trim() : 'anon'
+  if (fwd) {
+    const hops = fwd.split(',').map((s) => s.trim()).filter(Boolean)
+    return hops[hops.length - 1] || 'anon'
+  }
+  return 'anon'
 }
 
 /**

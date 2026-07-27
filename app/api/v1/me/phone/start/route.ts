@@ -33,11 +33,8 @@ export async function POST(req: Request): Promise<Response> {
       return fail('invalid_input', 'Enter your phone in international format, e.g. +9715XXXXXXXX.', 400)
     }
 
-    const owner = await findUserIdByPhone(e164)
-    if (owner && owner !== viewer.id) {
-      return fail('conflict', 'That number is already linked to another account.', 409)
-    }
-
+    // Rate-limit BEFORE the duplicate-phone lookup, so the 409 "already linked"
+    // response can't be used to enumerate which numbers are registered.
     const cooldown = enforceRateLimit('phone-verify:cooldown', viewer.id, 1, SEND_COOLDOWN_MS)
     if (!cooldown.allowed) {
       return fail('rate_limited', 'Please wait before requesting another code.', 429, { retryAfterSec: cooldown.retryAfterSec })
@@ -45,6 +42,11 @@ export async function POST(req: Request): Promise<Response> {
     const window = enforceRateLimit('phone-verify:send', viewer.id, SEND_WINDOW_MAX, SEND_WINDOW_MS)
     if (!window.allowed) {
       return fail('rate_limited', 'Too many codes requested. Try again later.', 429, { retryAfterSec: window.retryAfterSec })
+    }
+
+    const owner = await findUserIdByPhone(e164)
+    if (owner && owner !== viewer.id) {
+      return fail('conflict', 'That number is already linked to another account.', 409)
     }
 
     const res = await startVerification(e164)

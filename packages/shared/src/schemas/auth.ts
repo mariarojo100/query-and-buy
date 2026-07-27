@@ -29,6 +29,26 @@ export const RefreshSchema = z.object({
 })
 export type RefreshInput = z.infer<typeof RefreshSchema>
 
+/** POST /api/v1/me/phone/start — request an SMS OTP (Twilio Verify owns the code). */
+export const PhoneStartSchema = z.object({
+  phone: z.string().trim().min(1),
+})
+export type PhoneStartInput = z.infer<typeof PhoneStartSchema>
+
+/** POST /api/v1/me/phone/verify — confirm the SMS OTP. */
+export const PhoneVerifySchema = z.object({
+  phone: z.string().trim().min(1),
+  code: z.string().trim().regex(/^\d{4,8}$/, 'Enter the code from the SMS.'),
+})
+export type PhoneVerifyInput = z.infer<typeof PhoneVerifySchema>
+
+/** GET /api/v1/me/phone — current phone-verification state. */
+export const PhoneStateSchema = z.object({
+  phoneE164: z.string().nullable(),
+  verified: z.boolean(),
+})
+export type PhoneState = z.infer<typeof PhoneStateSchema>
+
 export const AuthUserSchema = z.object({
   id: z.string().uuid(),
   email: z.string().nullable(),

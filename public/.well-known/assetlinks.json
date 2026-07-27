@@ -4,7 +4,9 @@
     "target": {
       "namespace": "android_app",
       "package_name": "ae.queryandbuy.app",
-      "sha256_cert_fingerprints": ["SHA256_FINGERPRINT_PLACEHOLDER"]
+      "sha256_cert_fingerprints": [
+        "05:7F:14:D0:14:F1:E5:E0:1D:DE:1A:CF:85:03:B0:B8:C7:8F:2E:47:97:02:46:06:D2:D2:B5:C8:E8:5E:3A:77"
+      ]
     }
   }
 ]

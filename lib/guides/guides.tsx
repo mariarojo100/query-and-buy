@@ -469,6 +469,124 @@ export const GUIDES: Guide[] = [
       </>
     ),
   },
+  {
+    slug: 'how-to-check-a-used-car-before-buying-in-the-uae',
+    title: 'How to Check a Used Car Before Buying in the UAE',
+    description:
+      'A buyer’s checklist for used cars in the UAE — history and fines, mechanical checks, the test drive, and transferring ownership safely at the RTA.',
+    eyebrow: 'Buying guide',
+    published: '2026-07-24',
+    updated: '2026-07-24',
+    Body: () => (
+      <>
+        <p>
+          Buying a used car privately in the UAE can save you thousands over a dealer — as long as
+          you check the car, the paperwork and the seller properly before any money changes hands.
+          Here is the checklist to run through.
+        </p>
+
+        <h2>1. Check the car’s history and fines</h2>
+        <p>
+          Ask for the vehicle registration card (the <em>mulkiya</em>) and confirm the details match
+          the car and the seller’s Emirates ID. Check for outstanding traffic fines and any finance
+          or loan still registered against the plate — these must be cleared before ownership can
+          transfer. A car still on finance can only be sold once the bank issues a clearance letter.
+        </p>
+
+        <h2>2. Inspect it in daylight</h2>
+        <p>
+          Always view the car in daylight and dry weather. Look for mismatched paint or panel gaps
+          (a sign of accident repair), uneven tyre wear, fluid leaks under the engine, and the
+          condition of the tyres, brakes and interior. For anything above a modest price, it is
+          well worth paying for an independent inspection at an approved testing centre.
+        </p>
+
+        <h2>3. Take a proper test drive</h2>
+        <p>
+          Drive at a range of speeds. Listen for knocks or whines, check the AC cools quickly (it
+          matters in the Gulf), test the brakes and steering for pulling or vibration, and make sure
+          the gearbox shifts smoothly. Warning lights on the dashboard should not be ignored or
+          explained away.
+        </p>
+
+        <h2>4. Compare the price to the market</h2>
+        <p>
+          Before you negotiate, browse current{' '}
+          <Link href="/category/vehicles">used car listings</Link> — and{' '}
+          <Link href="/category/vehicles/dubai">cars in Dubai</Link> specifically — for the same
+          make, model, year and mileage, so you know a fair figure. A price well below the market
+          usually signals a problem, not a bargain.
+        </p>
+
+        <h2>5. Transfer ownership the right way</h2>
+        <p>
+          Complete the transfer at an official RTA / traffic department centre or an approved
+          testing centre, with both parties present and their Emirates IDs. Arrange insurance in
+          your name before the transfer, and never pay in full or drive away until the ownership has
+          officially changed hands. On Query &amp; Buy your contact details stay private until you
+          are ready to meet.
+        </p>
+      </>
+    ),
+  },
+  {
+    slug: 'selling-furniture-before-leaving-the-uae',
+    title: 'Selling Your Furniture Before Leaving the UAE',
+    description:
+      'Moving out of the UAE? A practical guide to selling furniture and appliances quickly — pricing, photos, timing and arranging pickup before you fly.',
+    eyebrow: 'Selling guide',
+    published: '2026-07-24',
+    updated: '2026-07-24',
+    Body: () => (
+      <>
+        <p>
+          Leaving the UAE usually means clearing a whole home in a few weeks. Furniture and
+          appliances sell fast here if you price and time them well — here is how to turn a full
+          apartment into cash before you fly.
+        </p>
+
+        <h2>Start early and price to move</h2>
+        <p>
+          Begin listing three to four weeks before you leave. Buyers know a mover is on a deadline,
+          so price a little below what similar items are going for and be upfront that everything
+          must go. Check current{' '}
+          <Link href="/category/home-garden">furniture and appliance listings</Link> to set a
+          realistic figure.
+        </p>
+
+        <h2>Photograph each item well</h2>
+        <p>
+          Clear, bright photos sell furniture. Shoot each piece from a couple of angles in good
+          light, note the dimensions and any wear, and keep descriptions honest. On Query &amp; Buy
+          you can snap a photo and let AI draft the title, description and a suggested price, so
+          listing a whole home takes minutes — <Link href="/sell">start listing here</Link>.
+        </p>
+
+        <h2>Bundle and stagger</h2>
+        <p>
+          Group small items into bundles (kitchen lot, kids’ room lot) to shift them faster, but
+          list big-ticket pieces — sofas, fridges, washing machines — separately, as they attract
+          the most buyers. Keep the essentials you still need until the last few days, then sell
+          those last.
+        </p>
+
+        <h2>Agree pickup and payment clearly</h2>
+        <p>
+          Confirm with each buyer who arranges and pays for transport, especially for heavy items,
+          and set a collection time. Take payment on collection, and meet buyers with someone else
+          at home where you can. Keep chats inside the app so your number stays private until you
+          choose to share it.
+        </p>
+
+        <h2>Time the last pickups around your flight</h2>
+        <p>
+          Line up the final collections a day or two before you hand back the apartment, not the
+          morning of your flight, so a no-show buyer does not leave you stuck. Anything unsold can be
+          re-listed cheaply or donated rather than dumped.
+        </p>
+      </>
+    ),
+  },
 ]
 
 export function getGuide(slug: string): Guide | null {
@@ -482,6 +600,8 @@ const GUIDE_CATEGORIES: Record<string, string[]> = {
   'how-to-check-a-used-iphone-before-buying-in-the-uae': ['mobiles', 'electronics'],
   'how-much-is-my-iphone-worth-in-the-uae': ['mobiles', 'electronics'],
   'buying-used-furniture-in-the-uae-checklist': ['home-garden'],
+  'selling-furniture-before-leaving-the-uae': ['home-garden'],
+  'how-to-check-a-used-car-before-buying-in-the-uae': ['vehicles'],
   'how-to-rent-an-apartment-in-dubai-without-an-agent': ['property'],
   // General safety guide — relevant across the marketplace.
   'is-it-safe-to-buy-second-hand-online-in-dubai': [
@@ -503,4 +623,88 @@ export function guidesForCategory(categorySlug: string, limit = 3): Guide[] {
     0,
     limit,
   )
+}
+
+/**
+ * Display topic for each guide — used to group the guides hub into scannable,
+ * keyword-rich sections. Set explicitly (not derived from GUIDE_CATEGORIES)
+ * because the cross-marketplace safety guide belongs under "Staying safe", not
+ * whatever category happens to be listed first.
+ */
+const GUIDE_TOPIC: Record<string, string> = {
+  'how-to-sell-your-car-privately-in-the-uae': 'Vehicles',
+  'how-to-check-a-used-car-before-buying-in-the-uae': 'Vehicles',
+  'how-much-is-my-car-worth-in-the-uae': 'Vehicles',
+  'how-to-check-a-used-iphone-before-buying-in-the-uae': 'Electronics & mobiles',
+  'how-much-is-my-iphone-worth-in-the-uae': 'Electronics & mobiles',
+  'buying-used-furniture-in-the-uae-checklist': 'Home & garden',
+  'selling-furniture-before-leaving-the-uae': 'Home & garden',
+  'how-to-rent-an-apartment-in-dubai-without-an-agent': 'Property',
+  'is-it-safe-to-buy-second-hand-online-in-dubai': 'Staying safe',
+}
+
+/** Order topics appear in on the hub. */
+const TOPIC_ORDER = ['Vehicles', 'Property', 'Electronics & mobiles', 'Home & garden', 'Staying safe']
+
+/** Rough read time (minutes) per guide, for the hub cards and article header. */
+const READ_MINUTES: Record<string, number> = {
+  'how-to-sell-your-car-privately-in-the-uae': 6,
+  'how-to-check-a-used-car-before-buying-in-the-uae': 5,
+  'how-much-is-my-car-worth-in-the-uae': 4,
+  'how-to-check-a-used-iphone-before-buying-in-the-uae': 5,
+  'how-much-is-my-iphone-worth-in-the-uae': 4,
+  'buying-used-furniture-in-the-uae-checklist': 4,
+  'selling-furniture-before-leaving-the-uae': 5,
+  'how-to-rent-an-apartment-in-dubai-without-an-agent': 6,
+  'is-it-safe-to-buy-second-hand-online-in-dubai': 5,
+}
+
+export function guideTopic(slug: string): string {
+  return GUIDE_TOPIC[slug] ?? 'Guides'
+}
+
+export function guideReadMinutes(slug: string): number {
+  return READ_MINUTES[slug] ?? 5
+}
+
+/** The flagship guide featured at the top of the hub. */
+export const FEATURED_GUIDE_SLUG = 'how-to-sell-your-car-privately-in-the-uae'
+
+/** Guides grouped by topic in TOPIC_ORDER (empty groups omitted). */
+export function guidesByTopic(): { topic: string; guides: Guide[] }[] {
+  return TOPIC_ORDER.map((topic) => ({
+    topic,
+    guides: GUIDES.filter((g) => guideTopic(g.slug) === topic),
+  })).filter((group) => group.guides.length > 0)
+}
+
+/** Up to `limit` other guides sharing a slug's topic (for the article footer). */
+export function relatedGuides(slug: string, limit = 3): Guide[] {
+  const topic = guideTopic(slug)
+  return GUIDES.filter((g) => g.slug !== slug && guideTopic(g.slug) === topic).slice(0, limit)
+}
+
+/** Display names for the top-level category slugs guides link into. */
+const CATEGORY_LABELS: Record<string, string> = {
+  vehicles: 'Vehicles',
+  property: 'Property',
+  electronics: 'Electronics',
+  mobiles: 'Mobiles & Tablets',
+  'home-garden': 'Home & Garden',
+  fashion: 'Fashion & Beauty',
+  services: 'Services',
+  hobbies: 'Hobbies & Sports',
+  business: 'Business & Industrial',
+}
+
+/**
+ * The primary category a guide's "browse listings" CTA points at. The
+ * cross-marketplace safety guide has no single category, so it returns null and
+ * the article falls back to a generic browse-all CTA.
+ */
+export function guidePrimaryCategory(slug: string): { slug: string; label: string } | null {
+  if (guideTopic(slug) === 'Staying safe') return null
+  const catSlug = (GUIDE_CATEGORIES[slug] ?? [])[0]
+  if (!catSlug) return null
+  return { slug: catSlug, label: CATEGORY_LABELS[catSlug] ?? catSlug }
 }

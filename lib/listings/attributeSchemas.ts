@@ -118,7 +118,7 @@ const CATEGORY_FIELD_KEYS: Record<string, readonly FieldKey[]> = {
   'apartments-sale': ['bedrooms', 'bathrooms', 'size_sqft', 'furnishing', 'parking', 'floor', 'completion'],
   'villas-rent': ['bedrooms', 'bathrooms', 'size_sqft', 'furnishing', 'parking', 'rent_period'],
   'villas-sale': ['bedrooms', 'bathrooms', 'size_sqft', 'furnishing', 'parking', 'completion'],
-  commercial: ['size_sqft', 'furnishing', 'parking', 'floor', 'rent_period'],
+  'commercial-property': ['size_sqft', 'furnishing', 'parking', 'floor', 'rent_period'],
   rooms: ['bathrooms', 'furnishing', 'rent_period'],
 
   // electronics

@@ -18,6 +18,15 @@ const PROTECTED_PREFIXES = [
 /** Canonical host — the apex every <link rel="canonical"> already points to. */
 const CANONICAL_HOST = 'queryandbuy.com'
 
+/**
+ * Renamed category slugs → their new slug. Emits a 301 from the old
+ * `/category/{old}` (and `/category/{old}/{city}`) URLs to the new ones so any
+ * existing links/index entries carry over. Keep in sync with the DB slug.
+ */
+const CATEGORY_SLUG_REDIRECTS: Record<string, string> = {
+  commercial: 'commercial-property',
+}
+
 export default auth((req) => {
   const { pathname } = req.nextUrl
 
@@ -32,6 +41,14 @@ export default auth((req) => {
     url.protocol = 'https:'
     url.host = CANONICAL_HOST
     url.port = ''
+    return NextResponse.redirect(url, 301)
+  }
+
+  // Renamed category slugs: 301 /category/{old} and /category/{old}/{city}.
+  const catMatch = pathname.match(/^\/category\/([^/]+)(\/.*)?$/)
+  if (catMatch && CATEGORY_SLUG_REDIRECTS[catMatch[1]]) {
+    const url = req.nextUrl.clone()
+    url.pathname = `/category/${CATEGORY_SLUG_REDIRECTS[catMatch[1]]}${catMatch[2] ?? ''}`
     return NextResponse.redirect(url, 301)
   }
 

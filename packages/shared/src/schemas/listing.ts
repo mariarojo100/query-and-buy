@@ -19,6 +19,7 @@ export type SellerMiniDto = z.infer<typeof SellerMiniSchema>
 
 export const FeedListingSchema = z.object({
   id: z.string().uuid(),
+  public_id: z.string(),
   title_en: z.string(),
   price_fils: z.number().int().nonnegative(),
   currency: z.string(),

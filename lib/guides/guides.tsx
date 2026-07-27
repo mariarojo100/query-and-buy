@@ -50,7 +50,7 @@ export const GUIDES: Guide[] = [
         <h2>2. Price it realistically</h2>
         <p>
           Buyers research before they message. Browse current{' '}
-          <Link href="/category/vehicles">used vehicle listings</Link> for the same make, model,
+          <Link href="/vehicles">used vehicle listings</Link> for the same make, model,
           year and mileage to see the real market, then price within that range. Be honest about
           condition — an accurate price attracts serious buyers, while an inflated one just means
           weeks of no replies.
@@ -84,8 +84,8 @@ export const GUIDES: Guide[] = [
 
         <p>
           Ready to sell? Browse the market first on{' '}
-          <Link href="/category/vehicles/dubai">used cars in Dubai</Link> or{' '}
-          <Link href="/category/vehicles/abu-dhabi">used cars in Abu Dhabi</Link>, then{' '}
+          <Link href="/vehicles/dubai">used cars in Dubai</Link> or{' '}
+          <Link href="/vehicles/abu-dhabi">used cars in Abu Dhabi</Link>, then{' '}
           <Link href="/sell">create your listing</Link>.
         </p>
       </>
@@ -152,9 +152,9 @@ export const GUIDES: Guide[] = [
 
         <p>
           Ready to browse safely? Explore{' '}
-          <Link href="/category/electronics/dubai">electronics in Dubai</Link>,{' '}
-          <Link href="/category/mobiles/dubai">mobiles in Dubai</Link>, or the full{' '}
-          <Link href="/category/electronics">electronics category</Link>.
+          <Link href="/electronics/dubai">electronics in Dubai</Link>,{' '}
+          <Link href="/mobiles/dubai">mobiles in Dubai</Link>, or the full{' '}
+          <Link href="/electronics">electronics category</Link>.
         </p>
       </>
     ),
@@ -226,9 +226,9 @@ export const GUIDES: Guide[] = [
 
         <p>
           Ready to look? Browse{' '}
-          <Link href="/category/mobiles">mobiles &amp; tablets</Link>,{' '}
-          <Link href="/category/mobiles/dubai">used phones in Dubai</Link>, or{' '}
-          <Link href="/category/mobiles/sharjah">used phones in Sharjah</Link>.
+          <Link href="/mobiles">mobiles &amp; tablets</Link>,{' '}
+          <Link href="/mobiles/dubai">used phones in Dubai</Link>, or{' '}
+          <Link href="/mobiles/sharjah">used phones in Sharjah</Link>.
         </p>
       </>
     ),
@@ -272,7 +272,7 @@ export const GUIDES: Guide[] = [
         <h2>Research the real market</h2>
         <p>
           The most reliable valuation is what similar cars are actually listed for right now. Browse{' '}
-          <Link href="/category/vehicles">current used-car listings</Link> filtered to your make,
+          <Link href="/vehicles">current used-car listings</Link> filtered to your make,
           model, year and mileage, and note the range. Ignore the one or two outliers at the top and
           bottom — aim for the middle of the cluster.
         </p>
@@ -287,8 +287,8 @@ export const GUIDES: Guide[] = [
 
         <p>
           When you are ready, check the market on{' '}
-          <Link href="/category/vehicles/dubai">used cars in Dubai</Link> and{' '}
-          <Link href="/category/vehicles/abu-dhabi">Abu Dhabi</Link>, then{' '}
+          <Link href="/vehicles/dubai">used cars in Dubai</Link> and{' '}
+          <Link href="/vehicles/abu-dhabi">Abu Dhabi</Link>, then{' '}
           <Link href="/sell">list your car</Link> — snap a few photos and let AI draft the details
           and a suggested price.
         </p>
@@ -333,7 +333,7 @@ export const GUIDES: Guide[] = [
 
         <h2>Check what the market is paying</h2>
         <p>
-          Search <Link href="/category/mobiles">current iPhone listings</Link> for your exact model,
+          Search <Link href="/mobiles">current iPhone listings</Link> for your exact model,
           storage and condition to see the live range. Prices move fast around new-model launches, so
           recent listings matter more than old ones.
         </p>
@@ -347,8 +347,8 @@ export const GUIDES: Guide[] = [
 
         <p>
           Ready to sell? Compare prices for{' '}
-          <Link href="/category/mobiles/dubai">used phones in Dubai</Link> or{' '}
-          <Link href="/category/mobiles/abu-dhabi">Abu Dhabi</Link>, then{' '}
+          <Link href="/mobiles/dubai">used phones in Dubai</Link> or{' '}
+          <Link href="/mobiles/abu-dhabi">Abu Dhabi</Link>, then{' '}
           <Link href="/sell">create your listing</Link>.
         </p>
       </>
@@ -406,9 +406,9 @@ export const GUIDES: Guide[] = [
 
         <p>
           Start browsing{' '}
-          <Link href="/category/home-garden">home &amp; garden listings</Link>, or narrow to{' '}
-          <Link href="/category/home-garden/dubai">furniture in Dubai</Link> and{' '}
-          <Link href="/category/home-garden/sharjah">Sharjah</Link>.
+          <Link href="/home-garden">home &amp; garden listings</Link>, or narrow to{' '}
+          <Link href="/home-garden/dubai">furniture in Dubai</Link> and{' '}
+          <Link href="/home-garden/sharjah">Sharjah</Link>.
         </p>
       </>
     ),
@@ -432,7 +432,7 @@ export const GUIDES: Guide[] = [
         <p>
           Decide on your budget, preferred communities and must-haves (parking, chiller, number of
           cheques) first, then browse{' '}
-          <Link href="/category/property">property listings</Link> and message listers directly
+          <Link href="/property">property listings</Link> and message listers directly
           through the app to arrange viewings. Keeping the conversation in-app protects your contact
           details until you are ready to share them.
         </p>
@@ -463,8 +463,8 @@ export const GUIDES: Guide[] = [
 
         <p>
           Ready to look? Browse{' '}
-          <Link href="/category/property/dubai">property in Dubai</Link> or the full{' '}
-          <Link href="/category/property">property category</Link>.
+          <Link href="/property/dubai">property in Dubai</Link> or the full{' '}
+          <Link href="/property">property category</Link>.
         </p>
       </>
     ),
@@ -512,8 +512,8 @@ export const GUIDES: Guide[] = [
         <h2>4. Compare the price to the market</h2>
         <p>
           Before you negotiate, browse current{' '}
-          <Link href="/category/vehicles">used car listings</Link> — and{' '}
-          <Link href="/category/vehicles/dubai">cars in Dubai</Link> specifically — for the same
+          <Link href="/vehicles">used car listings</Link> — and{' '}
+          <Link href="/vehicles/dubai">cars in Dubai</Link> specifically — for the same
           make, model, year and mileage, so you know a fair figure. A price well below the market
           usually signals a problem, not a bargain.
         </p>
@@ -550,7 +550,7 @@ export const GUIDES: Guide[] = [
           Begin listing three to four weeks before you leave. Buyers know a mover is on a deadline,
           so price a little below what similar items are going for and be upfront that everything
           must go. Check current{' '}
-          <Link href="/category/home-garden">furniture and appliance listings</Link> to set a
+          <Link href="/home-garden">furniture and appliance listings</Link> to set a
           realistic figure.
         </p>
 

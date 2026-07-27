@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 const HIDE_PREFIXES = ['/login', '/signup', '/auth', '/messages/', '/listing/']
 
 const TABS = [
-  { href: '/', label: 'Browse', icon: HomeIcon, match: (p: string) => p === '/' || p.startsWith('/category') || p.startsWith('/listing') },
+  { href: '/', label: 'Browse', icon: HomeIcon, match: (p: string) => p === '/' || p.startsWith('/listing') },
   { href: '/favorites', label: 'Saved', icon: HeartIcon, match: (p: string) => p.startsWith('/favorites') },
   { href: '/sell', label: 'Sell', icon: PlusIcon, primary: true, match: (p: string) => p.startsWith('/sell') },
   { href: '/messages', label: 'Chats', icon: MessageSquareIcon, match: (p: string) => p === '/messages' },

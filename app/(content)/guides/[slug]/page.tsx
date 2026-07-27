@@ -100,7 +100,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
             Ready to browse {primaryCategory.label}?
           </p>
           <Link
-            href={`/category/${primaryCategory.slug}`}
+            href={`/${primaryCategory.slug}`}
             className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
           >
             See {primaryCategory.label} listings

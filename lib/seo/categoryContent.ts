@@ -1,7 +1,7 @@
 /**
  * lib/seo/categoryContent — unique, human-written SEO copy for each top-level
- * category, reused by both the category pages (/category/[slug]) and the
- * category-in-city landing pages (/category/[slug]/[city]).
+ * category, reused by both the category pages (/[slug]) and the
+ * category-in-city landing pages (/[slug]/[city]).
  *
  * Why this exists: a marketplace category page that is just a grid of listings
  * behind one boilerplate line gives search engines almost nothing to rank. The

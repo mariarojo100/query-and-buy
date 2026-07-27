@@ -43,7 +43,7 @@ export function CategoryRail({ categories }: { categories: CategoryLite[] }) {
       {parents.map((c) => {
         const Icon = ICONS[c.slug] ?? TagIcon
         return (
-          <Link key={c.id} href={`/category/${c.slug}`} className={tile}>
+          <Link key={c.id} href={`/${c.slug}`} className={tile}>
             <span className="flex size-11 items-center justify-center rounded-full bg-primary/[0.06] text-primary ring-1 ring-inset ring-primary/10 transition-colors duration-200 group-hover:bg-gold/15 group-hover:text-gold group-hover:ring-gold/20">
               <Icon className="size-[22px]" strokeWidth={1.6} />
             </span>

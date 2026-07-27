@@ -120,7 +120,7 @@ export function SmartSearchBox({ trending = [] }: { trending?: string[] }) {
     if (typing) {
       return suggestions.map((s): Option =>
         s.type === 'category'
-          ? { kind: 'category', label: s.label, href: `/category/${s.slug}` }
+          ? { kind: 'category', label: s.label, href: `/${s.slug}` }
           : s.type === 'listing'
             ? { kind: 'listing', label: s.label, href: listingPath(s.label, s.id) }
             : { kind: 'query', label: s.label, run: s.label },

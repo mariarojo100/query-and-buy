@@ -19,12 +19,17 @@ const PROTECTED_PREFIXES = [
 const CANONICAL_HOST = 'queryandbuy.com'
 
 /**
- * Renamed category slugs → their new slug. Emits a 301 from the old
- * `/category/{old}` (and `/category/{old}/{city}`) URLs to the new ones so any
- * existing links/index entries carry over. Keep in sync with the DB slug.
+ * Renamed category slugs → their new slug. Emits a 301 to the new slug (at the
+ * root, since category pages now live at /{slug} rather than /category/{slug}).
+ * Keep in sync with the DB slug.
  */
 const CATEGORY_SLUG_REDIRECTS: Record<string, string> = {
   commercial: 'commercial-property',
+}
+
+/** First path segment (or '' for root). */
+function firstSegment(pathname: string): string {
+  return pathname.split('/')[1] ?? ''
 }
 
 export default auth((req) => {
@@ -44,11 +49,25 @@ export default auth((req) => {
     return NextResponse.redirect(url, 301)
   }
 
-  // Renamed category slugs: 301 /category/{old} and /category/{old}/{city}.
-  const catMatch = pathname.match(/^\/category\/([^/]+)(\/.*)?$/)
-  if (catMatch && CATEGORY_SLUG_REDIRECTS[catMatch[1]]) {
+  // Category pages moved from /category/{slug} to /{slug}. 301 any legacy
+  // /category/* URL to the root, stripping the prefix and applying any slug
+  // rename (e.g. /category/commercial/dubai → /commercial-property/dubai).
+  const legacyCat = pathname.match(/^\/category\/([^/]+)(\/.*)?$/)
+  if (legacyCat) {
+    const slug = CATEGORY_SLUG_REDIRECTS[legacyCat[1]] ?? legacyCat[1]
     const url = req.nextUrl.clone()
-    url.pathname = `/category/${CATEGORY_SLUG_REDIRECTS[catMatch[1]]}${catMatch[2] ?? ''}`
+    url.pathname = `/${slug}${legacyCat[2] ?? ''}`
+    return NextResponse.redirect(url, 301)
+  }
+
+  // Root-level renamed slugs (e.g. /commercial → /commercial-property). Only
+  // fires for slugs explicitly in the rename map, so it never touches other
+  // top-level routes.
+  const rootSlug = firstSegment(pathname)
+  if (CATEGORY_SLUG_REDIRECTS[rootSlug]) {
+    const rest = pathname.slice(`/${rootSlug}`.length)
+    const url = req.nextUrl.clone()
+    url.pathname = `/${CATEGORY_SLUG_REDIRECTS[rootSlug]}${rest}`
     return NextResponse.redirect(url, 301)
   }
 

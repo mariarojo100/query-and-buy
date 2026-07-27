@@ -23,13 +23,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const { categorySlugs, listings, profiles } = await sitemapData()
 
     for (const slug of categorySlugs) {
-      entries.push({ url: absoluteUrl(`/category/${slug}`), lastModified: now, changeFrequency: 'daily', priority: 0.7 })
+      entries.push({ url: absoluteUrl(`/${slug}`), lastModified: now, changeFrequency: 'daily', priority: 0.7 })
 
       // Category-in-city landing pages (one per emirate) — the long-tail
       // "{category} for sale in {city}" surface. Slightly lower priority than
       // the parent category.
       for (const city of CITY_SLUGS)
-        entries.push({ url: absoluteUrl(`/category/${slug}/${city}`), lastModified: now, changeFrequency: 'daily', priority: 0.6 })
+        entries.push({ url: absoluteUrl(`/${slug}/${city}`), lastModified: now, changeFrequency: 'daily', priority: 0.6 })
     }
 
     for (const l of listings)

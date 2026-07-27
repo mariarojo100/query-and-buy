@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { CategoryLite } from '@/lib/listings/queries'
 
-/** Horizontal scroll of top-level categories → /category/[slug]. */
+/** Horizontal scroll of top-level categories → /[slug]. */
 export function CategoryChips({
   categories,
   activeSlug,
@@ -20,7 +20,7 @@ export function CategoryChips({
       {parents.map((c) => (
         <Link
           key={c.id}
-          href={`/category/${c.slug}`}
+          href={`/${c.slug}`}
           className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm transition ${
             c.slug === activeSlug
               ? 'border-foreground bg-foreground text-background'

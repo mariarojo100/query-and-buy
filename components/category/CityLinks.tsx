@@ -3,7 +3,7 @@ import { EMIRATES } from '@/lib/profile/emirates'
 
 /**
  * "Browse by city" internal-link row shown on category and city landing pages.
- * Builds the crawlable mesh between /category/[slug] and /category/[slug]/[city]
+ * Builds the crawlable mesh between /[slug] and /[slug]/[city]
  * that lets the city pages accumulate internal links and get discovered.
  */
 export function CityLinks({
@@ -24,7 +24,7 @@ export function CityLinks({
           return (
             <Link
               key={e.slug}
-              href={`/category/${categorySlug}/${e.slug}`}
+              href={`/${categorySlug}/${e.slug}`}
               aria-current={active ? 'page' : undefined}
               className={
                 active

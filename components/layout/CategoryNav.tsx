@@ -21,7 +21,7 @@ export function CategoryNav({ categories }: { categories: CategoryLite[] }) {
     >
       <div className="mx-auto flex max-w-6xl items-center gap-6 px-5 sm:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {parents.map((c) => (
-          <Link key={c.id} href={`/category/${c.slug}`} className={link}>
+          <Link key={c.id} href={`/${c.slug}`} className={link}>
             {c.name_en}
           </Link>
         ))}

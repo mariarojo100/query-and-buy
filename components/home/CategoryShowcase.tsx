@@ -48,7 +48,7 @@ export function CategoryShowcase({
         return (
           <Link
             key={c.id}
-            href={`/category/${c.slug}`}
+            href={`/${c.slug}`}
             className="lift group relative flex min-h-[8.5rem] flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-[box-shadow,border-color] duration-300 hover:border-gold/30 hover:shadow-float focus-visible:border-gold/40"
           >
             {/* soft brand wash that warms on hover — subtler than a hard blob */}

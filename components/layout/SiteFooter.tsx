@@ -22,10 +22,10 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: 'Discover',
     links: [
-      { label: 'Vehicles', href: '/category/vehicles' },
-      { label: 'Property', href: '/category/property' },
-      { label: 'Electronics', href: '/category/electronics' },
-      { label: 'Fashion & Beauty', href: '/category/fashion' },
+      { label: 'Vehicles', href: '/vehicles' },
+      { label: 'Property', href: '/property' },
+      { label: 'Electronics', href: '/electronics' },
+      { label: 'Fashion & Beauty', href: '/fashion' },
     ],
   },
   {

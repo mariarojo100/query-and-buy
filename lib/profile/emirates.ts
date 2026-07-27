@@ -1,7 +1,7 @@
 /**
  * The 7 UAE emirates.
  * - `value` matches the Postgres `emirate` enum (underscored).
- * - `slug` is the SEO-friendly URL segment used by the /category/[slug]/[city]
+ * - `slug` is the SEO-friendly URL segment used by the /[slug]/[city]
  *   landing pages (hyphenated, no underscores).
  */
 export const EMIRATES = [

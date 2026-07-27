@@ -6,10 +6,8 @@ import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SearchControls } from '@/components/search/SearchControls'
+import { CategoryChips } from '@/components/listing/CategoryChips'
 import { ListingResults } from '@/components/listing/ListingResults'
-import { CityLinks } from '@/components/category/CityLinks'
-import { CategorySeoContent } from '@/components/category/CategorySeoContent'
-import { RelatedGuides } from '@/components/category/RelatedGuides'
 import {
   getActiveCategories,
   getCategoryBySlug,
@@ -18,6 +16,13 @@ import {
 } from '@/lib/listings/queries'
 import { getFavoritedIds } from '@/lib/favorites/queries'
 import { parseSearch, type RawSearchParams } from '@/lib/listings/searchParams'
+import {
+  resolveAttributeFieldsForSlug,
+  parseAttributeFilters,
+} from '@/lib/listings/attributeSchemas'
+import { CityLinks } from '@/components/category/CityLinks'
+import { CategorySeoContent } from '@/components/category/CategorySeoContent'
+import { RelatedGuides } from '@/components/category/RelatedGuides'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd } from '@/lib/seo'
 import {
@@ -27,59 +32,59 @@ import {
   categoryHeading,
 } from '@/lib/seo/categoryContent'
 import { absoluteUrl, OG_IMAGE } from '@/lib/site'
-import { citySlugToEmirate, emirateBySlug } from '@/lib/profile/emirates'
 import { listingPath } from '@/lib/listings/slug'
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string; city: string }>
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { slug, city } = await params
-  const cityRec = emirateBySlug(city)
+  const { slug } = await params
   const cat = await getCategoryBySlug(slug)
-  if (!cat || !cityRec) return { title: 'Not found · Query & Buy' }
-
+  if (!cat) return { title: 'Category not found · Query & Buy' }
   const name = cat.category.name_en
-  const title = `${categoryHeading(name, `${cityRec.label}, UAE`)} · Query & Buy`
-  const description = categoryMetaDescription(slug, name, cityRec.label)
-  const path = `/category/${slug}/${city}`
+  const description = categoryMetaDescription(slug, name)
+  const title = `${categoryHeading(name, 'the UAE')} · Query & Buy`
   return {
     title,
     description,
-    alternates: { canonical: path },
+    alternates: { canonical: `/${slug}` },
     openGraph: {
       type: 'website',
       title,
       description,
-      url: absoluteUrl(path),
+      url: absoluteUrl(`/${slug}`),
       images: [OG_IMAGE],
       locale: 'en_AE',
     },
   }
 }
 
-export default async function CategoryCityPage({
+export default async function CategoryPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string; city: string }>
+  params: Promise<{ slug: string }>
   searchParams: Promise<RawSearchParams>
 }) {
-  const { slug, city } = await params
-  const cityRec = emirateBySlug(city)
+  const { slug } = await params
   const cat = await getCategoryBySlug(slug)
-  if (!cat || !cityRec) notFound()
+  if (!cat) notFound()
 
-  const emirate = citySlugToEmirate(city) ?? undefined
   const name = cat.category.name_en
-  const parsed = parseSearch(await searchParams)
+  const { lead } = categoryIntro(slug, name)
+  const sp = await searchParams
+  const parsed = parseSearch(sp)
   const categories = await getActiveCategories()
+
+  // Facet filters for this category (from the route slug).
+  const attributeFields = resolveAttributeFieldsForSlug(slug, categories)
+  const attributeFilters = parseAttributeFilters(attributeFields, sp)
 
   const { listings, count } = await getFilteredListings({
     q: parsed.q,
     categoryIds: cat.ids, // this category + its children
-    emirate, // fixed by the route (city), not user-overridable here
+    emirate: parsed.emirate,
     condition: parsed.condition,
     minFils: parsed.minFils,
     maxFils: parsed.maxFils,
@@ -87,13 +92,11 @@ export default async function CategoryCityPage({
     featured: parsed.featured,
     sinceDays: parsed.sinceDays,
     sort: parsed.sort,
+    attributes: attributeFilters,
   })
 
   const user = await getViewer()
   const favoritedIds = await getFavoritedIds(listings.map((l) => l.id))
-
-  const { lead } = categoryIntro(slug, name, cityRec.label)
-  const path = `/category/${slug}/${city}`
 
   return (
     <>
@@ -104,39 +107,37 @@ export default async function CategoryCityPage({
             { name: 'Home', path: '/' },
             ...categoryAncestry(categories, slug).map((c) => ({
               name: c.name,
-              path: `/category/${c.slug}`,
+              path: `/${c.slug}`,
             })),
-            { name: cityRec.label, path },
           ]),
           itemListJsonLd(
             listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.id) })),
-            { name: `${name} in ${cityRec.label}` },
+            { name },
           ),
-          faqJsonLd(categoryFaqs(slug, name, cityRec.label)),
+          faqJsonLd(categoryFaqs(slug, name)),
         ]}
       />
       <main className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6 sm:py-8">
         <Link
-          href={`/category/${slug}`}
+          href="/"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ChevronLeftIcon className="size-4" /> All {name}
+          <ChevronLeftIcon className="size-4" /> All listings
         </Link>
 
         <div>
-          <p className="eyebrow">
-            {name} · {cityRec.label}
-          </p>
+          <p className="eyebrow">Category</p>
           <h1 className="font-display mt-2 text-3xl tracking-tight sm:text-4xl">
-            {categoryHeading(name, cityRec.label)}
+            {categoryHeading(name, 'the UAE')}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{lead}</p>
         </div>
 
-        <CityLinks categorySlug={slug} categoryName={name} activeCity={city} />
+        <CityLinks categorySlug={slug} categoryName={name} />
 
-        {/* Category and city are fixed by the route, so hide category from filters. */}
-        <SearchControls categories={categories} hideCategory />
+        <CategoryChips categories={categories} activeSlug={slug} />
+        {/* Category is fixed by the route, so hide it from the filters. */}
+        <SearchControls categories={categories} attributeFields={attributeFields} hideCategory />
         <ListingResults
           listings={listings}
           count={count}
@@ -144,7 +145,7 @@ export default async function CategoryCityPage({
           authed={!!user}
         />
 
-        <CategorySeoContent slug={slug} name={name} city={cityRec.label} />
+        <CategorySeoContent slug={slug} name={name} />
 
         <RelatedGuides categorySlug={slug} />
       </main>

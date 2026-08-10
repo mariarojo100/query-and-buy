@@ -41,6 +41,8 @@ export type FeedListing = {
   published_at: string | null
   is_featured: boolean
   view_count: number
+  attributes: Record<string, string>
+  category_slug: string | null
   seller: SellerMini | null
 }
 
@@ -161,6 +163,8 @@ const feedSelect = {
   publishedAt: true,
   isFeatured: true,
   viewCount: true,
+  attributes: true,
+  category: { select: { slug: true } },
   images: { select: { storageKey: true, position: true }, orderBy: { position: 'asc' } },
   seller: {
     select: {
@@ -199,6 +203,8 @@ function mapFeed(l: FeedRow): FeedListing {
     published_at: l.publishedAt ? l.publishedAt.toISOString() : null,
     is_featured: l.isFeatured,
     view_count: l.viewCount ?? 0,
+    attributes: toAttrMap(l.attributes),
+    category_slug: l.category?.slug ?? null,
     seller: sellerMiniOf(l.seller.profile),
   }
 }
@@ -218,6 +224,8 @@ type RawFeedRow = {
   published_at: Date | null
   is_featured: boolean
   view_count: number
+  attributes: unknown
+  category_slug: string | null
   images: { storage_key: string; position: number }[] | null
 }
 
@@ -274,6 +282,8 @@ function mapRaw(r: RawFeedRow, sellers: Map<string, SellerMini>): FeedListing {
     published_at: r.published_at ? new Date(r.published_at).toISOString() : null,
     is_featured: r.is_featured,
     view_count: r.view_count ?? 0,
+    attributes: toAttrMap(r.attributes),
+    category_slug: r.category_slug,
     seller: sellers.get(r.seller_id) ?? null,
   }
 }
@@ -321,10 +331,11 @@ export async function filteredListings(filters: ListingFilters = {}): Promise<{ 
 
   const rows = await db.$queryRaw<RawFeedRow[]>(Prisma.sql`
     select l.id, l.public_id, l.title_en, l.price_fils, l.currency, l.emirate, l.area, l.condition, l.seller_id,
-           l.published_at, l.is_featured, l.view_count,
+           l.published_at, l.is_featured, l.view_count, l.attributes, c.slug as category_slug,
            coalesce((select jsonb_agg(jsonb_build_object('storage_key', li.storage_key, 'position', li.position) order by li.position)
                      from listing_images li where li.listing_id = l.id), '[]'::jsonb) as images
     from listings l
+    left join categories c on c.id = l.category_id
     where ${where}
     ${orderBySql(filters.sort)}
     limit ${limit}
@@ -705,7 +716,7 @@ export async function categorySlugChain(
 }
 
 /** Coerce a jsonb attributes value into a flat string map for DTOs. */
-function toAttrMap(v: unknown): Record<string, string> {
+export function toAttrMap(v: unknown): Record<string, string> {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
   const out: Record<string, string> = {}
   for (const [k, val] of Object.entries(v as Record<string, unknown>)) {

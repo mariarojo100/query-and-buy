@@ -8,6 +8,7 @@ import { BLUR_DATA_URL } from '@/lib/blur'
 import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
 import { listingPath } from '@/lib/listings/slug'
+import { cardFacets } from '@/lib/listings/attributeSchemas'
 import type { FeedListing } from '@/lib/listings/queries'
 
 export function ListingCard({
@@ -24,6 +25,7 @@ export function ListingCard({
   const posted = formatRelativeTime(listing.published_at)
   const verified = seller?.email_verified
   const condition = conditionLabel(listing.condition)
+  const facets = cardFacets(listing.category_slug, listing.attributes)
 
   return (
     <Link
@@ -87,6 +89,15 @@ export function ListingCard({
         <h3 className="mt-1 line-clamp-1 text-sm leading-snug text-foreground/80">
           {listing.title_en}
         </h3>
+
+        {facets.length > 0 && (
+          <p
+            className="mt-1 line-clamp-1 text-xs text-muted-foreground/90"
+            title={facets.map((f) => `${f.label}: ${f.value}`).join(' · ')}
+          >
+            {facets.map((f) => f.value).join(' · ')}
+          </p>
+        )}
 
         {(location || verified) && (
           <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">

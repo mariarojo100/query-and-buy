@@ -9,6 +9,7 @@ import {
   parseAttributeFilters,
   describeAttributeParam,
   filterableFields,
+  cardFacets,
 } from '@/lib/listings/attributeSchemas'
 import { ok, eq, summary, exitCode } from '@/tests/unit/_harness'
 
@@ -108,6 +109,37 @@ eq('describe max with unit', describeAttributeParam('a_mileage_km_max', '80000')
 eq('describe min', describeAttributeParam('a_year_min', '2018')?.label, 'Year ≥ 2018')
 eq('describe unknown key → null', describeAttributeParam('a_nope', 'x'), null)
 eq('describe non-attr param → null', describeAttributeParam('emirate', 'dubai'), null)
+
+// --- cardFacets -------------------------------------------------------------
+// Curated order for the category, identity fields (make/model) omitted, values formatted.
+const carCard = cardFacets('cars', {
+  make: 'Toyota', // identity → skipped (already in title)
+  model: 'Corolla', // identity → skipped
+  year: '2021',
+  mileage_km: '45000', // number → grouped + unit
+  transmission: 'Automatic',
+  fuel_type: 'Petrol', // beyond max(3) for cars' curated set
+})
+eq('car card facet count capped at 3', carCard.length, 3)
+eq('car facet order/format #1', carCard[0].value, '2021')
+eq('car facet mileage grouped + unit', carCard[1].value, '45,000 km')
+eq('car facet transmission', carCard[2].value, 'Automatic')
+ok('car card omits identity fields', !carCard.some((f) => f.key === 'make' || f.key === 'model'))
+
+// Count fields get a short suffix; "Studio" stays as-is.
+const propCard = cardFacets('apartments-rent', { bedrooms: '3', bathrooms: '2', size_sqft: '1200' })
+eq('bedrooms suffixed', propCard[0].value, '3 Bed')
+eq('bathrooms suffixed', propCard[1].value, '2 Bath')
+eq('size grouped + unit', propCard[2].value, '1,200 sq ft')
+eq('studio not suffixed', cardFacets('apartments-sale', { bedrooms: 'Studio' })[0].value, 'Studio')
+
+// Unknown category → falls back to catalogue order, still skipping identity fields.
+const fallback = cardFacets('mystery-category', { brand: 'Sony', storage: '256GB', ram: '8GB' })
+ok('fallback skips brand identity', !fallback.some((f) => f.key === 'brand'))
+ok('fallback surfaces storage', fallback.some((f) => f.value === '256GB'))
+eq('no attributes → empty', cardFacets('cars', {}).length, 0)
+eq('null attributes → empty', cardFacets('cars', null).length, 0)
+eq('respects custom max', cardFacets('cars', { year: '2021', mileage_km: '10000', transmission: 'Manual' }, 2).length, 2)
 
 summary('attribute-schemas')
 process.exit(exitCode())

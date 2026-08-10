@@ -30,6 +30,8 @@ export const FeedListingSchema = z.object({
   published_at: z.string().nullable(),
   is_featured: z.boolean(),
   view_count: z.number().int().nonnegative(),
+  attributes: z.record(z.string(), z.string()),
+  category_slug: z.string().nullable(),
   seller: SellerMiniSchema.nullable(),
 })
 export type FeedListingDto = z.infer<typeof FeedListingSchema>

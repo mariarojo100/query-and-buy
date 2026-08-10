@@ -246,6 +246,96 @@ export function attributeVocabulary(): string[] {
   return [...new Set(FIELD_ORDER.map((k) => FIELDS[k].label))]
 }
 
+// ---- Compact card facets ---------------------------------------------------
+// The handful of specs worth surfacing on a listing card, per category. Ordered
+// by importance; identity fields (make/model/brand) are intentionally omitted
+// because they already appear in the title. Subcategories that aren't listed
+// fall back to the catalogue order (see cardFacets).
+const CARD_FACET_KEYS: Record<string, readonly FieldKey[]> = {
+  vehicles: ['year', 'mileage_km', 'transmission'],
+  cars: ['year', 'mileage_km', 'transmission'],
+  motorcycles: ['year', 'mileage_km', 'engine_cc'],
+  'heavy-vehicles': ['year', 'mileage_km', 'transmission'],
+  boats: ['year', 'length_ft'],
+  'auto-parts': ['part_type', 'compatible_with'],
+  property: ['bedrooms', 'bathrooms', 'size_sqft'],
+  'apartments-rent': ['bedrooms', 'bathrooms', 'size_sqft'],
+  'apartments-sale': ['bedrooms', 'bathrooms', 'size_sqft'],
+  'villas-rent': ['bedrooms', 'bathrooms', 'size_sqft'],
+  'villas-sale': ['bedrooms', 'bathrooms', 'size_sqft'],
+  'commercial-property': ['size_sqft', 'floor'],
+  rooms: ['bathrooms', 'furnishing'],
+  computers: ['processor', 'ram', 'storage_gb'],
+  'tv-audio': ['screen_size_in', 'resolution'],
+  gaming: ['storage_gb'],
+  cameras: ['megapixels'],
+  mobiles: ['storage', 'ram', 'battery_health'],
+  furniture: ['type', 'material'],
+  appliances: ['type', 'warranty'],
+  fashion: ['size', 'gender'],
+  services: ['service_type', 'experience_years'],
+}
+
+// Short trailing words so a bare count reads clearly on a card ("3" → "3 Bed").
+// Only applied when the value is numeric (so "Studio" stays "Studio").
+const CARD_SUFFIX: Partial<Record<FieldKey, string>> = {
+  bedrooms: 'Bed',
+  bathrooms: 'Bath',
+  doors: 'Doors',
+  seats: 'Seats',
+  floor: 'Floor',
+}
+
+// Numbers that read as identifiers, not quantities — never thousands-grouped.
+const NO_GROUP = new Set<FieldKey>(['year'])
+
+/** Card-friendly value: thousands-grouped, with unit or a short count suffix. */
+function formatCardValue(key: FieldKey, raw: string): string {
+  const f: AttrFieldDef = FIELDS[key]
+  let v = raw.trim()
+  if (f.type === 'number' && !NO_GROUP.has(key)) {
+    const n = Number(v)
+    if (Number.isFinite(n)) v = n.toLocaleString('en-US')
+  }
+  if (f.unit) return `${v} ${f.unit}`
+  const suffix = CARD_SUFFIX[key]
+  if (suffix && /^\d/.test(v)) return `${v} ${suffix}`
+  return v
+}
+
+/**
+ * The 1–`max` most useful specs to show on a compact listing card, formatted for
+ * display. Prefers the curated {@link CARD_FACET_KEYS} for the category, then
+ * falls back to catalogue order (skipping identity fields already in the title).
+ * Never throws; returns [] when there are no usable attributes.
+ */
+export function cardFacets(
+  categorySlug: string | null | undefined,
+  attributes: Record<string, unknown> | null | undefined,
+  max = 3,
+): { key: string; label: string; value: string }[] {
+  if (!attributes || typeof attributes !== 'object') return []
+  const attrs = attributes as Record<string, unknown>
+  const out: { key: string; label: string; value: string }[] = []
+  const seen = new Set<FieldKey>()
+  const tryKey = (k: FieldKey) => {
+    if (out.length >= max || seen.has(k)) return
+    const raw = attrs[k]
+    if (raw == null) return
+    const s = String(raw).trim()
+    if (!s) return
+    seen.add(k)
+    out.push({ key: k, label: FIELDS[k].label, value: formatCardValue(k, s) })
+  }
+  const priority = (categorySlug && CARD_FACET_KEYS[categorySlug]) || []
+  for (const k of priority) tryKey(k)
+  if (out.length < max) {
+    const SKIP = new Set<FieldKey>(['make', 'model', 'trim', 'brand', 'type'])
+    for (const k of FIELD_ORDER) if (!SKIP.has(k)) tryKey(k)
+  }
+  return out
+}
+
 // ---- Filtering -------------------------------------------------------------
 
 /** Minimal category shape needed to resolve a slug's fields (from getActiveCategories). */

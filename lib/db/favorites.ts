@@ -10,6 +10,7 @@
 import { db } from '@/lib/db'
 import type { Viewer } from '@/lib/authz/viewer'
 import type { FeedListing, SellerMini } from '@/lib/listings/queries'
+import { toAttrMap } from '@/lib/db/listings'
 
 /** Which of `listingIds` this viewer has favorited (RLS: fav_owner_all). */
 export async function favoritedIdsFor(viewer: Viewer, listingIds: string[]): Promise<Set<string>> {
@@ -42,6 +43,8 @@ export async function favoritesFeedFor(viewer: Viewer): Promise<FeedListing[]> {
           publishedAt: true,
           isFeatured: true,
           viewCount: true,
+          attributes: true,
+          category: { select: { slug: true } },
           images: { select: { storageKey: true }, orderBy: { position: 'asc' }, take: 1 },
           seller: {
             select: {
@@ -90,6 +93,8 @@ export async function favoritesFeedFor(viewer: Viewer): Promise<FeedListing[]> {
       published_at: l.publishedAt ? l.publishedAt.toISOString() : null,
       is_featured: l.isFeatured,
       view_count: l.viewCount ?? 0,
+      attributes: toAttrMap(l.attributes),
+      category_slug: l.category?.slug ?? null,
       seller,
     })
   }

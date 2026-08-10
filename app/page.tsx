@@ -8,6 +8,9 @@ import { SaveSearchButton } from '@/components/search/SaveSearchButton'
 import { SmartSearchBox } from '@/components/search/SmartSearchBox'
 import { CategoryChips } from '@/components/listing/CategoryChips'
 import { ListingResults } from '@/components/listing/ListingResults'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { itemListJsonLd } from '@/lib/seo'
+import { listingPath } from '@/lib/listings/slug'
 import { HomeHero } from '@/components/home/HomeHero'
 import { CategoryRail } from '@/components/home/CategoryRail'
 import { TrustBar } from '@/components/home/TrustBar'
@@ -186,6 +189,14 @@ export default async function HomePage({
           </section>
         ) : (
           <>
+            {listings.length > 0 && (
+              <JsonLd
+                data={itemListJsonLd(
+                  listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.id) })),
+                  { name: 'Recently added on Query & Buy' },
+                )}
+              />
+            )}
             <HomeHero
               trending={trending.map((t) => t.query)}
               listings={(featured.length ? featured : listings).slice(0, 8)}

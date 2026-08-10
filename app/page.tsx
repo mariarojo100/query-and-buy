@@ -192,7 +192,7 @@ export default async function HomePage({
             {listings.length > 0 && (
               <JsonLd
                 data={itemListJsonLd(
-                  listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.id) })),
+                  listings.map((l) => ({ name: l.title_en, path: listingPath(l.title_en, l.public_id) })),
                   { name: 'Recently added on Query & Buy' },
                 )}
               />

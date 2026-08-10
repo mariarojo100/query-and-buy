@@ -10,6 +10,7 @@ import {
   describeAttributeParam,
   filterableFields,
   cardFacets,
+  extractAttributesFromText,
 } from '@/lib/listings/attributeSchemas'
 import { ok, eq, summary, exitCode } from '@/tests/unit/_harness'
 
@@ -140,6 +141,57 @@ ok('fallback surfaces storage', fallback.some((f) => f.value === '256GB'))
 eq('no attributes → empty', cardFacets('cars', {}).length, 0)
 eq('null attributes → empty', cardFacets('cars', null).length, 0)
 eq('respects custom max', cardFacets('cars', { year: '2021', mileage_km: '10000', transmission: 'Manual' }, 2).length, 2)
+
+// --- extractAttributesFromText ---------------------------------------------
+// Laptop title — the real prod case. RAM vs storage must not be confused.
+const lap = extractAttributesFromText(
+  resolveAttributeFields('computers', 'electronics'),
+  'Lenovo Thinkpad T14 Intel core i7 16gb Ram 512gb NVME ssd 14 inches FHD',
+)
+eq('laptop RAM extracted (select)', lap.ram, '16GB')
+eq('laptop storage extracted (not RAM 16)', lap.storage_gb, '512')
+eq('laptop screen size extracted', lap.screen_size_in, '14')
+
+// TB storage → normalised to GB.
+eq(
+  'storage in TB → GB',
+  extractAttributesFromText(resolveAttributeFields('computers', 'electronics'), '1TB SSD gaming laptop').storage_gb,
+  '1000',
+)
+
+// Car text — year/mileage/transmission/specs, all scoped to the cars schema.
+const car = extractAttributesFromText(
+  resolveAttributeFields('cars', 'vehicles'),
+  'Nissan Patrol 2021, 45,000 km, Automatic, GCC specs, full service history',
+)
+eq('car year', car.year, '2021')
+eq('car mileage (comma stripped)', car.mileage_km, '45000')
+eq('car transmission', car.transmission, 'Automatic')
+eq('car regional specs', car.regional_specs, 'GCC')
+
+// Property text — anchored bed/bath + size + furnishing.
+const flat = extractAttributesFromText(
+  resolveAttributeFields('apartments-rent', 'property'),
+  'Spacious 2 bedroom 2 bathroom apartment, 1,200 sqft, fully Furnished',
+)
+eq('flat bedrooms', flat.bedrooms, '2')
+eq('flat bathrooms', flat.bathrooms, '2')
+eq('flat size', flat.size_sqft, '1200')
+eq('flat furnishing', flat.furnishing, 'Furnished')
+
+// Phone text — select storage + network.
+const phone = extractAttributesFromText(
+  resolveAttributeFields('mobiles', null),
+  'Apple iPhone 13 128GB, 5G, great condition',
+)
+eq('phone storage', phone.storage, '128GB')
+eq('phone network', phone.network, '5G')
+
+// Scoping + no-false-positives.
+ok('car text yields no storage (out of schema)', !('storage_gb' in car))
+ok('bare number is not a bedroom count', !('bedrooms' in extractAttributesFromText(resolveAttributeFields('apartments-rent', 'property'), 'Great deal, 3 minutes from metro')))
+eq('no text → empty', Object.keys(extractAttributesFromText(resolveAttributeFields('cars', 'vehicles'), '')).length, 0)
+eq('plain title, no specs → empty', Object.keys(extractAttributesFromText(resolveAttributeFields('cars', 'vehicles'), 'Toyota Camry for sale')).length, 0)
 
 summary('attribute-schemas')
 process.exit(exitCode())

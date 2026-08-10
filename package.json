@@ -28,7 +28,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:status": "prisma migrate status",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "backfill:attributes": "node --env-file=.env.local --import tsx scripts/backfill-attributes.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1080.0",

@@ -15,7 +15,11 @@ import { CONDITION_VALUES } from '@/lib/listings/conditions'
 import { analyzeListingSafety, PROHIBITED_MESSAGE } from '@/lib/safety/listing-safety'
 import { detectContactInfo, CONTACT_BLOCK_MESSAGE } from '@/lib/safety/contact'
 import { logModeration } from '@/lib/safety/moderation-log'
-import { resolveAttributeFields, sanitizeAttributes } from '@/lib/listings/attributeSchemas'
+import {
+  resolveAttributeFields,
+  sanitizeAttributes,
+  extractAttributesFromText,
+} from '@/lib/listings/attributeSchemas'
 import { emailUnverified, phoneUnverified } from '@/lib/authz/require-verified'
 import { track } from '@/lib/analytics'
 import type { Viewer } from '@/lib/authz/viewer'
@@ -94,10 +98,21 @@ async function screen(title: string, description: string): Promise<ListingWriteR
   return null
 }
 
-/** Whitelist + coerce category-specific facets against the category's schema. */
-async function coerceAttributes(categoryId: string, raw: Record<string, string> | undefined) {
+/**
+ * Whitelist + coerce category-specific facets against the category's schema,
+ * then fill any gaps from the listing's own text (title + description). Values
+ * the user/AI actually provided always win over text-extracted ones.
+ */
+async function coerceAttributes(
+  categoryId: string,
+  raw: Record<string, string> | undefined,
+  text: string,
+) {
   const chain = await categorySlugChain(categoryId)
-  return sanitizeAttributes(resolveAttributeFields(chain?.slug, chain?.parentSlug), raw)
+  const fields = resolveAttributeFields(chain?.slug, chain?.parentSlug)
+  const provided = sanitizeAttributes(fields, raw)
+  const fromText = extractAttributesFromText(fields, text)
+  return { ...fromText, ...provided }
 }
 
 /** Create a listing. Verification → validation → safety+contact screen (BEFORE any DB write). */
@@ -116,7 +131,11 @@ export async function createListingAs(
   const blocked = await screen(v.title, v.description)
   if (blocked) return blocked
 
-  const attributes = await coerceAttributes(input.category_id, input.attributes)
+  const attributes = await coerceAttributes(
+    input.category_id,
+    input.attributes,
+    `${v.title}\n${v.description}`,
+  )
 
   const res = await createListingFor(viewer, {
     title: v.title,
@@ -151,7 +170,11 @@ export async function updateListingAs(
   const blocked = await screen(v.title, v.description)
   if (blocked) return blocked
 
-  const attributes = await coerceAttributes(input.category_id, input.attributes)
+  const attributes = await coerceAttributes(
+    input.category_id,
+    input.attributes,
+    `${v.title}\n${v.description}`,
+  )
 
   const res = await updateListingFor(viewer, {
     id: input.id,

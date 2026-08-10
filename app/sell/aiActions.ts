@@ -9,7 +9,11 @@ import {
   type Confident,
 } from '@/lib/ai/provider'
 import { CONDITION_VALUES } from '@/lib/listings/conditions'
-import { resolveAttributeFields, matchAiAttributes } from '@/lib/listings/attributeSchemas'
+import {
+  resolveAttributeFields,
+  matchAiAttributes,
+  extractAttributesFromText,
+} from '@/lib/listings/attributeSchemas'
 import { logModeration } from '@/lib/safety/moderation-log'
 import { logger } from '@/lib/logger'
 import { enforceRateLimit } from '@/lib/security/rateLimit'
@@ -131,7 +135,11 @@ export async function generateListingDraft(images: AiImageInput[]): Promise<AiDr
   if (brandV) aiFacets.push({ name: 'brand', value: brandV })
   const colorV = confident(raw.color)
   if (colorV) aiFacets.push({ name: 'color', value: colorV })
-  const attributes = matchAiAttributes(attrFields, aiFacets)
+  // Photo-detected facets first; then fill gaps from the generated title +
+  // description text (specs the AI stated but couldn't "see", e.g. RAM/storage).
+  const fromPhotos = matchAiAttributes(attrFields, aiFacets)
+  const fromText = extractAttributesFromText(attrFields, `${title}\n${description}`)
+  const attributes = { ...fromText, ...fromPhotos }
 
   const lowConfidence: string[] = []
   if (!title) lowConfidence.push('title')

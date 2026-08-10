@@ -336,6 +336,112 @@ export function cardFacets(
   return out
 }
 
+// ---- Text extraction (fill facets from title / description) ----------------
+// Deterministic, no AI: many specs the AI can't see in a photo (mileage, RAM,
+// storage, sq ft) are stated in the title/description. We pull them out by
+// matching the category's own fields against the text — scoped per category, so
+// a laptop never gets a "year" and a car never gets "storage".
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+// Selects whose options are bare numbers ("4" doors) must be anchored to a word,
+// or every "4" in a description would match. Capture group 1 is the raw value.
+const NUMERIC_SELECT_ANCHORS: Partial<Record<FieldKey, RegExp>> = {
+  doors: /\b([2-5])\s*-?\s*doors?\b/,
+  bedrooms: /\b(studio|[1-7])\s*(?:bhk|bed(?:room)?s?|br)\b/,
+  bathrooms: /\b([1-6])\s*(?:bath(?:room)?s?|ba)\b/,
+}
+
+// Distinctive patterns for number fields the generic matcher would get wrong —
+// chiefly storage vs RAM, which both read as "NN gb". Capture group 1 = value.
+const NUMBER_PATTERNS: Partial<Record<FieldKey, RegExp[]>> = {
+  storage_gb: [
+    /\b(\d{2,4})\s*gb\s*(?:nvme\s+)?(?:ssd|hdd|emmc|storage|rom)\b/,
+    /\b(?:ssd|hdd|storage)\s*:?\s*(\d{2,4})\s*gb\b/,
+  ],
+  mileage_km: [/\b(\d[\d,]{2,})\s*(?:kms?|kilomet(?:er|re)s?)\b/],
+  screen_size_in: [/\b(\d{1,2}(?:\.\d)?)\s*(?:inch(?:es)?|in|")\b/],
+  battery_health: [/\bbattery(?:\s*health)?\s*:?\s*(\d{1,3})\s*%?/, /\b(\d{1,3})\s*%\s*battery\b/],
+}
+
+// Storage stated in TB → normalise to GB (marketplace convention 1TB = 1000GB).
+const TB_STORAGE = /\b(\d(?:\.\d)?)\s*tb\s*(?:nvme\s+)?(?:ssd|hdd|storage)\b/
+
+function extractOne(f: AttrField, hay: string): string | null {
+  const key = f.key as FieldKey
+  const anchor = NUMERIC_SELECT_ANCHORS[key]
+  if (anchor) {
+    const m = hay.match(anchor)
+    return m ? coerceOne(f, m[1]) : null
+  }
+  if (f.type === 'select') {
+    // Skip yes/no and bare-number options — too ambiguous to match in prose.
+    const opts = (f.options ?? []).filter(
+      (o) => !/^(yes|no)$/i.test(o) && o.length >= 2 && !/^\d+$/.test(o),
+    )
+    for (const o of [...opts].sort((a, b) => b.length - a.length)) {
+      if (new RegExp('\\b' + escapeRe(o.toLowerCase()) + '\\b').test(hay)) return o
+    }
+    return null
+  }
+  if (f.type === 'number') {
+    for (const re of NUMBER_PATTERNS[key] ?? []) {
+      const m = hay.match(re)
+      if (m) {
+        const c = coerceOne(f, m[1])
+        if (c != null) return c
+      }
+    }
+    if (key === 'storage_gb') {
+      const m = hay.match(TB_STORAGE)
+      if (m) return String(Math.round(parseFloat(m[1]) * 1000))
+    }
+    if (key === 'year') {
+      const m = hay.match(/\b(19[7-9]\d|20[0-4]\d)\b/)
+      return m ? coerceOne(f, m[1]) : null
+    }
+    // Generic: a number adjacent to the field's unit / alias / label. Skip the
+    // bare unit for storage_gb (its "gb" collides with RAM — handled above).
+    const tokens = [...(key === 'storage_gb' ? [] : [f.unit]), ...(f.aliases ?? []), f.label]
+      .filter((t): t is string => !!t)
+      .map((t) => t.toLowerCase())
+    for (const t of [...tokens].sort((a, b) => b.length - a.length)) {
+      const te = escapeRe(t)
+      let m = hay.match(new RegExp('(\\d[\\d,]*(?:\\.\\d+)?)\\s*' + te + '\\b'))
+      if (m) {
+        const c = coerceOne(f, m[1])
+        if (c != null) return c
+      }
+      m = hay.match(new RegExp('\\b' + te + '\\s*:?\\s*(\\d[\\d,]*(?:\\.\\d+)?)'))
+      if (m) {
+        const c = coerceOne(f, m[1])
+        if (c != null) return c
+      }
+    }
+    return null
+  }
+  return null
+}
+
+/**
+ * Deterministically extract a category's facets from free text (title +
+ * description). Whitelisted to `fields`, coerced/canonicalised the same way as
+ * form input. Never throws. Intended to FILL GAPS the photo-based AI can't see.
+ */
+export function extractAttributesFromText(
+  fields: AttrField[],
+  text: string | null | undefined,
+): Record<string, string> {
+  const out: Record<string, string> = {}
+  if (!text) return out
+  const hay = ' ' + String(text).toLowerCase().replace(/\s+/g, ' ') + ' '
+  for (const f of fields) {
+    const v = extractOne(f, hay)
+    if (v != null) out[f.key] = v
+  }
+  return out
+}
+
 // ---- Filtering -------------------------------------------------------------
 
 /** Minimal category shape needed to resolve a slug's fields (from getActiveCategories). */

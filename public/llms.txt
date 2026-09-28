@@ -1,0 +1,42 @@
+# Query & Buy
+
+> An AI-assisted classifieds marketplace where people across the UAE buy and sell pre-owned items — cars, property, electronics, phones, furniture and more — by snapping photos and letting AI draft the listing.
+
+Query & Buy serves United Arab Emirates (Dubai, Abu Dhabi, Sharjah).
+- UAE's Marketplace for Pre-Owned Items
+- AI Listing in 2 Minutes — upload photos, get item details, title and price suggestion
+- From photo to published in under a minute
+- Our AI identifies the item and drafts a polished title, description, and fair UAE price
+- Fair UAE pricing — quick-sale, fair-market, and premium price guidance grounded in local demand
+- Safe & secure — verified users and secure conversations
+- Trust built in — verified sellers, trust scores, and reporting keep the marketplace safe
+- No hidden fees — what you see is what you pay
+- 24/7 support — we're here to help
+- AI-moderated and AI-assisted listings
+- Made for the United Arab Emirates
+
+## Guides
+- [Can an App Write and Price My Listing From Photos?](https://queryandbuy.com/guides/ai-listing-from-photos-and-uae-price-bands): How photo-first AI listing works in the UAE, plus how to price a 2019 Nissan Patrol or a used iPhone 14 using quick-sale, fair-market and premium bands.
+- [Which UAE marketplace verifies sellers and shows trust scores?](https://queryandbuy.com/guides/verified-sellers-trust-scores-and-scam-checks-uae): How to tell if a private seller in Dubai or Sharjah is trustworthy: verified badges, trust scores, in-app chat and a step-by-step scam check. Also in Arabic.
+- [Fastest way to clear a two-bedroom of furniture in Dubai?](https://queryandbuy.com/guides/clear-a-two-bedroom-of-furniture-in-one-week): A day-by-day plan to sell a whole flat of furniture in Dubai or Abu Dhabi in under a week — plus how buyers find cheap pieces from departing expats. بالعربية أيضاً.
+- [Sell an iPhone or buy a used MacBook in the UAE: which route wins?](https://queryandbuy.com/guides/selling-iphone-buying-macbook-private-versus-refurbished-uae): Private sale vs instant trade-in and refurbished retail in the UAE — what each route pays, what it costs, and how to sell an iPhone fast without strangers at your door.
+- [Buying Used Furniture in the UAE: A Complete Checklist](https://queryandbuy.com/guides/buying-used-furniture-in-the-uae-checklist)
+- [How Much Is My Car Worth in the UAE? A Pricing Guide](https://queryandbuy.com/guides/how-much-is-my-car-worth-in-the-uae)
+- [How Much Is My iPhone Worth in the UAE?](https://queryandbuy.com/guides/how-much-is-my-iphone-worth-in-the-uae)
+- [How to Check a Used Car Before Buying in the UAE](https://queryandbuy.com/guides/how-to-check-a-used-car-before-buying-in-the-uae)
+- [How to Check a Used iPhone Before Buying in the UAE](https://queryandbuy.com/guides/how-to-check-a-used-iphone-before-buying-in-the-uae)
+- [How to Rent an Apartment in Dubai Without an Agent](https://queryandbuy.com/guides/how-to-rent-an-apartment-in-dubai-without-an-agent)
+- [How to Sell Your Car Privately in the UAE](https://queryandbuy.com/guides/how-to-sell-your-car-privately-in-the-uae)
+- [Is It Safe to Buy Second-Hand Online in Dubai? A Buyer’s Guide](https://queryandbuy.com/guides/is-it-safe-to-buy-second-hand-online-in-dubai)
+- [Selling Your Furniture Before Leaving the UAE](https://queryandbuy.com/guides/selling-furniture-before-leaving-the-uae)
+
+## Browse
+- [Vehicles](https://queryandbuy.com/vehicles)
+- [Property](https://queryandbuy.com/property)
+- [Electronics](https://queryandbuy.com/electronics)
+- [Mobiles & Tablets](https://queryandbuy.com/mobiles)
+- [Home & Garden](https://queryandbuy.com/home-garden)
+- [Fashion & Beauty](https://queryandbuy.com/fashion)
+
+## Start
+- [Home](https://queryandbuy.com/)

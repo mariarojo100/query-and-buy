@@ -1,5 +1,11 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import {
+  BEACON_GUIDES,
+  BEACON_GUIDE_CATEGORIES,
+  BEACON_GUIDE_TOPIC,
+  BEACON_READ_MINUTES,
+} from './beacon.generated'
 
 /**
  * Guides — evergreen, informational SEO content targeting research-intent
@@ -587,6 +593,7 @@ export const GUIDES: Guide[] = [
       </>
     ),
   },
+  ...BEACON_GUIDES,
 ]
 
 export function getGuide(slug: string): Guide | null {
@@ -615,6 +622,7 @@ const GUIDE_CATEGORIES: Record<string, string[]> = {
     'hobbies',
     'business',
   ],
+  ...BEACON_GUIDE_CATEGORIES,
 }
 
 /** Guides relevant to a category, most-specific first, capped at `limit`. */
@@ -641,6 +649,7 @@ const GUIDE_TOPIC: Record<string, string> = {
   'selling-furniture-before-leaving-the-uae': 'Home & garden',
   'how-to-rent-an-apartment-in-dubai-without-an-agent': 'Property',
   'is-it-safe-to-buy-second-hand-online-in-dubai': 'Staying safe',
+  ...BEACON_GUIDE_TOPIC,
 }
 
 /** Order topics appear in on the hub. */
@@ -657,6 +666,7 @@ const READ_MINUTES: Record<string, number> = {
   'selling-furniture-before-leaving-the-uae': 5,
   'how-to-rent-an-apartment-in-dubai-without-an-agent': 6,
   'is-it-safe-to-buy-second-hand-online-in-dubai': 5,
+  ...BEACON_READ_MINUTES,
 }
 
 export function guideTopic(slug: string): string {

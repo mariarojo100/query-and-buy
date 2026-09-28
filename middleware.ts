@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authConfig } from '@/lib/auth/config'
-import { logAgentHit } from '@/lib/agent-log'
+import { AI_COOKIE, AI_COOKIE_MAX_AGE, logAgentHit } from '@/lib/agent-log'
 
 const { auth } = NextAuth(authConfig)
 
@@ -35,7 +35,7 @@ function firstSegment(pathname: string): string {
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
-  logAgentHit(req)
+  const aiSource = logAgentHit(req)
 
   // Canonical host: 301-redirect www.queryandbuy.com → queryandbuy.com so the
   // apex is the single indexed host. A 301 (permanent) is emitted explicitly —
@@ -93,7 +93,13 @@ export default auth((req) => {
     return NextResponse.redirect(url)
   }
 
-  return NextResponse.next()
+  const res = NextResponse.next()
+  // First touch: remember which AI assistant this visitor came from, so a later
+  // sign-up or listing can be attributed to it (lib/agent-log.ts#logConversion).
+  if (aiSource && !req.cookies.get(AI_COOKIE)) {
+    res.cookies.set(AI_COOKIE, aiSource, { maxAge: AI_COOKIE_MAX_AGE, path: '/', sameSite: 'lax', secure: true, httpOnly: true })
+  }
+  return res
 })
 
 export const config = {

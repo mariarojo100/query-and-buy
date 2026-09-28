@@ -6,6 +6,7 @@
  * analytics) lives in lib/listings/write.ts so the mobile API
  * (/api/v1/listings/create) enforces exactly the same behavior.
  */
+import { logConversion } from '@/lib/agent-log'
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
 import { createListingAs, type ListingWriteInput } from '@/lib/listings/write'
@@ -24,6 +25,9 @@ export async function createListing(input: CreateListingInput): Promise<{
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in to sell.' }
   const res = await createListingAs(viewer, input)
-  if (res.id) revalidatePath('/')
+  if (res.id) {
+    revalidatePath('/')
+    await logConversion('listing')
+  }
   return res
 }

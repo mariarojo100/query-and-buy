@@ -6,6 +6,7 @@
  * revalidatePath. All business logic, validation, and notification fan-out
  * live in the service.
  */
+import { logConversion } from '@/lib/agent-log'
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
 import {
@@ -46,7 +47,9 @@ function finish(res: OrderServiceResult, alsoListing = false): Result {
 export async function makeOffer(conversationId: string, amountAed: string | number): Promise<Result> {
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in.' }
-  return finish(await makeOfferAs(viewer, conversationId, amountAed))
+  const r = finish(await makeOfferAs(viewer, conversationId, amountAed))
+  if (r.ok) await logConversion('offer')
+  return r
 }
 
 /** The recipient accepts or declines a pending offer. Counter = makeOffer again. */
@@ -60,7 +63,9 @@ export async function respondToOffer(offerId: string, action: 'accept' | 'declin
 export async function confirmOrder(orderId: string): Promise<Result> {
   const viewer = await getViewer()
   if (!viewer) return { error: 'You must be signed in.' }
-  return finish(await confirmOrderAs(viewer, orderId))
+  const r = finish(await confirmOrderAs(viewer, orderId))
+  if (r.ok) await logConversion('deal')
+  return r
 }
 
 /** Either party cancels. Frees the listing if it had been reserved by this order. */

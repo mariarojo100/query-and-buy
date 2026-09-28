@@ -1,5 +1,6 @@
 'use server'
 
+import { logConversion } from '@/lib/agent-log'
 import { redirect } from 'next/navigation'
 import { AuthError } from 'next-auth'
 import { signIn, signOut as authSignOut } from '@/lib/auth/nextauth'
@@ -31,6 +32,7 @@ export async function signup(_prev: AuthState, formData: FormData): Promise<Auth
   try {
     const { emailVerifyToken } = await registerWithPassword({ email, password })
     await sendVerificationEmail(email.toLowerCase(), emailVerifyToken)
+    await logConversion('signup')
   } catch (e) {
     if (e instanceof SignupError) return { error: e.message }
     throw e

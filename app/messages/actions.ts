@@ -5,6 +5,7 @@
  * recipient notifications live in the shared services (lib/messaging/service,
  * lib/db/messaging) so the mobile API enforces the same rules.
  */
+import { logConversion } from '@/lib/agent-log'
 import { revalidatePath } from 'next/cache'
 import { getViewer } from '@/lib/auth/session'
 import { emailUnverified } from '@/lib/authz/require-verified'
@@ -23,7 +24,10 @@ export async function createConversation(
   const gate = emailUnverified(viewer)
   if (gate) return gate
   const res = await createConversationFor(viewer, listingId)
-  if (res.conversationId) revalidatePath('/messages')
+  if (res.conversationId) {
+    revalidatePath('/messages')
+    await logConversion('inquiry')
+  }
   return res
 }
 

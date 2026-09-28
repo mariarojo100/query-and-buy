@@ -38,5 +38,9 @@ Query & Buy serves United Arab Emirates (Dubai, Abu Dhabi, Sharjah).
 - [Home & Garden](https://queryandbuy.com/home-garden)
 - [Fashion & Beauty](https://queryandbuy.com/fashion)
 
+## For AI agents
+- [MCP server](https://queryandbuy.com/api/mcp): search live listings and open one (Streamable HTTP, read-only, no key needed)
+- [Listings feed](https://queryandbuy.com/feeds/listings.json): newest active listings as schema.org Products with AED prices
+
 ## Start
 - [Home](https://queryandbuy.com/)

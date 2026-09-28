@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authConfig } from '@/lib/auth/config'
+import { logAgentHit } from '@/lib/agent-log'
 
 const { auth } = NextAuth(authConfig)
 
@@ -34,6 +35,7 @@ function firstSegment(pathname: string): string {
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
+  logAgentHit(req)
 
   // Canonical host: 301-redirect www.queryandbuy.com → queryandbuy.com so the
   // apex is the single indexed host. A 301 (permanent) is emitted explicitly —

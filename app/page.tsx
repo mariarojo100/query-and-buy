@@ -17,6 +17,7 @@ import { TrustBar } from '@/components/home/TrustBar'
 import { ContinueNegotiation } from '@/components/home/ContinueNegotiation'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { WhyAI } from '@/components/home/WhyAI'
+import { GuidesStrip } from '@/components/home/GuidesStrip'
 import { Button } from '@/components/ui/button'
 import {
   getActiveCategories,
@@ -305,6 +306,9 @@ export default async function HomePage({
               </div>
               <HowItWorks />
             </section>
+
+            {/* ---------- GUIDES ---------- */}
+            <GuidesStrip />
 
             {/* ---------- WHY AI ---------- */}
             <section className="pb-12 sm:pb-16">

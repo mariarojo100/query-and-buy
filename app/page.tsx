@@ -13,6 +13,7 @@ import { itemListJsonLd } from '@/lib/seo'
 import { listingPath } from '@/lib/listings/slug'
 import { HomeHero } from '@/components/home/HomeHero'
 import { CategoryRail } from '@/components/home/CategoryRail'
+import { SectionHeading } from '@/components/home/SectionHeading'
 import { TrustBar } from '@/components/home/TrustBar'
 import { ContinueNegotiation } from '@/components/home/ContinueNegotiation'
 import { HowItWorks } from '@/components/home/HowItWorks'
@@ -206,10 +207,8 @@ export default async function HomePage({
             />
 
             {/* ---------- CATEGORIES ---------- */}
-            <section className="py-6 sm:py-8">
-              <h2 className="font-display mb-5 text-2xl tracking-tight sm:text-3xl">
-                Browse by category
-              </h2>
+            <section className="py-8 sm:py-11">
+              <SectionHeading kicker="Browse" title="Browse by category" />
               <CategoryRail categories={categories} />
             </section>
 
@@ -278,18 +277,12 @@ export default async function HomePage({
             )}
 
             {/* ---------- LISTINGS (early) ---------- */}
-            <section id="listings" className="scroll-mt-20 py-4 sm:py-6">
-              <div className="mb-6 flex items-end justify-between gap-3">
-                <div>
-                  <p className="eyebrow">Fresh finds</p>
-                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
-                    Recently added
-                  </h2>
-                </div>
+            <section id="listings" className="scroll-mt-20 py-8 sm:py-11">
+              <SectionHeading kicker="Fresh finds" title="Recently added">
                 <Button asChild variant="outline" size="sm" className="rounded-full">
                   <Link href="/sell">Sell yours</Link>
                 </Button>
-              </div>
+              </SectionHeading>
               <div className="space-y-5">
                 <CategoryChips categories={categories} activeSlug={parsed.categorySlug} />
                 <div className="pt-1">{feed}</div>
@@ -297,13 +290,8 @@ export default async function HomePage({
             </section>
 
             {/* ---------- HOW IT WORKS ---------- */}
-            <section className="py-6 sm:py-10">
-              <div className="mb-7">
-                <p className="eyebrow">How it works</p>
-                <h2 className="font-display mt-1.5 text-3xl tracking-tight sm:text-4xl">
-                  From photo to published in under a minute
-                </h2>
-              </div>
+            <section className="py-8 sm:py-11">
+              <SectionHeading kicker="How it works" title="From photo to published" />
               <HowItWorks />
             </section>
 

@@ -8,7 +8,8 @@
    Query & Buy — design system · "Ink & Sand"
    Warm ivory paper, deep ink, a single refined bronze accent. Neutrals carry
    the design; green survives only as a functional trust cue (verified/success).
-   Typography (Fraunces serif / Geist sans) + restraint carry the experience.
+   Type carries the experience: Fraunces (display serif), Hanken Grotesk (UI),
+   JetBrains Mono (editorial kickers / spec labels). Restraint over decoration.
    ========================================================================== */
 :root {
   color-scheme: light;
@@ -117,6 +118,7 @@
 @theme inline {
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
   --font-heading: var(--font-serif);
 
   --color-background: var(--background);
@@ -179,24 +181,39 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "cv11", "ss01";
     text-rendering: optimizeLegibility;
     line-height: 1.6;
   }
 }
 
 @layer components {
+  /* Editorial kicker — mono, wide-tracked, uppercase (catalog label feel) */
   .eyebrow {
+    font-family: var(--font-mono), ui-monospace, monospace;
     font-size: 0.6875rem;
     line-height: 1;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--muted-foreground);
   }
   .font-display {
     font-family: var(--font-serif), Georgia, serif;
+    font-optical-sizing: auto;
     letter-spacing: -0.021em;
+  }
+  /* Big display gets tighter tracking + snug leading for editorial drama */
+  .display-hero {
+    font-family: var(--font-serif), Georgia, serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+  }
+  .font-mono-nums {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
   }
   .tnum {
     font-variant-numeric: tabular-nums;

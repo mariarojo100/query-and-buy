@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Geist, Fraunces } from "next/font/google";
+import { Hanken_Grotesk, Fraunces, JetBrains_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
@@ -13,12 +13,19 @@ import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const sans = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 const fraunces = Fraunces({
   subsets: ['latin'],
   variable: '--font-serif',
-  weight: ['400', '500', '600'],
-  style: ['normal'],
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+});
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  weight: ['400', '500'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -72,7 +79,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans", geist.variable, fraunces.variable)}
+      className={cn("font-sans", sans.variable, fraunces.variable, mono.variable)}
     >
       <body className="min-h-screen">
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />

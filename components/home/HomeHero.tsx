@@ -18,27 +18,35 @@ export function HomeHero({
   authed?: boolean
 }) {
   return (
-    <section className="animate-rise grid items-center gap-10 pb-8 pt-6 sm:pt-8 lg:grid-cols-[1.02fr_1fr] lg:gap-12 lg:pb-12 lg:pt-12">
-      {/* Left — the pitch, search, and AI listing cue */}
-      <div className="min-w-0">
-        <p className="eyebrow text-gold">UAE&rsquo;s Marketplace for Pre-Owned Items</p>
-        <h1 className="font-display mt-4 text-[2.6rem] leading-[0.98] tracking-tight sm:text-[3.75rem]">
-          Find it. Buy it.
+    <section className="grid items-center gap-10 pb-10 pt-5 sm:pt-9 lg:grid-cols-[1.06fr_1fr] lg:gap-14 lg:pb-16 lg:pt-12">
+      {/* Left — the pitch, search, and list-from-photo cue */}
+      <div className="animate-rise min-w-0">
+        <div className="flex items-center gap-3">
+          <span className="eyebrow text-gold">UAE&rsquo;s pre-owned marketplace</span>
+          <span className="h-px flex-1 bg-border" aria-hidden />
+        </div>
+
+        <h1 className="display-hero mt-5 text-[clamp(3.25rem,8vw,5.75rem)]">
+          Find it.
           <br />
-          <span className="text-gold">Love it.</span>
+          Buy it.
+          <br />
+          <span className="italic text-gold">Love it.</span>
         </h1>
-        <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
-          Buy and sell quality pre-owned items across the UAE — safely and easily.
+
+        <p className="mt-6 max-w-md text-[15px] leading-relaxed text-muted-foreground sm:text-lg">
+          Thousands of quality pre-owned finds across the Emirates — listed in minutes, priced
+          fairly, sold safely.
         </p>
 
-        <div className="mt-6 max-w-xl">
+        <div className="mt-7 max-w-xl">
           <SmartSearchBox trending={trending} />
         </div>
 
         {/* List-from-a-photo cue — on-brand, no generic "AI" chrome */}
         <Link
           href="/sell"
-          className="lift group mt-5 flex max-w-xl items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-soft ring-gold hover:border-gold/40"
+          className="lift group mt-4 flex max-w-xl items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-soft ring-gold hover:border-gold/40"
         >
           <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gold/12 text-gold ring-1 ring-inset ring-gold/25">
             <CameraIcon className="size-5" strokeWidth={1.75} />
@@ -58,8 +66,8 @@ export function HomeHero({
           </span>
         </Link>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <span className="eyebrow mr-1">Popular searches</span>
+        <div className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-2.5">
+          <span className="eyebrow mr-1">Trending</span>
           {POPULAR.map((q) => (
             <Link
               key={q}

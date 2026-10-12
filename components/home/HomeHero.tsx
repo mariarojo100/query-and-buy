@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRightIcon, SparklesIcon } from 'lucide-react'
+import { ArrowRightIcon, CameraIcon } from 'lucide-react'
 import { SmartSearchBox } from '@/components/search/SmartSearchBox'
 import { PopularNearYou } from '@/components/home/PopularNearYou'
 import type { FeedListing } from '@/lib/listings/queries'
@@ -35,28 +35,25 @@ export function HomeHero({
           <SmartSearchBox trending={trending} />
         </div>
 
-        {/* AI listing promo */}
+        {/* List-from-a-photo cue — on-brand, no generic "AI" chrome */}
         <Link
           href="/sell"
-          className="group mt-4 flex max-w-xl items-center gap-4 rounded-2xl border border-violet-500/15 bg-violet-500/[0.06] p-4 transition hover:border-violet-500/30 hover:bg-violet-500/[0.09]"
+          className="lift group mt-5 flex max-w-xl items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-soft ring-gold hover:border-gold/40"
         >
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/12 text-violet-600 ring-1 ring-inset ring-violet-500/20 dark:text-violet-400">
-            <SparklesIcon className="size-5" />
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gold/12 text-gold ring-1 ring-inset ring-gold/25">
+            <CameraIcon className="size-5" strokeWidth={1.75} />
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-foreground">AI Listing in 2 Minutes</p>
-              <span className="rounded-full bg-violet-500/12 px-2 py-0.5 text-[11px] font-semibold text-violet-600 dark:text-violet-400">
-                New
-              </span>
+              <p className="text-sm font-semibold text-foreground">List in 2 minutes from a photo</p>
+              <span className="eyebrow rounded-full bg-gold/12 px-2 py-1 text-gold">New</span>
             </div>
-            <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">
-              Upload photos, get item details, title and price suggestion — ready to list in just 2
-              minutes.
+            <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
+              Snap your item — we draft the title, details and a fair UAE price, ready to publish.
             </p>
           </div>
-          <span className="hidden shrink-0 items-center gap-1 rounded-full border border-border bg-card px-3.5 py-2 text-sm font-medium text-foreground shadow-soft transition group-hover:border-gold/40 group-hover:text-gold sm:inline-flex">
-            Try AI Listing
+          <span className="hidden shrink-0 items-center gap-1 rounded-full border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground transition group-hover:border-gold/40 group-hover:text-gold sm:inline-flex">
+            Try it
             <ArrowRightIcon className="size-4" />
           </span>
         </Link>

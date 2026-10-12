@@ -1,4 +1,4 @@
-import { CameraIcon, RocketIcon, SparklesIcon } from 'lucide-react'
+import { CameraIcon, PenLineIcon, SendHorizontalIcon } from 'lucide-react'
 
 const STEPS = [
   {
@@ -8,13 +8,13 @@ const STEPS = [
     body: 'Add up to eight photos of your item — no studio, no fuss. Your camera roll is enough.',
   },
   {
-    icon: SparklesIcon,
+    icon: PenLineIcon,
     n: '02',
-    title: 'AI writes the listing',
-    body: 'Our AI identifies the item and drafts a polished title, description, and fair UAE price.',
+    title: 'We draft the listing',
+    body: 'We identify the item and write a polished title, description, and fair UAE price for you.',
   },
   {
-    icon: RocketIcon,
+    icon: SendHorizontalIcon,
     n: '03',
     title: 'Go live in seconds',
     body: 'Review, tweak anything you like, and publish. Buyers across the Emirates see it instantly.',

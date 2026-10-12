@@ -1,10 +1,10 @@
-import { ShieldCheckIcon, SparklesIcon, TagIcon } from 'lucide-react'
+import { FileTextIcon, ShieldCheckIcon, TagIcon } from 'lucide-react'
 
 const POINTS = [
   {
-    icon: SparklesIcon,
+    icon: FileTextIcon,
     title: 'Listings that sell',
-    body: 'AI writes clear, complete, keyword-rich descriptions buyers actually read.',
+    body: 'Clear, complete, keyword-rich descriptions written for you — the kind buyers actually read.',
   },
   {
     icon: TagIcon,
@@ -25,7 +25,7 @@ export function WhyAI() {
         Why Query &amp; Buy
       </p>
       <h2 className="font-display mt-3 max-w-xl text-3xl tracking-tight sm:text-4xl">
-        Selling, reimagined by AI.
+        Less work. Better listings. Fair prices.
       </h2>
       <div className="mt-9 grid gap-7 sm:grid-cols-3 sm:gap-8">
         {POINTS.map((p) => (

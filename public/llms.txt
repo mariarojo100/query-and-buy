@@ -29,18 +29,51 @@ Query & Buy serves United Arab Emirates (Dubai, Abu Dhabi, Sharjah).
 - [How to Sell Your Car Privately in the UAE](https://queryandbuy.com/guides/how-to-sell-your-car-privately-in-the-uae)
 - [Is It Safe to Buy Second-Hand Online in Dubai? A Buyer’s Guide](https://queryandbuy.com/guides/is-it-safe-to-buy-second-hand-online-in-dubai)
 - [Selling Your Furniture Before Leaving the UAE](https://queryandbuy.com/guides/selling-furniture-before-leaving-the-uae)
+- [All guides](https://queryandbuy.com/guides)
 
 ## Browse
-- [Vehicles](https://queryandbuy.com/vehicles)
-- [Property](https://queryandbuy.com/property)
-- [Electronics](https://queryandbuy.com/electronics)
+- [Vehicles](https://queryandbuy.com/vehicles): cars, motorcycles, heavy vehicles, boats and auto parts across the UAE
+- [Cars](https://queryandbuy.com/cars)
+- [Motorcycles](https://queryandbuy.com/motorcycles)
+- [Heavy vehicles](https://queryandbuy.com/heavy-vehicles)
+- [Boats](https://queryandbuy.com/boats)
+- [Auto parts](https://queryandbuy.com/auto-parts)
+- [Property](https://queryandbuy.com/property): apartments, villas, commercial space and rooms to rent or buy
+- [Apartments for rent](https://queryandbuy.com/apartments-rent)
+- [Apartments for sale](https://queryandbuy.com/apartments-sale)
+- [Villas for rent](https://queryandbuy.com/villas-rent)
+- [Villas for sale](https://queryandbuy.com/villas-sale)
+- [Commercial property](https://queryandbuy.com/commercial-property)
+- [Rooms](https://queryandbuy.com/rooms)
+- [Electronics](https://queryandbuy.com/electronics): computers, TV & audio, gaming and cameras
+- [Computers](https://queryandbuy.com/computers)
+- [TV & audio](https://queryandbuy.com/tv-audio)
+- [Gaming](https://queryandbuy.com/gaming)
+- [Cameras](https://queryandbuy.com/cameras)
 - [Mobiles & Tablets](https://queryandbuy.com/mobiles)
-- [Home & Garden](https://queryandbuy.com/home-garden)
+- [Home & Garden](https://queryandbuy.com/home-garden): furniture, appliances, home decor and garden
+- [Furniture](https://queryandbuy.com/furniture)
+- [Appliances](https://queryandbuy.com/appliances)
+- [Home decor](https://queryandbuy.com/home-decor)
+- [Garden](https://queryandbuy.com/garden)
 - [Fashion & Beauty](https://queryandbuy.com/fashion)
+- [Services](https://queryandbuy.com/local-services)
+- [Sports, Hobbies & Kids](https://queryandbuy.com/sports-hobbies-kids)
+- [Business & Industrial](https://queryandbuy.com/business-industrial)
 
 ## For AI agents
 - [MCP server](https://queryandbuy.com/api/mcp): search live listings and open one (Streamable HTTP, read-only, no key needed)
 - [Listings feed](https://queryandbuy.com/feeds/listings.json): newest active listings as schema.org Products with AED prices
 
+## Help & company
+- [FAQ](https://queryandbuy.com/faq): how buying, selling and the AI listing flow work
+- [Help](https://queryandbuy.com/help): account, listings, chat and safety help
+- [About](https://queryandbuy.com/about): what Query & Buy is and who it's for
+- [Contact](https://queryandbuy.com/contact): reach the Query & Buy team
+- [Privacy policy](https://queryandbuy.com/privacy)
+- [Terms of service](https://queryandbuy.com/terms)
+- [Cookie policy](https://queryandbuy.com/cookies)
+
 ## Start
-- [Home](https://queryandbuy.com/)
+- [Home](https://queryandbuy.com/): browse newest listings and search in natural language
+- [Sell an item](https://queryandbuy.com/sell): snap photos and let AI draft the title, description and UAE price

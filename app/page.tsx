@@ -208,7 +208,7 @@ export default async function HomePage({
 
             {/* ---------- CATEGORIES ---------- */}
             <section className="py-8 sm:py-11">
-              <SectionHeading kicker="Browse" title="Browse by category" />
+              <SectionHeading title="Browse by category" />
               <CategoryRail categories={categories} />
             </section>
 
@@ -278,7 +278,7 @@ export default async function HomePage({
 
             {/* ---------- LISTINGS (early) ---------- */}
             <section id="listings" className="scroll-mt-20 py-8 sm:py-11">
-              <SectionHeading kicker="Fresh finds" title="Recently added">
+              <SectionHeading title="Recently added">
                 <Button asChild variant="outline" size="sm" className="rounded-full">
                   <Link href="/sell">Sell yours</Link>
                 </Button>
@@ -291,7 +291,7 @@ export default async function HomePage({
 
             {/* ---------- HOW IT WORKS ---------- */}
             <section className="py-8 sm:py-11">
-              <SectionHeading kicker="How it works" title="From photo to published" />
+              <SectionHeading title="From photo to published" />
               <HowItWorks />
             </section>
 

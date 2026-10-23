@@ -57,7 +57,7 @@ export function ListingCard({
         <div className="absolute inset-x-2.5 top-2.5 flex items-start justify-between gap-2">
           <div className="flex flex-col items-start gap-1.5">
             {listing.is_featured && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-card/95 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-gold shadow-sm backdrop-blur-sm">
+              <span className="inline-flex items-center gap-1 rounded-md bg-card/95 px-2 py-1 text-[11px] font-medium text-gold shadow-sm backdrop-blur-sm">
                 <StarIcon className="size-3 fill-gold" />
                 Featured
               </span>

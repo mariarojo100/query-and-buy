@@ -8,8 +8,8 @@
    Query & Buy — design system · "Ink & Sand"
    Warm ivory paper, deep ink, a single refined bronze accent. Neutrals carry
    the design; green survives only as a functional trust cue (verified/success).
-   Type carries the experience: Fraunces (display serif), Hanken Grotesk (UI),
-   JetBrains Mono (editorial kickers / spec labels). Restraint over decoration.
+   Type carries the experience: Fraunces (display serif), Hanken Grotesk (UI).
+   Sentence case, no uppercase-mono labels, no italic accents. Restraint.
    ========================================================================== */
 :root {
   color-scheme: light;
@@ -187,13 +187,12 @@
 }
 
 @layer components {
-  /* Editorial kicker — mono, wide-tracked, uppercase (catalog label feel) */
+  /* Small label — sentence case, sans, no tracking. A quiet signpost, not a chip. */
   .eyebrow {
-    font-family: var(--font-mono), ui-monospace, monospace;
-    font-size: 0.6875rem;
-    line-height: 1;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    letter-spacing: 0;
+    text-transform: none;
     font-weight: 500;
     color: var(--muted-foreground);
   }
@@ -202,18 +201,15 @@
     font-optical-sizing: auto;
     letter-spacing: -0.021em;
   }
-  /* Big display gets tighter tracking + snug leading for editorial drama */
+  /* Big display: tighter tracking + snug leading, size baked in so it survives
+     any stale Tailwind build cache on deploy. */
   .display-hero {
     font-family: var(--font-serif), Georgia, serif;
     font-optical-sizing: auto;
     font-weight: 600;
     letter-spacing: -0.03em;
-    line-height: 0.95;
-  }
-  .font-mono-nums {
-    font-family: var(--font-mono), ui-monospace, monospace;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
+    line-height: 0.96;
+    font-size: clamp(3rem, 7.5vw, 5.25rem);
   }
   .tnum {
     font-variant-numeric: tabular-nums;

@@ -21,20 +21,15 @@ export function HomeHero({
     <section className="grid items-center gap-10 pb-10 pt-5 sm:pt-9 lg:grid-cols-[1.06fr_1fr] lg:gap-14 lg:pb-16 lg:pt-12">
       {/* Left — the pitch, search, and list-from-photo cue */}
       <div className="animate-rise min-w-0">
-        <div className="flex items-center gap-3">
-          <span className="eyebrow text-gold">UAE&rsquo;s pre-owned marketplace</span>
-          <span className="h-px flex-1 bg-border" aria-hidden />
-        </div>
-
-        <h1 className="display-hero mt-5 text-[clamp(3.25rem,8vw,5.75rem)]">
+        <h1 className="display-hero">
           Find it.
           <br />
           Buy it.
           <br />
-          <span className="italic text-gold">Love it.</span>
+          Love it.
         </h1>
 
-        <p className="mt-6 max-w-md text-[15px] leading-relaxed text-muted-foreground sm:text-lg">
+        <p className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
           Thousands of quality pre-owned finds across the Emirates — listed in minutes, priced
           fairly, sold safely.
         </p>

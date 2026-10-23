@@ -21,9 +21,7 @@ const POINTS = [
 export function WhyAI() {
   return (
     <div className="overflow-hidden rounded-3xl bg-primary p-8 text-primary-foreground shadow-float sm:p-12">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-foreground/65">
-        Why Query &amp; Buy
-      </p>
+      <p className="text-sm font-medium text-primary-foreground/60">Why Query &amp; Buy</p>
       <h2 className="font-display mt-3 max-w-xl text-3xl tracking-tight sm:text-4xl">
         Less work. Better listings. Fair prices.
       </h2>

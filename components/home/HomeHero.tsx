@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRightIcon, CameraIcon } from 'lucide-react'
+import { ArrowRightIcon } from 'lucide-react'
 import { SmartSearchBox } from '@/components/search/SmartSearchBox'
 import { FeaturedShowcase } from '@/components/home/FeaturedShowcase'
 import { LocationMenu } from '@/components/layout/LocationMenu'
@@ -19,58 +19,44 @@ export function HomeHero({
   authed?: boolean
 }) {
   return (
-    <section className="pt-5 sm:pt-8">
-      {/* Band — the pitch and the search (the primary CTA) */}
-      <div className="grid items-end gap-6 lg:grid-cols-[1.12fr_0.88fr] lg:gap-10">
-        <div className="animate-rise min-w-0">
-          <h1 className="display-md">
-            Find it. Buy it.
-            <br />
-            Love it.
-          </h1>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Thousands of quality pre-owned finds across the Emirates — listed in minutes, priced
-            fairly, sold safely.
+    <section className="pt-4 sm:pt-6">
+      {/* Dark hero stage — high contrast, search-first */}
+      <div className="animate-rise relative overflow-hidden rounded-[1.75rem] bg-primary px-6 py-12 text-center text-primary-foreground shadow-float sm:px-10 sm:py-16">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-gold/18 blur-3xl sm:size-80"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-20 -left-12 size-52 rounded-full bg-gold/10 blur-3xl sm:size-72"
+        />
+        <div className="relative mx-auto max-w-3xl">
+          <p className="text-sm font-medium text-gold">The UAE&rsquo;s marketplace for pre-owned</p>
+          <h1 className="display-hero mt-4 text-primary-foreground">Find it. Buy it. Love it.</h1>
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-primary-foreground/70 sm:text-lg">
+            Thousands of quality finds across the Emirates — listed in minutes, priced fairly, sold
+            safely.
           </p>
+          <div className="mx-auto mt-8 max-w-2xl text-left">
+            <SmartSearchBox trending={trending} />
+          </div>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            {POPULAR.map((q) => (
+              <Link
+                key={q}
+                href={`/?q=${encodeURIComponent(q)}`}
+                className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-sm text-primary-foreground/85 backdrop-blur-sm transition hover:border-gold/50 hover:bg-white/15 hover:text-primary-foreground"
+              >
+                {q}
+              </Link>
+            ))}
+          </div>
         </div>
-
-        <div className="animate-rise min-w-0">
-          <SmartSearchBox trending={trending} />
-          <Link
-            href="/sell"
-            className="lift group mt-3 flex items-center gap-3.5 rounded-2xl border border-border bg-card p-3.5 shadow-soft ring-gold hover:border-gold/40"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gold/12 text-gold ring-1 ring-inset ring-gold/25">
-              <CameraIcon className="size-5" strokeWidth={1.75} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">List in 2 minutes from a photo</p>
-              <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
-                Snap it — we draft the title, details and a fair price.
-              </p>
-            </div>
-            <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground transition group-hover:text-gold" />
-          </Link>
-        </div>
-      </div>
-
-      {/* Trending row */}
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <span className="eyebrow mr-1">Trending</span>
-        {POPULAR.map((q) => (
-          <Link
-            key={q}
-            href={`/?q=${encodeURIComponent(q)}`}
-            className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground shadow-soft transition hover:border-gold/40 hover:bg-accent/40 hover:text-foreground"
-          >
-            {q}
-          </Link>
-        ))}
       </div>
 
       {/* Featured — imagery-led bento of real listings */}
       {listings.length > 0 && (
-        <div className="mt-8 sm:mt-10">
+        <div className="mt-7 sm:mt-9">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <h2 className="font-display text-xl tracking-tight sm:text-2xl">Featured near you</h2>

@@ -8,8 +8,8 @@
    Query & Buy — design system · "Ink & Sand"
    Warm ivory paper, deep ink, a single refined bronze accent. Neutrals carry
    the design; green survives only as a functional trust cue (verified/success).
-   Type carries the experience: Fraunces (display serif), Hanken Grotesk (UI).
-   Sentence case, no uppercase-mono labels, no italic accents. Restraint.
+   Type carries the experience: Bricolage Grotesque (display), Hanken Grotesk (UI).
+   Sentence case, no uppercase-mono labels, no italic accents. Confident, not loud.
    ========================================================================== */
 :root {
   color-scheme: light;
@@ -197,27 +197,28 @@
     color: var(--muted-foreground);
   }
   .font-display {
-    font-family: var(--font-serif), Georgia, serif;
+    font-family: var(--font-serif), "Hanken Grotesk", system-ui, sans-serif;
     font-optical-sizing: auto;
-    letter-spacing: -0.021em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
-  /* Big display: tighter tracking + snug leading, size baked in so it survives
-     any stale Tailwind build cache on deploy. */
+  /* Big display: heavy, tight, confident. Size baked in so it survives any
+     stale Tailwind build cache on deploy. */
   .display-hero {
-    font-family: var(--font-serif), Georgia, serif;
+    font-family: var(--font-serif), "Hanken Grotesk", system-ui, sans-serif;
     font-optical-sizing: auto;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 0.96;
-    font-size: clamp(3rem, 7.5vw, 5.25rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 0.9;
+    font-size: clamp(3.25rem, 8vw, 6rem);
   }
   /* Mid display — headline that shares the stage with imagery. Size baked in. */
   .display-md {
-    font-family: var(--font-serif), Georgia, serif;
+    font-family: var(--font-serif), "Hanken Grotesk", system-ui, sans-serif;
     font-optical-sizing: auto;
-    font-weight: 600;
-    letter-spacing: -0.025em;
-    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 0.98;
     font-size: clamp(2.25rem, 4.6vw, 3.75rem);
   }
   .tnum {

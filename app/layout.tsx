@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Hanken_Grotesk, Fraunces, JetBrains_Mono } from "next/font/google";
+import { Hanken_Grotesk, Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
@@ -14,11 +14,12 @@ import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
 const sans = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
-const fraunces = Fraunces({
+// Display face — a characterful grotesque (not the generic "tasteful serif"
+// look). Drives every headline via --font-serif / .font-display.
+const display = Bricolage_Grotesque({
   subsets: ['latin'],
   variable: '--font-serif',
-  weight: ['400', '500', '600', '700'],
-  style: ['normal', 'italic'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 });
 const mono = JetBrains_Mono({
@@ -79,7 +80,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans", sans.variable, fraunces.variable, mono.variable)}
+      className={cn("font-sans", sans.variable, display.variable, mono.variable)}
     >
       <body className="min-h-screen">
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />

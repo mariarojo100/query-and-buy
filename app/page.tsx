@@ -130,6 +130,19 @@ export default async function HomePage({
     ? await getFavoritedIds(featured.map((l) => l.id))
     : new Set<string>()
 
+  // A representative cover photo per top-level category, drawn from the real
+  // listings already loaded — so the category tiles show imagery, not icons.
+  const catBySlug = new Map(categories.map((c) => [c.slug, c]))
+  const catById = new Map(categories.map((c) => [c.id, c]))
+  const categoryCovers: Record<string, string> = {}
+  for (const l of [...featured, ...listings]) {
+    if (!l.cover_key || !l.category_slug) continue
+    const cat = catBySlug.get(l.category_slug)
+    if (!cat) continue
+    const parentSlug = cat.parent_id ? (catById.get(cat.parent_id)?.slug ?? cat.slug) : cat.slug
+    if (!(parentSlug in categoryCovers)) categoryCovers[parentSlug] = l.cover_key
+  }
+
   // Personalized (signed-in, no active search). Empty arrays → sections hidden.
   const personalize = !hasFilters && !!user
   const [recentlyViewed, recommended, continueItems, savedMatches] = personalize
@@ -209,7 +222,7 @@ export default async function HomePage({
             {/* ---------- CATEGORIES ---------- */}
             <section className="py-8 sm:py-11">
               <SectionHeading title="Browse by category" />
-              <CategoryRail categories={categories} />
+              <CategoryRail categories={categories} covers={categoryCovers} />
             </section>
 
             {/* ---------- TRUST ---------- */}

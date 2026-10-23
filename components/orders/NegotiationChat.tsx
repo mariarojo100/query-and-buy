@@ -10,7 +10,7 @@ import {
   RotateCcwIcon,
   SendIcon,
   ShieldCheckIcon,
-  SparklesIcon,
+  LightbulbIcon,
   TagIcon,
   XIcon,
 } from 'lucide-react'
@@ -548,7 +548,7 @@ function NegotiationDock({
       {suggestion && negotiating && (
         <div className="mx-3 mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
           <div className="flex items-center gap-2">
-            <SparklesIcon className="size-4 text-primary" />
+            <LightbulbIcon className="size-4 text-primary" />
             <p className="text-sm font-semibold">
               Suggested {suggestion.role === 'buyer' ? 'offer' : 'counter'}
             </p>
@@ -645,7 +645,7 @@ function NegotiationDock({
             disabled={suggesting}
             onClick={getSuggestion}
           >
-            {suggesting ? <Loader2Icon className="size-4 animate-spin" /> : <SparklesIcon className="size-4" />}
+            {suggesting ? <Loader2Icon className="size-4 animate-spin" /> : <LightbulbIcon className="size-4" />}
             AI Suggest
           </Button>
         </div>

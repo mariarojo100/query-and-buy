@@ -2,7 +2,7 @@ import {
   BadgeCheckIcon,
   type LucideIcon,
   ShieldCheckIcon,
-  SparklesIcon,
+  CameraIcon,
   SproutIcon,
   StarIcon,
   TrophyIcon,
@@ -17,7 +17,7 @@ const ICONS: Record<BadgeKey, LucideIcon> = {
   trusted: ShieldCheckIcon,
   fast_responder: ZapIcon,
   verified: BadgeCheckIcon,
-  ai_photos: SparklesIcon,
+  ai_photos: CameraIcon,
   new_seller: SproutIcon,
 }
 

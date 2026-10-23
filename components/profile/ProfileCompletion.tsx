@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle2Icon, CircleIcon, ShieldCheckIcon, SparklesIcon } from 'lucide-react'
+import { CheckCircle2Icon, CircleIcon, ShieldCheckIcon, PenLineIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { profileCompletion, type Profile } from '@/lib/profile/completion'
@@ -26,7 +26,7 @@ export function ProfileCompletion({
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between text-base">
           <span className="flex items-center gap-2">
-            <SparklesIcon className="size-4 text-muted-foreground" />
+            <PenLineIcon className="size-4 text-muted-foreground" />
             Profile completion
           </span>
           <span className="tabular-nums text-muted-foreground">{percent}%</span>

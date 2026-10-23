@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BadgeCheckIcon, ShieldCheckIcon, SparklesIcon } from 'lucide-react'
+import { BadgeCheckIcon, PenLineIcon, ShieldCheckIcon } from 'lucide-react'
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
@@ -49,7 +49,7 @@ const SOCIALS = [
 const TRUST = [
   { icon: BadgeCheckIcon, label: 'Verified sellers' },
   { icon: ShieldCheckIcon, label: 'AI-moderated' },
-  { icon: SparklesIcon, label: 'AI-assisted listings' },
+  { icon: PenLineIcon, label: 'AI-assisted listings' },
 ]
 
 export function SiteFooter() {
@@ -106,7 +106,7 @@ export function SiteFooter() {
               <Link href="/cookies" className="transition-colors hover:text-foreground">
                 Cookies
               </Link>
-              <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground">
+              <span className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-0.5 text-[11px] font-medium text-foreground">
                 Beta
               </span>
             </div>

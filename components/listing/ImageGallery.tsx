@@ -41,7 +41,7 @@ export function ImageGallery({ keys, title }: { keys: string[]; title: string })
           <span className="font-display select-none text-4xl leading-none tracking-tight text-primary/40">
             Q&amp;B
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/70">
+          <span className="text-[11px] font-medium text-muted-foreground/70">
             No photo
           </span>
         </div>

@@ -3,7 +3,7 @@ import { listingPath } from '@/lib/listings/slug'
 
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ImagePlusIcon, Loader2Icon, SparklesIcon, XIcon } from 'lucide-react'
+import { ImagePlusIcon, Loader2Icon, PenLineIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -279,7 +279,7 @@ export function CreateListingForm({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-start gap-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gold/15 text-gold">
-                <SparklesIcon className="size-5" />
+                <PenLineIcon className="size-5" />
               </span>
               <div>
                 <p className="text-sm font-medium text-foreground">Let AI write your listing</p>
@@ -299,7 +299,7 @@ export function CreateListingForm({
               {aiLoading ? (
                 <Loader2Icon className="size-4 animate-spin" />
               ) : (
-                <SparklesIcon className="size-4" />
+                <PenLineIcon className="size-4" />
               )}
               {aiLoading ? 'Analyzing…' : 'Generate with AI'}
             </Button>

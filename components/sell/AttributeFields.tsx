@@ -1,6 +1,6 @@
 'use client'
 
-import { SparklesIcon } from 'lucide-react'
+import { PenLineIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -43,11 +43,11 @@ export function AttributeFields({
               {f.unit && <span className="text-xs text-muted-foreground">({f.unit})</span>}
               {isAi && (
                 <span
-                  title="Filled by AI — please confirm"
-                  className="inline-flex items-center gap-0.5 rounded-full bg-violet-500/12 px-1.5 py-0.5 text-[10px] font-semibold text-violet-600 dark:text-violet-400"
+                  title="Filled from your photos — please confirm"
+                  className="inline-flex items-center gap-1 rounded-full bg-gold/12 px-1.5 py-0.5 text-[10px] font-medium text-gold"
                 >
-                  <SparklesIcon className="size-2.5" />
-                  AI
+                  <PenLineIcon className="size-2.5" />
+                  Drafted
                 </span>
               )}
             </Label>

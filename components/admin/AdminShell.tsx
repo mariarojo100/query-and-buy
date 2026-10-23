@@ -14,7 +14,7 @@ import {
   ScrollTextIcon,
   SettingsIcon,
   ShoppingCartIcon,
-  SparklesIcon,
+  ShieldCheckIcon,
   StarIcon,
   UsersIcon,
   XIcon,
@@ -31,7 +31,7 @@ const NAV: { href: string; label: string; icon: typeof LayoutDashboardIcon }[] =
   { href: '/admin/reviews', label: 'Reviews', icon: StarIcon },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3Icon },
   { href: '/admin/categories', label: 'Categories', icon: ListTreeIcon },
-  { href: '/admin/ai', label: 'AI Moderation', icon: SparklesIcon },
+  { href: '/admin/ai', label: 'AI Moderation', icon: ShieldCheckIcon },
   { href: '/admin/audit', label: 'Audit Log', icon: ScrollTextIcon },
   { href: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
@@ -49,7 +49,7 @@ export function AdminShell({ adminName, children }: { adminName: string; childre
         <span className="font-display text-lg tracking-tight">
           Query <span className="text-muted-foreground">&amp;</span> Buy
         </span>
-        <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+        <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
           Admin
         </span>
       </Link>

@@ -1,7 +1,6 @@
 import {
   type LucideIcon,
   PackageIcon,
-  SparklesIcon,
   StarIcon,
   TrophyIcon,
   UserPlusIcon,
@@ -14,7 +13,7 @@ import type { ActivityEvent, ActivityKind } from '@/lib/account/activity'
 const ICONS: Record<ActivityKind, LucideIcon> = {
   joined: UserPlusIcon,
   listed: PackageIcon,
-  featured: SparklesIcon,
+  featured: StarIcon,
   sold: TrophyIcon,
   review: StarIcon,
 }

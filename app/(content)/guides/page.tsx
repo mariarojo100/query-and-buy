@@ -76,7 +76,7 @@ export default function GuidesIndexPage() {
           className="group mb-12 block rounded-2xl border border-border bg-card p-6 shadow-soft transition-shadow hover:shadow-float sm:p-8"
         >
           <div className="flex items-center gap-2">
-            <span className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground">
+            <span className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-0.5 text-[11px] font-medium text-foreground">
               Featured
             </span>
             <span className="eyebrow">{guideTopic(featured.slug)}</span>

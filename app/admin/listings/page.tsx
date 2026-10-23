@@ -113,7 +113,7 @@ export default async function AdminListingsPage({
                       <div className="min-w-0">
                         <p className="max-w-[220px] truncate font-medium">{r.title_en}</p>
                         {r.is_featured && (
-                          <span className="text-[10px] font-semibold uppercase text-gold">Featured</span>
+                          <span className="text-[11px] font-medium text-gold">Featured</span>
                         )}
                       </div>
                     </div>

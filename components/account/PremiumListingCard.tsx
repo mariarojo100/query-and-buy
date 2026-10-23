@@ -13,7 +13,7 @@ import {
   PauseIcon,
   PencilIcon,
   PlayIcon,
-  RocketIcon,
+  TrendingUpIcon,
   TagIcon,
   Trash2Icon,
 } from 'lucide-react'
@@ -164,7 +164,7 @@ export function PremiumListingCard({ listing }: { listing: MyListing }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => toast.message('Paid promotion is coming soon.')}>
-                <RocketIcon className="size-4" /> Promote
+                <TrendingUpIcon className="size-4" /> Promote
               </DropdownMenuItem>
               {isActive && (
                 <DropdownMenuItem onSelect={() => run(() => markSold(listing.id), 'Marked as sold.')}>

@@ -28,11 +28,20 @@ The homepage kept reading as "AI slop / beginner." Root causes, now addressed:
 ## Tokens
 Palette unchanged — the "Ink & Sand" oklch system (warm sand paper, deep ink, single bronze `--gold`, functional teal for trust). No off-palette colour. See `app/globals.css` `:root`.
 
-### Typography — CHANGED (all families)
-- **Display (`--font-serif` slot, `.font-display` / `.display-*`):** **Archivo Expanded** — a wide, grounded grotesque. Retail-masthead confidence, globally legible (good for a UAE mass-market brand), the opposite of the "tasteful AI serif." Weights 600/700/800.
-- **UI / body (`--font-sans`):** **Archivo** (normal width) — same superfamily as the display. Pairing a grotesque with its own expanded cut reads as *deliberate craft*, and keeps the system cohesive. Replaces Hanken Grotesk.
+### Typography — CHANGED (Refero-grounded: Faire / Medium / Beautiful)
+Every strong editorial-*marketplace* reference uses the same formula: a refined
+**serif headline** + a clean **sans body** on warm paper. That contrast is the
+identity. (Earlier sans-display attempts — Bricolage, Archivo — read generic
+precisely because they skipped it.)
+- **Display (`--font-serif` slot, `.font-display` / `.display-*`):** **Fraunces** — a warm old-style serif with real character and optical sizing (opsz tracks the size, so headlines get the display cut automatically). Weight 600. Leads every headline. *Not* used as italic accent words (that specific move is the AI tell, per house rule — a full serif masthead is not).
+- **UI / body (`--font-sans`):** **Figtree** — a clean humanist grotesque that recedes under the serif. Replaces Archivo/Hanken.
 - **Mono (`--font-mono`):** JetBrains Mono — code/IDs only.
-- Sentence case. No uppercase-tracked-mono eyebrows. No italic-serif accent words (both flagged as AI tells).
+- Sentence case. No uppercase-tracked-mono eyebrows.
+
+### Surfaces — CHANGED
+Flat, hairline-first (Faire/Palmer discipline): depth from a warm hairline
+border, not glow. Shadows dialled back. Radius tightened to `0.5rem` base so
+cards read editorial, not like fat SaaS bubbles. Search stays a full pill.
 
 ### Type scale (baked clamps so they survive stale deploy cache)
 - `.display-hero` — clamp(3rem, 7.5vw, 5.75rem), weight 800, tracking -0.03em, lh 0.92
@@ -49,12 +58,13 @@ Palette unchanged — the "Ink & Sand" oklch system (warm sand paper, deep ink, 
 - Honour `prefers-reduced-motion` (already global in globals.css).
 - **No GSAP, no Three.js, no 3D icons.** For a utility marketplace these would be the slop, not the wow — the wow is type + real inventory + precise restraint. (Skill's heavy-motion defaults deliberately declined.)
 
-## References (Refero + Supahero, 2026-10-26)
-- Refero — Pravah: technical dossier on warm paper → price/condition as precise fine print. https://styles.refero.design (design-md-examples)
-- Refero — Adam Lippes: monochrome atelier, restraint carried by surfaces.
-- Refero — Miranda: old-world broadsheet on warm cream → masthead type.
-- Refero — Zara / Airbnb / Nike: imagery carries colour, accent reserved for actions.
-- Supahero — Airbnb Homes (marketplace hero pacing): see notes below.
+## References (Refero MCP, 2026-10-26)
+Full styles pulled and synthesised (reference lock):
+- **Primary — Faire** (`79142100…`, faire.com): warm artisanal *marketplace*. Canvas off-white `#fbf8f6`, ink text, fog-gray hairline borders, sturdy sans (Graphik) + distinct serif headline (Nantes), accent (Market Yellow) **decorative only, never on actions**, CTAs ink-black, cards 4px radius + hairline, split hero + product grid, 48px section gaps. → our structural + surface foundation.
+- **Borrowed — Medium** (`4784cf2e…`): "digital ink on vellum" — stately serif headline (GT Super) + clean sans (Söhne) on warm off-white, black pill CTAs, accent reserved for illustration only. → confirms the serif-masthead/sans-body contrast *is* the identity; don't add a second serif.
+- **Borrowed — Beautiful™** (`80f49900…`): creamy canvas, distinctive serif headline (Gascogne) + sans body, single warm accent reserved strictly for primary CTA, soft imagery. → accent discipline.
+- **Context — Palmer** (`66430c0f…`): Canvas Creme gallery, flat surfaces, depth from imagery + hairlines not shadow. → surface restraint.
+- **Rejected:** violet accents (Shop.app/Graf Lantz), fat rounded-2xl + heavy shadows, pill-chip clutter, uppercase-mono eyebrows, italic-serif accent words. Kept Ink & Sand bronze as the single, action-only accent (not yellow/coral — brand rule).
 
 ## What's being built
 1. Fonts swapped to the Archivo superfamily (`layout.tsx`, `globals.css`).

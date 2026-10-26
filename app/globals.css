@@ -5,123 +5,125 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================================
-   Query & Buy — design system · "Ink & Sand"
-   Warm ivory paper, deep ink, a single refined bronze accent. Neutrals carry
-   the design; green survives only as a functional trust cue (verified/success).
-   Type carries the experience: one variable Archivo superfamily — body at
-   normal width, headlines at expanded width (wdth axis via font-stretch) for a
-   retail-masthead set. Sentence case, no uppercase-mono labels, no italic
-   accents. Confident, not loud. Imagery carries the colour.
+   Query & Buy — design system · "Porcelain & Pine"
+   Crisp porcelain paper, near-black pine-ink, near-black CTAs, and a single
+   deep pine-green accent (actions & recognition only). Monochrome discipline —
+   the product photography carries all the colour.
+   Type carries the experience (editorial-commerce system, grounded in Refero —
+   Faire / Medium / Beautiful): a warm Fraunces serif leads every headline, a
+   clean Figtree grotesque carries the UI. Flat surfaces, hairline borders over
+   heavy shadow, tight radii. Sentence case, no uppercase-mono labels, no italic
+   accents. Imagery carries the colour; bronze reserved for actions.
    ========================================================================== */
 :root {
   color-scheme: light;
 
-  --background: oklch(0.972 0.009 83);     /* warm sand paper */
-  --foreground: oklch(0.23 0.014 62);      /* deep warm ink */
-  --card: oklch(0.995 0.004 85);           /* warm white, floats on paper */
-  --card-foreground: oklch(0.23 0.014 62);
-  --popover: oklch(0.995 0.004 85);
-  --popover-foreground: oklch(0.23 0.014 62);
+  --background: oklch(0.979 0.004 106);    /* porcelain — crisp warm white */
+  --foreground: oklch(0.205 0.012 165);    /* pine-ink, a near-black with depth */
+  --card: oklch(1 0 0);                     /* clean white, lifts off the porcelain */
+  --card-foreground: oklch(0.205 0.012 165);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.012 165);
 
-  --primary: oklch(0.25 0.016 58);         /* ink — the premium CTA */
-  --primary-foreground: oklch(0.985 0.006 85);
+  --primary: oklch(0.225 0.014 165);       /* near-black ink — the premium CTA */
+  --primary-foreground: oklch(0.985 0.004 106);
 
-  --secondary: oklch(0.953 0.009 82);      /* warm neutral */
-  --secondary-foreground: oklch(0.32 0.014 60);
-  --muted: oklch(0.953 0.009 82);
-  --muted-foreground: oklch(0.5 0.013 64);
+  --secondary: oklch(0.96 0.004 140);      /* quiet cool-neutral */
+  --secondary-foreground: oklch(0.30 0.012 165);
+  --muted: oklch(0.96 0.004 140);
+  --muted-foreground: oklch(0.47 0.012 160);
 
-  --accent: oklch(0.955 0.018 78);         /* faint warm wash (hovers) */
-  --accent-foreground: oklch(0.36 0.03 64);
+  --accent: oklch(0.955 0.016 160);        /* faint pine wash (hovers) */
+  --accent-foreground: oklch(0.32 0.03 160);
 
-  --gold: oklch(0.66 0.108 67);            /* bronze — the signature accent */
-  --gold-foreground: oklch(0.28 0.05 62);
+  --gold: oklch(0.50 0.085 158);           /* pine — the single brand accent (actions/recognition) */
+  --gold-foreground: oklch(0.985 0.012 150);
 
   --destructive: oklch(0.55 0.18 26);      /* warm red */
-  --destructive-foreground: oklch(0.985 0.006 85);
-  --success: oklch(0.52 0.09 162);         /* trust teal (verified/success only) */
-  --success-foreground: oklch(0.985 0.006 85);
+  --destructive-foreground: oklch(0.985 0.004 106);
+  --success: oklch(0.55 0.10 160);         /* verified/success (shares the pine family) */
+  --success-foreground: oklch(0.985 0.004 106);
   --warning: oklch(0.74 0.12 76);          /* amber */
   --warning-foreground: oklch(0.3 0.05 62);
 
-  --border: oklch(0.9 0.01 76);            /* warm hairline */
-  --input: oklch(0.9 0.01 76);
-  --ring: oklch(0.66 0.108 67);            /* bronze focus */
+  --border: oklch(0.905 0.006 150);        /* cool hairline */
+  --input: oklch(0.905 0.006 150);
+  --ring: oklch(0.50 0.085 158);           /* pine focus */
 
-  --chart-1: oklch(0.25 0.016 58);
-  --chart-2: oklch(0.66 0.108 67);
-  --chart-3: oklch(0.52 0.09 162);
+  --chart-1: oklch(0.225 0.014 165);
+  --chart-2: oklch(0.50 0.085 158);
+  --chart-3: oklch(0.55 0.10 160);
   --chart-4: oklch(0.74 0.12 76);
   --chart-5: oklch(0.55 0.18 26);
 
-  --radius: 0.75rem;
+  --radius: 0.5rem;        /* tighter, editorial — not fat SaaS bubbles */
 
-  --sidebar: oklch(0.985 0.006 84);
-  --sidebar-foreground: oklch(0.23 0.014 62);
-  --sidebar-primary: oklch(0.25 0.016 58);
-  --sidebar-primary-foreground: oklch(0.985 0.006 85);
-  --sidebar-accent: oklch(0.955 0.018 78);
-  --sidebar-accent-foreground: oklch(0.36 0.03 64);
-  --sidebar-border: oklch(0.9 0.01 76);
-  --sidebar-ring: oklch(0.66 0.108 67);
+  --sidebar: oklch(0.986 0.003 106);
+  --sidebar-foreground: oklch(0.205 0.012 165);
+  --sidebar-primary: oklch(0.225 0.014 165);
+  --sidebar-primary-foreground: oklch(0.985 0.004 106);
+  --sidebar-accent: oklch(0.955 0.016 160);
+  --sidebar-accent-foreground: oklch(0.32 0.03 160);
+  --sidebar-border: oklch(0.905 0.006 150);
+  --sidebar-ring: oklch(0.50 0.085 158);
 }
 
 .dark {
   color-scheme: dark;
 
-  --background: oklch(0.185 0.008 62);     /* warm charcoal, not black */
-  --foreground: oklch(0.95 0.006 84);
-  --card: oklch(0.225 0.01 62);
-  --card-foreground: oklch(0.95 0.006 84);
-  --popover: oklch(0.225 0.01 62);
-  --popover-foreground: oklch(0.95 0.006 84);
+  --background: oklch(0.185 0.012 165);    /* deep pine-charcoal, not black */
+  --foreground: oklch(0.95 0.005 106);
+  --card: oklch(0.223 0.013 165);
+  --card-foreground: oklch(0.95 0.005 106);
+  --popover: oklch(0.223 0.013 165);
+  --popover-foreground: oklch(0.95 0.005 106);
 
-  --primary: oklch(0.95 0.008 84);         /* warm cream — inverted CTA on dark */
-  --primary-foreground: oklch(0.2 0.012 60);
+  --primary: oklch(0.95 0.006 106);        /* cream — inverted CTA on dark */
+  --primary-foreground: oklch(0.2 0.012 165);
 
-  --secondary: oklch(0.27 0.01 62);
-  --secondary-foreground: oklch(0.95 0.006 84);
-  --muted: oklch(0.27 0.01 62);
-  --muted-foreground: oklch(0.72 0.012 70);
+  --secondary: oklch(0.27 0.012 165);
+  --secondary-foreground: oklch(0.95 0.005 106);
+  --muted: oklch(0.27 0.012 165);
+  --muted-foreground: oklch(0.72 0.012 150);
 
-  --accent: oklch(0.3 0.02 68);
-  --accent-foreground: oklch(0.95 0.006 84);
+  --accent: oklch(0.30 0.022 162);
+  --accent-foreground: oklch(0.95 0.005 106);
 
-  --gold: oklch(0.75 0.11 72);             /* brighter bronze on dark */
-  --gold-foreground: oklch(0.2 0.03 62);
+  --gold: oklch(0.68 0.10 160);            /* brighter pine on dark */
+  --gold-foreground: oklch(0.17 0.03 165);
 
   --destructive: oklch(0.65 0.17 26);
-  --destructive-foreground: oklch(0.985 0.006 85);
-  --success: oklch(0.64 0.1 164);
-  --success-foreground: oklch(0.18 0.02 62);
+  --destructive-foreground: oklch(0.985 0.004 106);
+  --success: oklch(0.66 0.10 162);
+  --success-foreground: oklch(0.17 0.02 165);
   --warning: oklch(0.8 0.12 76);
   --warning-foreground: oklch(0.22 0.04 62);
 
   --border: oklch(1 0 0 / 11%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.75 0.11 72);
+  --ring: oklch(0.68 0.10 160);
 
-  --chart-1: oklch(0.95 0.008 84);
-  --chart-2: oklch(0.75 0.11 72);
-  --chart-3: oklch(0.64 0.1 164);
+  --chart-1: oklch(0.95 0.006 106);
+  --chart-2: oklch(0.68 0.10 160);
+  --chart-3: oklch(0.66 0.10 162);
   --chart-4: oklch(0.8 0.12 76);
   --chart-5: oklch(0.65 0.17 26);
 
-  --sidebar: oklch(0.225 0.01 62);
-  --sidebar-foreground: oklch(0.95 0.006 84);
-  --sidebar-primary: oklch(0.95 0.008 84);
-  --sidebar-primary-foreground: oklch(0.2 0.012 60);
-  --sidebar-accent: oklch(0.3 0.02 68);
-  --sidebar-accent-foreground: oklch(0.95 0.006 84);
+  --sidebar: oklch(0.223 0.013 165);
+  --sidebar-foreground: oklch(0.95 0.005 106);
+  --sidebar-primary: oklch(0.95 0.006 106);
+  --sidebar-primary-foreground: oklch(0.2 0.012 165);
+  --sidebar-accent: oklch(0.30 0.022 162);
+  --sidebar-accent-foreground: oklch(0.95 0.005 106);
   --sidebar-border: oklch(1 0 0 / 11%);
   --sidebar-ring: oklch(0.75 0.11 72);
 }
 
 @theme inline {
-  --font-sans: var(--font-archivo), system-ui, sans-serif;
-  --font-serif: var(--font-archivo), system-ui, sans-serif;
+  --font-sans: var(--font-figtree), system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-mono);
-  --font-heading: var(--font-archivo), system-ui, sans-serif;
+  --font-heading: var(--font-fraunces), Georgia, serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -198,58 +200,46 @@
     font-weight: 500;
     color: var(--muted-foreground);
   }
-  /* Section headings — slightly widened grotesque, confident but quiet. */
+  /* Section headings — warm serif, confident but quiet. */
   .font-display {
-    font-family: var(--font-serif), system-ui, sans-serif;
+    font-family: var(--font-serif), Georgia, serif;
     font-optical-sizing: auto;
-    font-weight: 700;
-    font-stretch: 110%;
-    letter-spacing: -0.015em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
-  /* Big display: heavy, wide, masthead. The width axis (font-stretch) ramps up
-     with the viewport so long words never overflow a phone. Size baked in so it
+  /* Masthead: a warm Fraunces serif. Optical sizing (opsz) tracks the font size,
+     so large headlines get the display cut automatically. Size baked in so it
      survives any stale Tailwind build cache on deploy. */
   .display-hero {
-    font-family: var(--font-serif), system-ui, sans-serif;
+    font-family: var(--font-serif), Georgia, serif;
     font-optical-sizing: auto;
-    font-weight: 800;
-    font-stretch: 108%;
-    letter-spacing: -0.025em;
-    line-height: 0.92;
-    font-size: clamp(3rem, 7.5vw, 5.75rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-size: clamp(2.75rem, 6.2vw, 5rem);
   }
   /* Mid display — headline that shares the stage with imagery. Size baked in. */
   .display-md {
-    font-family: var(--font-serif), system-ui, sans-serif;
+    font-family: var(--font-serif), Georgia, serif;
     font-optical-sizing: auto;
-    font-weight: 700;
-    font-stretch: 112%;
-    letter-spacing: -0.02em;
-    line-height: 1;
-    font-size: clamp(2rem, 4.4vw, 3.5rem);
-  }
-  @media (min-width: 640px) {
-    .display-hero {
-      font-stretch: 125%;
-      letter-spacing: -0.03em;
-    }
-    .display-md {
-      font-stretch: 122%;
-    }
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.05;
+    font-size: clamp(1.9rem, 3.8vw, 3rem);
   }
   .tnum {
     font-variant-numeric: tabular-nums;
   }
-  /* Elevation scale */
+  /* Elevation scale — restrained; depth comes from hairline borders, not glow. */
   .shadow-soft {
     box-shadow:
-      0 1px 2px rgba(41, 33, 24, 0.035),
-      0 8px 22px -18px rgba(41, 33, 24, 0.16);
+      0 1px 2px rgba(41, 33, 24, 0.03),
+      0 6px 18px -16px rgba(41, 33, 24, 0.12);
   }
   .shadow-float {
     box-shadow:
-      0 2px 6px rgba(41, 33, 24, 0.05),
-      0 24px 48px -26px rgba(41, 33, 24, 0.24);
+      0 1px 3px rgba(41, 33, 24, 0.04),
+      0 18px 40px -28px rgba(41, 33, 24, 0.18);
   }
   /* Champagne hairline used on premium cards/panels */
   .ring-gold {

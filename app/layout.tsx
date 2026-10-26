@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Archivo, JetBrains_Mono } from "next/font/google";
+import { Fraunces, Figtree, JetBrains_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
@@ -13,14 +13,19 @@ import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
-// One variable superfamily carries the whole UI. Archivo ships a width axis
-// (wdth 62–125); the display cut gets its wide, retail-masthead set via
-// `font-stretch` in globals.css. Pairing a grotesque with its own expanded
-// width reads as deliberate craft — not a stock "tasteful serif" headline.
-const archivo = Archivo({
+// Editorial-commerce type system (grounded in Refero: Faire, Medium, Beautiful).
+// A warm serif masthead (Fraunces, with optical sizing) leads every headline;
+// a clean humanist grotesque (Figtree) carries all UI and body text. The
+// serif/sans contrast is the identity — not a stock single-family headline.
+const display = Fraunces({
   subsets: ['latin'],
-  axes: ['wdth'],
-  variable: '--font-archivo',
+  axes: ['opsz'],
+  variable: '--font-fraunces',
+  display: 'swap',
+});
+const sans = Figtree({
+  subsets: ['latin'],
+  variable: '--font-figtree',
   display: 'swap',
 });
 const mono = JetBrains_Mono({
@@ -81,7 +86,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans", archivo.variable, mono.variable)}
+      className={cn("font-sans", display.variable, sans.variable, mono.variable)}
     >
       <body className="min-h-screen">
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />

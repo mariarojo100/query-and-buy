@@ -232,8 +232,7 @@ export default async function HomePage({
             {continueItems.length > 0 && (
               <section className="py-6 sm:py-8">
                 <div className="mb-5">
-                  <p className="eyebrow">Pick up where you left off</p>
-                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                  <h2 className="font-display text-2xl tracking-tight sm:text-3xl">
                     Continue negotiating
                   </h2>
                 </div>
@@ -243,8 +242,7 @@ export default async function HomePage({
             {savedMatches && savedMatches.listings.length > 0 && (
               <section className="py-6 sm:py-8">
                 <div className="mb-5">
-                  <p className="eyebrow">From your saved search</p>
-                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                  <h2 className="font-display text-2xl tracking-tight sm:text-3xl">
                     {savedMatches.label}
                   </h2>
                 </div>
@@ -259,8 +257,7 @@ export default async function HomePage({
             {recommended.length > 0 && (
               <section className="py-6 sm:py-8">
                 <div className="mb-5">
-                  <p className="eyebrow">For you</p>
-                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                  <h2 className="font-display text-2xl tracking-tight sm:text-3xl">
                     Recommended for you
                   </h2>
                 </div>
@@ -275,8 +272,7 @@ export default async function HomePage({
             {recentlyViewed.length > 0 && (
               <section className="py-6 sm:py-8">
                 <div className="mb-5">
-                  <p className="eyebrow">Recently viewed</p>
-                  <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl">
+                  <h2 className="font-display text-2xl tracking-tight sm:text-3xl">
                     Jump back in
                   </h2>
                 </div>

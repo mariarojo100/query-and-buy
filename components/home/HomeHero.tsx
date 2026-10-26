@@ -54,7 +54,7 @@ function WallCard({
       href={listingPath(listing.title_en, listing.public_id)}
       style={{ animationDelay: `${Math.min(index, 6) * 55}ms` }}
       className={cn(
-        'group animate-rise relative overflow-hidden rounded-2xl bg-muted shadow-soft ring-1 ring-inset ring-foreground/[0.06] transition-shadow duration-300 hover:shadow-float focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold',
+        'group animate-rise relative overflow-hidden rounded-xl border border-border/80 bg-muted shadow-soft transition-shadow duration-300 hover:shadow-float focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold',
         WALL_SPAN[index] ?? 'aspect-[4/5] lg:aspect-auto',
       )}
     >
@@ -132,16 +132,12 @@ export function HomeHero({
       {/* ---------- Masthead: one headline, one action, one honest line ---------- */}
       <div className="animate-rise grid items-center gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12">
         <div>
-          <p className="inline-flex items-center gap-2.5 text-sm font-medium text-gold">
-            <span className="h-px w-7 bg-gold/60" aria-hidden />
-            The UAE&rsquo;s marketplace for pre-owned
-          </p>
-          <h1 className="display-hero mt-5 max-w-[15ch] text-balance text-foreground">
+          <h1 className="display-hero max-w-[17ch] text-balance text-foreground">
             Buy and sell almost anything.
           </h1>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Thousands of quality finds across all seven emirates — listed in minutes,
-            priced fairly, sold safely.
+          <p className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
+            The UAE&rsquo;s marketplace for pre-owned — thousands of quality finds across
+            all seven emirates, listed in minutes and sold safely.
           </p>
 
           <div className="mt-7 max-w-xl">
@@ -169,7 +165,7 @@ export function HomeHero({
         {cover && (
           <Link
             href={listingPath(cover.title_en, cover.public_id)}
-            className="group relative hidden h-[30rem] overflow-hidden rounded-3xl bg-muted shadow-float ring-1 ring-inset ring-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold lg:block"
+            className="group relative hidden h-[30rem] overflow-hidden rounded-xl border border-border/80 bg-muted shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold lg:block"
           >
             {cover.cover_key ? (
               <SafeListingImage

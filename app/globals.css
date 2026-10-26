@@ -8,8 +8,10 @@
    Query & Buy — design system · "Ink & Sand"
    Warm ivory paper, deep ink, a single refined bronze accent. Neutrals carry
    the design; green survives only as a functional trust cue (verified/success).
-   Type carries the experience: Bricolage Grotesque (display), Hanken Grotesk (UI).
-   Sentence case, no uppercase-mono labels, no italic accents. Confident, not loud.
+   Type carries the experience: one variable Archivo superfamily — body at
+   normal width, headlines at expanded width (wdth axis via font-stretch) for a
+   retail-masthead set. Sentence case, no uppercase-mono labels, no italic
+   accents. Confident, not loud. Imagery carries the colour.
    ========================================================================== */
 :root {
   color-scheme: light;
@@ -116,10 +118,10 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-sans);
-  --font-serif: var(--font-serif);
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-serif: var(--font-archivo), system-ui, sans-serif;
   --font-mono: var(--font-mono);
-  --font-heading: var(--font-serif);
+  --font-heading: var(--font-archivo), system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -196,30 +198,44 @@
     font-weight: 500;
     color: var(--muted-foreground);
   }
+  /* Section headings — slightly widened grotesque, confident but quiet. */
   .font-display {
-    font-family: var(--font-serif), "Hanken Grotesk", system-ui, sans-serif;
+    font-family: var(--font-serif), system-ui, sans-serif;
     font-optical-sizing: auto;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    font-stretch: 110%;
+    letter-spacing: -0.015em;
   }
-  /* Big display: heavy, tight, confident. Size baked in so it survives any
-     stale Tailwind build cache on deploy. */
+  /* Big display: heavy, wide, masthead. The width axis (font-stretch) ramps up
+     with the viewport so long words never overflow a phone. Size baked in so it
+     survives any stale Tailwind build cache on deploy. */
   .display-hero {
-    font-family: var(--font-serif), "Hanken Grotesk", system-ui, sans-serif;
+    font-family: var(--font-serif), system-ui, sans-serif;
     font-optical-sizing: auto;
     font-weight: 800;
-    letter-spacing: -0.035em;
-    line-height: 0.9;
-    font-size: clamp(3.25rem, 8vw, 6rem);
+    font-stretch: 108%;
+    letter-spacing: -0.025em;
+    line-height: 0.92;
+    font-size: clamp(3rem, 7.5vw, 5.75rem);
   }
   /* Mid display — headline that shares the stage with imagery. Size baked in. */
   .display-md {
-    font-family: var(--font-serif), "Hanken Grotesk", system-ui, sans-serif;
+    font-family: var(--font-serif), system-ui, sans-serif;
     font-optical-sizing: auto;
     font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 0.98;
-    font-size: clamp(2.25rem, 4.6vw, 3.75rem);
+    font-stretch: 112%;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-size: clamp(2rem, 4.4vw, 3.5rem);
+  }
+  @media (min-width: 640px) {
+    .display-hero {
+      font-stretch: 125%;
+      letter-spacing: -0.03em;
+    }
+    .display-md {
+      font-stretch: 122%;
+    }
   }
   .tnum {
     font-variant-numeric: tabular-nums;

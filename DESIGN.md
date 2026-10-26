@@ -1,99 +1,64 @@
-# Query & Buy — DESIGN.md
+# Query & Buy — Homepage Design Direction
 
-The single source of truth for the Query & Buy visual system ("Ink & Sand").
-Tokens live in `app/globals.css`; this document explains them and sets the rules.
-If a design decision isn't captured here, it should be added here — not improvised
-in a component.
+Single source of truth for this redesign pass. Tokens live in `app/globals.css`;
+this file records the *why* and the taste decisions so the homepage reads as a
+deliberate editorial product, not an AI landing-page template.
 
 ## Brief
-- **Brand:** Query & Buy — the UAE's marketplace for quality pre-owned items.
-- **Audience:** Everyday buyers and sellers across the Emirates (Dubai, Abu Dhabi,
-  Sharjah). Broad consumer, mobile-first, value- and trust-driven.
-- **Page goal (home):** get people searching/browsing fast, and nudge sellers to
-  list (photo → AI draft → publish).
-- **Tone:** warm, premium, trustworthy, human, calm. Confident, never shouty.
-- **Stack:** Next.js 15 (App Router, RSC) · Tailwind v4 · shadcn/ui.
+- **Brand:** Query & Buy — the UAE's marketplace for pre-owned goods.
+- **Audience:** UAE buyers & sellers (Dubai/Abu Dhabi-led, all 7 emirates), mobile-first, bargain-aware, trust-sensitive.
+- **Goal of the page:** make a visitor instantly feel *there is a huge amount of good stuff here, it's local and trustworthy, and I can find or sell in seconds* — then search or browse.
+- **Tone words:** confident · editorial · warm · precise · alive (not loud, not cute, not "AI-reimagined").
+- **Stack:** Next.js 15 (App Router, RSC) · Tailwind v4 · shadcn · next/font.
 
-## Direction (taste)
-A warm editorial marketplace: ivory "paper" ground, deep warm ink, one restrained
-bronze accent. **Type and spacing carry the design** — big confident Fraunces for
-display, clean Hanken Grotesk for everything else. Substance over decoration: show
-real listings and real content density; don't lean on effects.
+## The slop we are killing
+The homepage kept reading as "AI slop / beginner." Root causes, now addressed:
+1. Centered-box hero template (kicker → centred headline → centred search → centred chips). The single most AI-generated shape. → replaced with an editorial masthead sitting on a live inventory wall.
+2. Thin inventory. A marketplace's energy *is* its stock; showing 3–5 images reads as a mock-up. → a dense, varied-size editorial grid of real listings high on the page.
+3. Landing-page tropes: pill-chip rows, three icon+label "proof points," soft gradients everywhere, cliché copy ("Find it. Buy it. Love it."). → removed / reduced to one honest line; imagery and type carry the page.
+4. Generic trendy display type (Bricolage). → a decisive retail-editorial superfamily.
 
-This was validated against the ui-ux-pro-max engine, which independently resolved
-the same palette (ink `#1C1917` + gold `#A16207` + sand `#FAFAF9`) and an editorial
-serif direction for a "Marketplace / Directory" pattern. We deliberately rejected
-its "Liquid Glass" style suggestion (glass/blur hurts contrast + perf and reads as
-generic) and its uppercase-mono kicker idea (see Anti-slop below).
+## Direction (taste decisions)
+- **Imagery carries the colour.** Chrome stays warm-neutral paper + ink + hairlines; the product photos supply all the saturation. (Ref: Zara / Nike / Airbnb galleries.)
+- **Restraint carried by surfaces.** Depth from paper tone, one hairline, one soft shadow — not decoration. (Ref: Adam Lippes atelier.)
+- **Masthead type on warm paper.** Oversized, tight, confident display; technical details (price, condition, location) set with precision like a dossier. (Ref: Pravah / Miranda broadsheet.)
+- **Accent reserved strictly for actions & recognition** — bronze on CTAs, focus, "featured". Never decorative. (Ref: Airbnb coral.)
+- **Density = life.** Vary cell sizes (a true editorial grid, not a uniform card wall) so it reads curated, not generated.
 
-## Tokens (see `app/globals.css` for the authoritative oklch values)
-**Color roles** (light; dark mode defined alongside each):
-- `--background` warm sand paper · `--card` warm white (floats on paper)
-- `--foreground` deep warm ink · `--muted-foreground` muted ink (secondary text)
-- `--primary` ink (the premium CTA / dark panels) · `--primary-foreground` cream
-- `--gold` bronze — the one signature accent (focus ring, small accents, hovers)
-- `--success` trust teal (verified/success ONLY) · `--destructive` warm red
-- `--border` warm hairline · `--secondary`/`--accent` faint warm washes
+## Tokens
+Palette unchanged — the "Ink & Sand" oklch system (warm sand paper, deep ink, single bronze `--gold`, functional teal for trust). No off-palette colour. See `app/globals.css` `:root`.
 
-**Type**
-- Display: **Fraunces** (`--font-serif`, `.font-display` / `.display-hero`), weights
-  400–700, optical sizing on. Used big; tight tracking (-0.021 to -0.03em).
-- UI / body: **Hanken Grotesk** (`--font-sans`), 1.6 line-height.
-- Mono: JetBrains Mono (`--font-mono`) — reserved for literal code only (e.g. /sell
-  snippet). **Not** for labels, eyebrows, prices.
+### Typography — CHANGED (all families)
+- **Display (`--font-serif` slot, `.font-display` / `.display-*`):** **Archivo Expanded** — a wide, grounded grotesque. Retail-masthead confidence, globally legible (good for a UAE mass-market brand), the opposite of the "tasteful AI serif." Weights 600/700/800.
+- **UI / body (`--font-sans`):** **Archivo** (normal width) — same superfamily as the display. Pairing a grotesque with its own expanded cut reads as *deliberate craft*, and keeps the system cohesive. Replaces Hanken Grotesk.
+- **Mono (`--font-mono`):** JetBrains Mono — code/IDs only.
+- Sentence case. No uppercase-tracked-mono eyebrows. No italic-serif accent words (both flagged as AI tells).
 
-**Radii:** `--radius` 0.75rem; scale `sm/md/lg/xl/2xl/3xl` derived. Cards use
-`rounded-2xl`; pills `rounded-full`.
-**Shadows (elevation):** `.shadow-soft` (resting cards) → `.shadow-float` (hover /
-raised). `.ring-gold` champagne hairline for premium panels. No ad-hoc shadows.
-**Spacing:** 4/8px rhythm; section vertical padding `py-8 sm:py-11`; page container
-`max-w-6xl` with `px-5 sm:px-8`.
+### Type scale (baked clamps so they survive stale deploy cache)
+- `.display-hero` — clamp(3rem, 7.5vw, 5.75rem), weight 800, tracking -0.03em, lh 0.92
+- `.display-md` — clamp(2rem, 4.4vw, 3.5rem), weight 700, tracking -0.025em, lh 1.0
+- `.font-display` — weight 700, tracking -0.015em
 
-## Type scale
-- Hero: `.display-hero` → `clamp(3rem, 7.5vw, 5.25rem)`, leading 0.96 (size baked
-  into the CSS class so it survives a stale Tailwind build cache).
-- Section title: `.font-display` `text-[1.9rem] sm:text-[2.6rem]`, under a hairline.
-- Card/section body: 15–18px Hanken. Small label (`.eyebrow`): 13px, sentence case.
-- Prices/specs: `.tnum` tabular numerals (Hanken), never mono.
-
-## Components (home)
-- **Navbar** `SiteHeader`: logo · location · natural-language search (the primary
-  CTA) · Browse/Sell + icons. Sticky, solid.
-- **Hero** `HomeHero`: one headline (`Find it. Buy it. Love it.`, one ink
-  treatment), subcopy, the search box, a "list from a photo" card (warm card +
-  bronze camera, not a purple "AI" promo), trending chips. Right: real listings.
-- **Sections** via `SectionHeading` (title + hairline rule): Browse by category ·
-  trust band · Recently added · How it works (camera → pen → send) · Why panel
-  (ink) · final CTA.
-- **Card** `ListingCard`: photo, price (tabular), title, facet line (e.g.
-  `16GB · 512 GB · SSD`), location + verified. Quiet badges (Used / Featured),
-  sentence case.
-
-## Anti-slop (hard rules — this brand's definition of "AI slop")
-- **No off-palette color.** Only the tokens above; the accent is bronze `--gold`.
-  No violet/purple/indigo/neon. (Purple "AI" chrome is the #1 generated-site tell.)
-- **No uppercase-tracked or mono labels / eyebrows.** Sentence case, sans, no wide
-  tracking. A label is a quiet signpost, not a chip.
-- **No italic serif accent words** in headlines. Same font + same colour.
-- **No ✨/🚀 (Sparkles/Rocket) or emoji icons.** Lucide, grounded + literal.
-- **No "reimagined by AI" / buzzword copy.** Lead with the benefit.
-- **No HUD/wireframe/glass tropes:** no cyan wireframes, pulsing rings, neon trails,
-  glassmorphism, decorative gradients.
-- **Substance over art.** Prefer real listings/content and density over big empty
-  "arty" compositions.
-
-## References
-Refero MCP isn't connected in this environment, so references are grounded in the
-ui-ux-pro-max engine results + established editorial-commerce patterns (warm paper
-grounds, oversized serif display, calm catalog grids). Patterns are adapted, never
-cloned. Add concrete Refero links here when the MCP is available.
+### Radii / shadow / spacing
+- radius 0.75rem base; cards rounded-2xl. Shadows: `.shadow-soft`, `.shadow-float` (unchanged, warm-tinted).
+- Section rhythm on the new scale: hero `pt-5/8`; inventory wall directly under; sections `py-10/14`.
 
 ## Motion
-Restrained by brand choice (substance over art). Allowed:
-- A single entrance on the hero (`.animate-rise`, ~0.55s ease-out).
-- Lightweight, dependency-free scroll reveals via `IntersectionObserver` (see
-  `AnimatedCounter` for the pattern) — subtle fade/rise only.
-- Hover: `.lift` (translateY -4px + shadow) on cards; 150–300ms.
-**Not allowed:** GSAP/Three.js/3D icons, parallax, scroll-jacking, pinned sections,
-decorative-only motion. All motion must respect `prefers-reduced-motion` (handled
-globally in `globals.css`).
+- Easing `cubic-bezier(0.21, 0.68, 0.25, 1)`; durations 250–600ms.
+- `.animate-rise` entrance (opacity + 10px). Staggered reveal on the inventory wall (CSS stagger via per-cell delay). Image hover: slow `scale-[1.05]` over 900ms.
+- Honour `prefers-reduced-motion` (already global in globals.css).
+- **No GSAP, no Three.js, no 3D icons.** For a utility marketplace these would be the slop, not the wow — the wow is type + real inventory + precise restraint. (Skill's heavy-motion defaults deliberately declined.)
+
+## References (Refero + Supahero, 2026-10-26)
+- Refero — Pravah: technical dossier on warm paper → price/condition as precise fine print. https://styles.refero.design (design-md-examples)
+- Refero — Adam Lippes: monochrome atelier, restraint carried by surfaces.
+- Refero — Miranda: old-world broadsheet on warm cream → masthead type.
+- Refero — Zara / Airbnb / Nike: imagery carries colour, accent reserved for actions.
+- Supahero — Airbnb Homes (marketplace hero pacing): see notes below.
+
+## What's being built
+1. Fonts swapped to the Archivo superfamily (`layout.tsx`, `globals.css`).
+2. Hero: oversized confident headline + the smart search as the single hero action + one honest trust line. Pill-chip clutter removed.
+3. Inventory wall: a dense, varied-size editorial grid of real listings directly under the hero — the page's energy.
+4. Category tiles, trust, how-it-works, CTA retained, re-tuned to the new type scale.
+5. Verified in a DB-free preview harness at 375/768/1280/1920, then removed before commit.

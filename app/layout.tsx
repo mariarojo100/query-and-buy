@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Hanken_Grotesk, Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
+import { Archivo, JetBrains_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
@@ -13,13 +13,14 @@ import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
-const sans = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
-// Display face — a characterful grotesque (not the generic "tasteful serif"
-// look). Drives every headline via --font-serif / .font-display.
-const display = Bricolage_Grotesque({
+// One variable superfamily carries the whole UI. Archivo ships a width axis
+// (wdth 62–125); the display cut gets its wide, retail-masthead set via
+// `font-stretch` in globals.css. Pairing a grotesque with its own expanded
+// width reads as deliberate craft — not a stock "tasteful serif" headline.
+const archivo = Archivo({
   subsets: ['latin'],
-  variable: '--font-serif',
-  weight: ['400', '500', '600', '700', '800'],
+  axes: ['wdth'],
+  variable: '--font-archivo',
   display: 'swap',
 });
 const mono = JetBrains_Mono({
@@ -80,7 +81,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans", sans.variable, display.variable, mono.variable)}
+      className={cn("font-sans", archivo.variable, mono.variable)}
     >
       <body className="min-h-screen">
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />

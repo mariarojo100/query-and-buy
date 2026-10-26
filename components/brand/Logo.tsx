@@ -49,9 +49,9 @@ export function LogoMark({ size = 32, className }: { size?: number; className?: 
         y={45}
         textAnchor="middle"
         dominantBaseline="middle"
-        fontFamily="Fraunces, Georgia, 'Times New Roman', serif"
-        fontSize={26}
-        fontWeight={600}
+        fontFamily="var(--font-satoshi), system-ui, sans-serif"
+        fontSize={25}
+        fontWeight={700}
         fill="currentColor"
       >
         Q&amp;B

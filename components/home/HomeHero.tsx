@@ -150,11 +150,11 @@ export function HomeHero({
 
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="display-hero text-balance text-[oklch(0.975_0.014_95)]">
-            Buy and sell almost anything.
+            Buy and sell across the Emirates.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-pretty text-base text-[oklch(0.97_0.012_95)]/75 sm:text-lg">
-            The UAE&rsquo;s marketplace for pre-owned — thousands of quality finds across all seven
-            emirates, listed in minutes and sold safely.
+            The UAE&rsquo;s marketplace for quality pre-owned — thousands of finds from verified
+            sellers, listed in minutes and sold safely.
           </p>
 
           <div className="mx-auto mt-8 max-w-2xl text-left">

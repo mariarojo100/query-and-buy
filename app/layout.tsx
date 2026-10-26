@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Fraunces, Figtree, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
+import { JetBrains_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
@@ -13,19 +14,17 @@ import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
-// Editorial-commerce type system (grounded in Refero: Faire, Medium, Beautiful).
-// A warm serif masthead (Fraunces, with optical sizing) leads every headline;
-// a clean humanist grotesque (Figtree) carries all UI and body text. The
-// serif/sans contrast is the identity — not a stock single-family headline.
-const display = Fraunces({
-  subsets: ['latin'],
-  axes: ['opsz'],
-  variable: '--font-fraunces',
-  display: 'swap',
-});
-const sans = Figtree({
-  subsets: ['latin'],
-  variable: '--font-figtree',
+// Satoshi (self-hosted from Fontshare) carries the whole UI — a crisp, modern
+// grotesque that is deliberately NOT the Google-default set AI sites reach for.
+// Bold weights lead headlines; Regular/Medium carry body and chrome.
+const satoshi = localFont({
+  src: [
+    { path: './fonts/Satoshi-Regular.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/Satoshi-Medium.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/Satoshi-Bold.woff2', weight: '700', style: 'normal' },
+    { path: './fonts/Satoshi-Black.woff2', weight: '900', style: 'normal' },
+  ],
+  variable: '--font-satoshi',
   display: 'swap',
 });
 const mono = JetBrains_Mono({
@@ -86,7 +85,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans", display.variable, sans.variable, mono.variable)}
+      className={cn("font-sans", satoshi.variable, mono.variable)}
     >
       <body className="min-h-screen">
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />

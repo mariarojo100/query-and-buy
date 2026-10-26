@@ -213,7 +213,7 @@
     font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1;
-    font-size: clamp(3rem, 6.9vw, 5.5rem);
+    font-size: clamp(3.15rem, 7.1vw, 6rem);
   }
   /* Mid display — headline that shares the stage with imagery. Size baked in. */
   .display-md {

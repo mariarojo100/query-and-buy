@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { maskContactInfo } from '@/lib/safety/contact'
 import { notFound, permanentRedirect } from 'next/navigation'
-import { ChevronLeftIcon, PencilIcon, ShieldCheckIcon } from 'lucide-react'
+import { ChevronLeftIcon, ClockIcon, MapPinIcon, PencilIcon, ShieldCheckIcon, TagIcon } from 'lucide-react'
 import { getViewer } from '@/lib/auth/session'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
@@ -76,16 +76,6 @@ export async function generateMetadata({
       images: img ? [img] : undefined,
     },
   }
-}
-
-function Spec({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null
-  return (
-    <div>
-      <dt className="eyebrow">{label}</dt>
-      <dd className="mt-1.5 text-sm">{value}</dd>
-    </div>
-  )
 }
 
 export default async function ListingDetailPage({
@@ -186,30 +176,55 @@ export default async function ListingDetailPage({
           {/* Details */}
           <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2">
             <div className="lg:sticky lg:top-24">
-              <p className="eyebrow">{listing.category_name ?? 'Listing'}</p>
-              <h1 className="font-display mt-3 text-3xl leading-tight tracking-tight sm:text-[2.5rem]">
+              <p className="text-sm font-medium text-muted-foreground">
+                {listing.category_name ?? 'Listing'}
+              </p>
+              <h1 className="font-display mt-2 text-[1.9rem] font-bold leading-[1.08] tracking-tight sm:text-4xl">
                 {listing.title_en}
               </h1>
-              <p className="tnum mt-4 text-3xl font-semibold tracking-tight">{priceLabel}</p>
-
-              <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-y border-border py-6">
-                <Spec label="Condition" value={conditionLabel(listing.condition)} />
-                <Spec label="Pricing" value={listing.is_negotiable ? 'Negotiable' : 'Fixed'} />
-                <Spec label="Location" value={location || null} />
-                <Spec label="Listed" value={postedLabel} />
-              </dl>
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <p className="tnum text-[2.5rem] font-bold leading-none tracking-tight text-foreground">
+                  {priceLabel}
+                </p>
+                {listing.is_negotiable && (
+                  <span className="rounded-full bg-gold/12 px-3 py-1 text-sm font-semibold text-gold">
+                    Negotiable
+                  </span>
+                )}
+              </div>
+              <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5">
+                  <TagIcon className="size-3.5 text-gold" strokeWidth={1.9} />
+                  {conditionLabel(listing.condition)}
+                </span>
+                {location && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5">
+                    <MapPinIcon className="size-3.5 text-gold" strokeWidth={1.9} />
+                    {location}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5">
+                  <ClockIcon className="size-3.5 text-gold" strokeWidth={1.9} />
+                  {postedLabel}
+                </span>
+              </div>
 
               {!isOwner && (
-                <div className="mt-7 flex gap-3">
-                  <div className="flex-1">
-                    <ContactSellerButton listingId={listing.id} authed={!!user} />
+                <div className="mt-6 rounded-2xl border border-border bg-card p-4 shadow-soft">
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <ContactSellerButton listingId={listing.id} authed={!!user} />
+                    </div>
+                    <FavoriteButton
+                      listingId={listing.id}
+                      initialFavorited={favorited}
+                      authed={!!user}
+                      className="size-11 shrink-0 rounded-full border border-border bg-background hover:bg-accent"
+                    />
                   </div>
-                  <FavoriteButton
-                    listingId={listing.id}
-                    initialFavorited={favorited}
-                    authed={!!user}
-                    className="size-11 shrink-0 rounded-full border border-border bg-card hover:bg-accent"
-                  />
+                  <p className="mt-3 text-center text-xs text-muted-foreground">
+                    Message the seller to ask a question or make an offer.
+                  </p>
                 </div>
               )}
 
@@ -256,7 +271,7 @@ export default async function ListingDetailPage({
           {/* Specifications — category-specific facets, when present. */}
           {specs.length > 0 && (
             <section className="border-t border-border pt-8 lg:col-span-7 lg:col-start-1 lg:row-start-2">
-              <p className="eyebrow">Details</p>
+              <h2 className="font-display text-xl">Details</h2>
               <dl className="mt-4 grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2">
                 {specs.map((s) => (
                   <div
@@ -273,7 +288,7 @@ export default async function ListingDetailPage({
 
           {/* Description — after the details on mobile; bottom-left on lg. */}
           <section className="border-t border-border pt-8 lg:col-span-7 lg:col-start-1 lg:row-start-3">
-            <p className="eyebrow">Description</p>
+            <h2 className="font-display text-xl">Description</h2>
             <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-foreground/90">
               {/* Legacy listings may contain contact details entered before
                   enforcement — masked at display until the owner edits. */}
@@ -284,7 +299,7 @@ export default async function ListingDetailPage({
 
         {related.length > 0 && (
           <section className="mt-14 border-t border-border pt-10 sm:mt-20">
-            <p className="eyebrow mb-6">More from this seller</p>
+            <h2 className="font-display mb-6 text-xl sm:text-2xl">More from this seller</h2>
             <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-4 sm:gap-x-6">
               {related.map((l) => (
                 <ListingCard
@@ -300,7 +315,7 @@ export default async function ListingDetailPage({
 
         {similar.length > 0 && (
           <section className="mt-14 border-t border-border pt-10 sm:mt-20">
-            <p className="eyebrow mb-6">You may also like</p>
+            <h2 className="font-display mb-6 text-xl sm:text-2xl">You may also like</h2>
             <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-4 sm:gap-x-6">
               {similar.map((l) => (
                 <ListingCard

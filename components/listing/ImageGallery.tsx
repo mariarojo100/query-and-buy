@@ -56,7 +56,7 @@ export function ImageGallery({ keys, title }: { keys: string[]; title: string })
         type="button"
         onClick={() => setZoom(true)}
         aria-label="View photo fullscreen"
-        className="group relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-xl border bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="group relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-2xl border border-border bg-muted shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <SafeListingImage
           src={publicUrl(LISTING_IMAGES_BUCKET, keys[active])}
@@ -85,7 +85,7 @@ export function ImageGallery({ keys, title }: { keys: string[]; title: string })
               className={cn(
                 'relative aspect-square w-16 shrink-0 overflow-hidden rounded-lg border bg-muted transition',
                 i === active
-                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                  ? 'ring-2 ring-gold ring-offset-2 ring-offset-background'
                   : 'opacity-60 hover:opacity-100',
               )}
               aria-label={`View photo ${i + 1}`}

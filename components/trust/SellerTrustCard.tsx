@@ -13,7 +13,7 @@ export function SellerTrustCard({ seller }: { seller: TrustSeller }) {
 
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-soft sm:p-6">
-      <p className="eyebrow mb-4">Seller</p>
+      <p className="mb-4 text-sm font-semibold text-muted-foreground">Seller</p>
 
       <Link
         href={seller.username ? `/u/${seller.username}` : '#'}

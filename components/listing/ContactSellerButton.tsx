@@ -35,9 +35,14 @@ export function ContactSellerButton({
   }
 
   return (
-    <Button size="lg" className="w-full" onClick={onClick} disabled={pending}>
+    <Button
+      size="lg"
+      className="w-full rounded-full bg-gold font-semibold text-gold-foreground shadow-soft hover:bg-gold/90"
+      onClick={onClick}
+      disabled={pending}
+    >
       {pending ? <Loader2Icon className="size-4 animate-spin" /> : <MessageCircleIcon className="size-4" />}
-      Contact seller
+      Message seller
     </Button>
   )
 }

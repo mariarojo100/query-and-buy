@@ -214,7 +214,9 @@ export default async function HomePage({
             )}
             <HomeHero
               trending={trending.map((t) => t.query)}
-              listings={(featured.length ? featured : listings).slice(0, 8)}
+              listings={[...featured, ...listings]
+                .filter((l, i, a) => a.findIndex((x) => x.id === l.id) === i)
+                .slice(0, 15)}
               categories={categories}
               favoritedIds={featured.length ? featuredFav : favoritedIds}
               authed={!!user}

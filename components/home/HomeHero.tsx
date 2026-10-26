@@ -129,50 +129,53 @@ export function HomeHero({
     .filter((c) => !c.parent_id)
     .sort((a, b) => a.position - b.position)
     .slice(0, 6)
+  // A 15-tile wall of real covers fills the hero backdrop (repeats if sparse).
+  const covers = listings.filter((l) => l.cover_key)
+  const mosaic = covers.length ? Array.from({ length: 15 }, (_, i) => covers[i % covers.length]) : []
 
   return (
     <section className="pt-6 sm:pt-8">
       {/* ---------- Pine hero panel — search-forward, the marketplace front door ---------- */}
-      <div className="animate-rise relative overflow-hidden rounded-[1.25rem] bg-[oklch(0.25_0.045_160)] px-6 py-16 shadow-float sm:rounded-[1.75rem] sm:px-12 sm:py-24">
-        {/* Depth — a diagonal pine gradient plus a soft glow that lifts the centre. */}
+      <div className="animate-rise relative isolate overflow-hidden rounded-[1.25rem] px-6 py-20 shadow-float sm:rounded-[1.75rem] sm:px-12 sm:py-28">
+        {/* Dramatic backdrop — a wall of real inventory under a deep pine scrim. */}
+        {mosaic.length > 0 && (
+          <div
+            aria-hidden
+            className="absolute inset-0 -z-10 grid grid-cols-3 grid-rows-5 gap-1.5 sm:grid-cols-5 sm:grid-rows-3"
+          >
+            {mosaic.map((l, i) => (
+              <div key={i} className="relative overflow-hidden bg-[oklch(0.3_0.04_160)]">
+                <SafeListingImage
+                  src={publicUrl(LISTING_IMAGES_BUCKET, l.cover_key!)}
+                  alt=""
+                  sizes="25vw"
+                  className="object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Scrim — near-solid pine through the centre (legible text), lighter at the
+            edges so the inventory bleeds in. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[oklch(0.34_0.055_163)] via-[oklch(0.26_0.05_160)] to-[oklch(0.19_0.04_158)]"
+          className="absolute inset-0 -z-10"
+          style={{
+            background:
+              'radial-gradient(80% 74% at 50% 48%, oklch(0.17 0.04 158 / 0.94) 0%, oklch(0.19 0.045 160 / 0.82) 46%, oklch(0.21 0.05 162 / 0.5) 100%)',
+          }}
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[-6rem] h-[28rem] w-[46rem] max-w-[130%] -translate-x-1/2 rounded-full bg-[oklch(0.58_0.09_162)] opacity-[0.18] blur-[90px]"
+          className="absolute inset-x-0 bottom-0 -z-10 h-2/5"
+          style={{ background: 'linear-gradient(to top, oklch(0.17 0.04 158), transparent)' }}
         />
-        {/* Quiet magnifier-arc motifs — a brand echo, balanced corner to corner. */}
-        <svg
-          aria-hidden
-          viewBox="0 0 200 200"
-          className="pointer-events-none absolute -right-10 -top-16 h-80 w-80 text-white/[0.07] sm:-right-6 sm:h-[26rem] sm:w-[26rem]"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={3}
-        >
-          <circle cx={108} cy={92} r={60} />
-          <circle cx={108} cy={92} r={46} strokeWidth={1.5} />
-          <path d="M64 136 L30 170" strokeWidth={12} strokeLinecap="round" />
-        </svg>
-        <svg
-          aria-hidden
-          viewBox="0 0 200 200"
-          className="pointer-events-none absolute -bottom-24 -left-16 hidden h-72 w-72 text-white/[0.05] sm:block"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={3}
-        >
-          <circle cx={92} cy={108} r={56} />
-          <path d="M132 148 L168 184" strokeWidth={11} strokeLinecap="round" />
-        </svg>
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <h1 className="display-hero text-balance text-[oklch(0.975_0.014_95)]">
+          <h1 className="display-hero text-balance text-[oklch(0.975_0.014_95)] [text-shadow:0_2px_24px_oklch(0.12_0.03_158/0.6)]">
             Buy and sell across the Emirates.
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-pretty text-base text-[oklch(0.97_0.012_95)]/75 sm:text-lg">
+          <p className="mx-auto mt-5 max-w-xl text-pretty text-base text-[oklch(0.97_0.012_95)]/80 sm:text-lg">
             The UAE&rsquo;s marketplace for quality pre-owned — thousands of finds from verified
             sellers, listed in minutes and sold safely.
           </p>
@@ -180,7 +183,7 @@ export function HomeHero({
           <div className="relative mx-auto mt-9 max-w-2xl text-left">
             <div
               aria-hidden
-              className="pointer-events-none absolute -inset-x-6 -inset-y-4 rounded-full bg-[oklch(0.6_0.08_162)] opacity-25 blur-2xl"
+              className="pointer-events-none absolute -inset-x-6 -inset-y-4 rounded-full bg-[oklch(0.62_0.08_162)] opacity-25 blur-2xl"
             />
             <div className="relative">
               <SmartSearchBox trending={trending} />

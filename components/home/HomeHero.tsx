@@ -3,7 +3,6 @@ import { ArrowRightIcon, MapPinIcon, ShieldCheckIcon, TagIcon } from 'lucide-rea
 import { SmartSearchBox } from '@/components/search/SmartSearchBox'
 import { SafeListingImage } from '@/components/listing/SafeListingImage'
 import { FavoriteButton } from '@/components/listing/FavoriteButton'
-import { HeroCover } from '@/components/home/HeroCover'
 import { LocationMenu } from '@/components/layout/LocationMenu'
 import { formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
@@ -12,7 +11,7 @@ import { emirateLabel } from '@/lib/profile/emirates'
 import { conditionLabel } from '@/lib/listings/conditions'
 import { listingPath } from '@/lib/listings/slug'
 import { cn } from '@/lib/utils'
-import type { FeedListing } from '@/lib/listings/queries'
+import type { FeedListing, CategoryLite } from '@/lib/listings/queries'
 
 /** Editorial tiling for the inventory wall: a big lead cell, two wide banners,
  *  the rest square — so it reads curated, not like a uniform generated grid.
@@ -34,8 +33,7 @@ function priceClass(lead: boolean) {
   )
 }
 
-/** One cell of the inventory wall — a real photo doing the work, with price,
- *  title and location set over a legibility scrim. */
+/** One cell of the inventory wall — a real photo doing the work. */
 function WallCard({
   listing,
   index,
@@ -116,53 +114,82 @@ function WallCard({
 export function HomeHero({
   trending,
   listings,
+  categories = [],
   favoritedIds,
   authed = false,
 }: {
   trending: string[]
   listings: FeedListing[]
+  categories?: CategoryLite[]
   favoritedIds?: Set<string>
   authed?: boolean
 }) {
-  // The wall leads with the next item and runs the editorial tiling (up to 7).
-  const wall = listings.slice(1, 8)
+  const wall = listings.slice(0, 7)
+  const quickCategories = categories
+    .filter((c) => !c.parent_id)
+    .sort((a, b) => a.position - b.position)
+    .slice(0, 6)
 
   return (
-    <section className="pt-6 sm:pt-10">
-      {/* ---------- Masthead: one headline, one action, one honest line ---------- */}
-      <div className="animate-rise grid items-center gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12">
-        <div>
-          <h1 className="display-hero max-w-[17ch] text-balance text-foreground">
+    <section className="pt-6 sm:pt-8">
+      {/* ---------- Pine hero panel — search-forward, the marketplace front door ---------- */}
+      <div className="animate-rise relative overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-[oklch(0.34_0.055_163)] to-[oklch(0.23_0.045_159)] px-6 py-14 shadow-float sm:rounded-[1.75rem] sm:px-10 sm:py-20">
+        {/* Subtle magnifier-arc motif — a quiet brand echo, not decoration spam. */}
+        <svg
+          aria-hidden
+          viewBox="0 0 200 200"
+          className="pointer-events-none absolute -right-10 -top-16 h-80 w-80 text-white/[0.06] sm:-right-4 sm:h-[26rem] sm:w-[26rem]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={3}
+        >
+          <circle cx={108} cy={92} r={60} />
+          <circle cx={108} cy={92} r={46} strokeWidth={1.5} />
+          <path d="M64 136 L30 170" strokeWidth={12} strokeLinecap="round" />
+        </svg>
+
+        <div className="relative mx-auto max-w-3xl text-center">
+          <h1 className="display-hero text-balance text-[oklch(0.975_0.014_95)]">
             Buy and sell almost anything.
           </h1>
-          <p className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
-            The UAE&rsquo;s marketplace for pre-owned — thousands of quality finds across
-            all seven emirates, listed in minutes and sold safely.
+          <p className="mx-auto mt-5 max-w-xl text-pretty text-base text-[oklch(0.97_0.012_95)]/75 sm:text-lg">
+            The UAE&rsquo;s marketplace for pre-owned — thousands of quality finds across all seven
+            emirates, listed in minutes and sold safely.
           </p>
 
-          <div className="mt-7 max-w-xl">
+          <div className="mx-auto mt-8 max-w-2xl text-left">
             <SmartSearchBox trending={trending} />
           </div>
 
-          {/* Honest, non-numeric reassurance — one tight line, no chip clutter. */}
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+          {quickCategories.length > 0 && (
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              {quickCategories.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/${c.slug}`}
+                  className="inline-flex items-center rounded-full border border-white/25 px-4 py-1.5 text-sm text-[oklch(0.97_0.012_95)]/90 transition hover:border-white/50 hover:bg-white/10"
+                >
+                  {c.name_en}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[oklch(0.97_0.012_95)]/65">
             <span className="inline-flex items-center gap-1.5">
-              <TagIcon className="size-4 text-gold" strokeWidth={1.75} />
+              <TagIcon className="size-4" strokeWidth={1.75} />
               Free to list
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <ShieldCheckIcon className="size-4 text-gold" strokeWidth={1.75} />
+              <ShieldCheckIcon className="size-4" strokeWidth={1.75} />
               Verified sellers
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <MapPinIcon className="size-4 text-gold" strokeWidth={1.75} />
+              <MapPinIcon className="size-4" strokeWidth={1.75} />
               All 7 emirates
             </span>
           </div>
         </div>
-
-        {/* ---------- Cinematic cover — a live crossfade through featured listings ---------- */}
-        <HeroCover listings={listings.slice(0, 4)} className="hidden lg:block" />
       </div>
 
       {/* ---------- Inventory wall — the marketplace's real energy, high on the page ---------- */}

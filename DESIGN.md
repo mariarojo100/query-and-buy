@@ -66,6 +66,19 @@ Full styles pulled and synthesised (reference lock):
 - **Context — Palmer** (`66430c0f…`): Canvas Creme gallery, flat surfaces, depth from imagery + hairlines not shadow. → surface restraint.
 - **Rejected:** violet accents (Shop.app/Graf Lantz), fat rounded-2xl + heavy shadows, pill-chip clutter, uppercase-mono eyebrows, italic-serif accent words. Kept Ink & Sand bronze as the single, action-only accent (not yellow/coral — brand rule).
 
+## Hero redesign (2026-10-26, "best marketplace" pass)
+The two-column "serif text left + image right" hero read as a SaaS landing page,
+not a marketplace (rejected repeatedly). Refero marketplace screens (Faire home,
+Pattern Brands) show the right pattern: a **compact colored brand band / rich
+hero that is search-forward**, then straight into category tiles + a dense
+product grid — the inventory is the page.
+- New hero = a **deep-pine hero panel** (rounded, contained): cream Fraunces
+  headline, one short line, a **big prominent search** (the primary action),
+  category quick-chips, a small honest trust line. Dark-on-porcelain contrast is
+  the "wow"; search-forward + dense wall below = unmistakably a marketplace.
+- Dropped the rotating `HeroCover` from the hero (the product wall carries the
+  imagery). Accent stays pine; CTAs/search ink-or-cream. No eyebrows.
+
 ## What's being built
 1. Fonts swapped to the Archivo superfamily (`layout.tsx`, `globals.css`).
 2. Hero: oversized confident headline + the smart search as the single hero action + one honest trust line. Pill-chip clutter removed.

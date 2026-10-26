@@ -9,20 +9,14 @@ import { initials } from '@/components/profile/ProfileHeader'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { SmartSearchBox } from '@/components/search/SmartSearchBox'
-import { LocationMenu } from '@/components/layout/LocationMenu'
-import { CategoryNav } from '@/components/layout/CategoryNav'
 import { getUnreadConversationCount } from '@/lib/messaging/queries'
 import { getNotifications, getUnreadNotificationCount } from '@/lib/notifications/queries'
-import { getActiveCategories } from '@/lib/listings/queries'
 import { getTrendingSearches } from '@/lib/search/intelligence'
 
 /** Marketplace top bar: brand · location · search, then the category strip below. */
 export async function SiteHeader() {
   const user = await getViewer()
-  const [categories, trending] = await Promise.all([
-    getActiveCategories(),
-    getTrendingSearches(6),
-  ])
+  const trending = await getTrendingSearches(6)
 
   let avatarUrl: string | null = null
   let displayName = ''
@@ -48,21 +42,12 @@ export async function SiteHeader() {
           <Logo size={34} />
         </Link>
 
-        <LocationMenu className="hidden shrink-0 lg:block" />
-
-        {/* Persistent conversational search — discovery from any page. */}
-        <div className="mx-1 hidden min-w-0 max-w-xl flex-1 md:block">
+        {/* Persistent search — discovery from any page. */}
+        <div className="mx-2 hidden min-w-0 max-w-2xl flex-1 md:block">
           <SmartSearchBox trending={trending.map((t) => t.query)} />
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
-          <Link
-            href="/?sort=newest"
-            className="hidden px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground lg:block"
-          >
-            Browse
-          </Link>
-
           {user ? (
             <>
               <Button
@@ -138,8 +123,6 @@ export async function SiteHeader() {
           <ThemeToggle />
         </div>
       </div>
-
-      <CategoryNav categories={categories} />
     </header>
   )
 }

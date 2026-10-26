@@ -190,7 +190,7 @@ export function SmartSearchBox({ trending = [] }: { trending?: string[] }) {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder="Search naturally — “iPhone under AED 2000 in Dubai”"
+          placeholder="Search cars, phones, watches and more"
           aria-label="Search the marketplace"
           role="combobox"
           aria-expanded={showDropdown}

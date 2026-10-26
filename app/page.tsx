@@ -317,7 +317,7 @@ export default async function HomePage({
             </section>
 
             {/* ---------- FINAL CTA ---------- */}
-            <ConversionCTA />
+            <ConversionCTA listings={featured.length ? featured : listings} />
           </>
         )}
       </main>

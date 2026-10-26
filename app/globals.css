@@ -214,9 +214,9 @@
     font-family: var(--font-serif), Georgia, serif;
     font-optical-sizing: auto;
     font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1;
-    font-size: clamp(2.75rem, 6.2vw, 5rem);
+    letter-spacing: -0.021em;
+    line-height: 0.98;
+    font-size: clamp(3rem, 6.9vw, 5.75rem);
   }
   /* Mid display — headline that shares the stage with imagery. Size baked in. */
   .display-md {
@@ -249,6 +249,11 @@
   .animate-rise {
     animation: qb-rise 0.55s cubic-bezier(0.21, 0.68, 0.25, 1) both;
   }
+  /* Slow cinematic push for the hero cover's active image. */
+  .animate-kenburns {
+    animation: qb-kenburns 6.2s ease-out both;
+    will-change: transform;
+  }
   .lift {
     transition:
       transform 0.28s cubic-bezier(0.21, 0.68, 0.25, 1),
@@ -267,6 +272,15 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes qb-kenburns {
+  from {
+    transform: scale(1.001);
+  }
+  to {
+    transform: scale(1.09);
   }
 }
 

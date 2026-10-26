@@ -3,6 +3,7 @@ import { ArrowRightIcon, MapPinIcon, ShieldCheckIcon, TagIcon } from 'lucide-rea
 import { SmartSearchBox } from '@/components/search/SmartSearchBox'
 import { SafeListingImage } from '@/components/listing/SafeListingImage'
 import { FavoriteButton } from '@/components/listing/FavoriteButton'
+import { HeroCover } from '@/components/home/HeroCover'
 import { LocationMenu } from '@/components/layout/LocationMenu'
 import { formatPrice } from '@/lib/format'
 import { publicUrl, LISTING_IMAGES_BUCKET } from '@/lib/storage'
@@ -123,7 +124,6 @@ export function HomeHero({
   favoritedIds?: Set<string>
   authed?: boolean
 }) {
-  const cover = listings[0]
   // The wall leads with the next item and runs the editorial tiling (up to 7).
   const wall = listings.slice(1, 8)
 
@@ -161,44 +161,8 @@ export function HomeHero({
           </div>
         </div>
 
-        {/* ---------- One editorial cover — a single strong image, not a cluster ---------- */}
-        {cover && (
-          <Link
-            href={listingPath(cover.title_en, cover.public_id)}
-            className="group relative hidden h-[30rem] overflow-hidden rounded-xl border border-border/80 bg-muted shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold lg:block"
-          >
-            {cover.cover_key ? (
-              <SafeListingImage
-                src={publicUrl(LISTING_IMAGES_BUCKET, cover.cover_key)}
-                alt={cover.title_en}
-                sizes="45vw"
-                placeholder="blur"
-                blurDataURL={BLUR_DATA_URL}
-                className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
-              />
-            ) : (
-              <span className="flex size-full items-center justify-center bg-gradient-to-br from-accent via-muted to-secondary/70">
-                <span className="font-display text-5xl text-primary/25">Q&amp;B</span>
-              </span>
-            )}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 text-white">
-              <div className="min-w-0">
-                <p className="tnum text-3xl font-bold leading-none tracking-tight drop-shadow">
-                  {formatPrice(cover.price_fils, cover.currency)}
-                </p>
-                <h3 className="mt-2 line-clamp-1 text-lg font-medium text-white/95">{cover.title_en}</h3>
-                <p className="mt-1 flex items-center gap-1 text-sm text-white/70">
-                  <MapPinIcon className="size-4 shrink-0" />
-                  {[cover.area, emirateLabel(cover.emirate)].filter(Boolean).join(', ') || 'United Arab Emirates'}
-                </p>
-              </div>
-              <span className="shrink-0 rounded-full bg-white/95 px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm transition group-hover:bg-white">
-                View
-              </span>
-            </div>
-          </Link>
-        )}
+        {/* ---------- Cinematic cover — a live crossfade through featured listings ---------- */}
+        <HeroCover listings={listings.slice(0, 4)} className="hidden lg:block" />
       </div>
 
       {/* ---------- Inventory wall — the marketplace's real energy, high on the page ---------- */}

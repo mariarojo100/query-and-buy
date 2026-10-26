@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { HeartIcon, MessageSquareIcon } from 'lucide-react'
+import { HeartIcon, MessageSquareIcon, TagIcon } from 'lucide-react'
 import { Logo } from '@/components/brand/Logo'
 import { getViewer } from '@/lib/auth/session'
 import { profileHeader } from '@/lib/db/profiles'
@@ -96,8 +96,15 @@ export async function SiteHeader() {
 
               <NotificationBell userId={user.id} items={notifications} unreadCount={notifUnread} />
 
-              <Button asChild size="sm" className="hidden rounded-full px-5 sm:inline-flex">
-                <Link href="/sell">Sell</Link>
+              <Button
+                asChild
+                size="sm"
+                className="hidden rounded-full bg-gold px-4 font-semibold text-gold-foreground shadow-soft hover:bg-gold/90 sm:inline-flex"
+              >
+                <Link href="/sell">
+                  <TagIcon className="size-4" strokeWidth={2} />
+                  Sell
+                </Link>
               </Button>
 
               <Link href="/account" aria-label="Account" className="ml-1">
@@ -109,17 +116,20 @@ export async function SiteHeader() {
             </>
           ) : (
             <>
-              <Link
-                href="/sell"
-                className="hidden px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+              <Button
+                asChild
+                size="sm"
+                className="hidden rounded-full bg-gold px-4 font-semibold text-gold-foreground shadow-soft hover:bg-gold/90 sm:inline-flex"
               >
-                Sell
-              </Link>
-              <span className="mx-1 hidden h-5 w-px bg-border/80 sm:block" />
+                <Link href="/sell">
+                  <TagIcon className="size-4" strokeWidth={2} />
+                  Sell
+                </Link>
+              </Button>
               <Button asChild size="sm" variant="ghost" className="hidden sm:inline-flex">
                 <Link href="/login">Log in</Link>
               </Button>
-              <Button asChild size="sm" className="rounded-full px-5">
+              <Button asChild size="sm" variant="outline" className="rounded-full px-5">
                 <Link href="/signup">Sign up</Link>
               </Button>
             </>

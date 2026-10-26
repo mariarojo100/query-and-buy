@@ -19,6 +19,7 @@ import { ContinueNegotiation } from '@/components/home/ContinueNegotiation'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { WhyAI } from '@/components/home/WhyAI'
 import { GuidesStrip } from '@/components/home/GuidesStrip'
+import { ConversionCTA } from '@/components/home/ConversionCTA'
 import { Button } from '@/components/ui/button'
 import {
   getActiveCategories,
@@ -316,17 +317,7 @@ export default async function HomePage({
             </section>
 
             {/* ---------- FINAL CTA ---------- */}
-            <section className="border-t border-border py-14 text-center sm:py-20">
-              <h2 className="font-display mx-auto max-w-xl text-3xl tracking-tight sm:text-4xl">
-                Have something to sell?
-              </h2>
-              <p className="mx-auto mt-4 max-w-md text-muted-foreground">
-                List it in under a minute and reach buyers across the UAE.
-              </p>
-              <Button asChild size="lg" className="mt-7 rounded-full px-8">
-                <Link href="/sell">Start Selling</Link>
-              </Button>
-            </section>
+            <ConversionCTA />
           </>
         )}
       </main>
